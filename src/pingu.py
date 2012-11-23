@@ -40,6 +40,8 @@ __license__ = "GNU General Public License (GPL), Version 3"
 import os
 import flask
 
+import execution
+
 SECRET_KEY = "kyjbqt4828ky8fdl7ifwgawt60erk8wg"
 """ The "secret" key to be at the internal encryption
 processes handled by flask (eg: sessions) """
@@ -82,6 +84,12 @@ def run():
         host = "0.0.0.0",
         port = port
     )
+
+# creates the thread that it's going to be used to
+# execute the various background tasks and starts
+# it, providing the mechanism for execution
+execution_thread = execution.ExecutionThread()
+execution_thread.start()
 
 if __name__ == "__main__": run()
 else: load()
