@@ -37,4 +37,51 @@ __copyright__ = "Copyright (c) 2008-2012 Hive Solutions Lda."
 __license__ = "GNU General Public License (GPL), Version 3"
 """ The license for the module """
 
+import os
 import flask
+
+SECRET_KEY = "kyjbqt4828ky8fdl7ifwgawt60erk8wg"
+""" The "secret" key to be at the internal encryption
+processes handled by flask (eg: sessions) """
+
+app = flask.Flask(__name__)
+#app.config["PERMANENT_SESSION_LIFETIME"] = datetime.timedelta(365)
+#app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+#app.config["MAX_CONTENT_LENGTH"] = 1024 ** 3
+
+@app.route("/", methods = ("GET",))
+@app.route("/index", methods = ("GET",))
+def index():
+    return flask.render_template(
+        "index.html.tpl",
+        link = "home"
+    )
+
+def load():
+    # sets the global wide application settings and
+    # configures the application object according to
+    # this settings
+    debug = os.environ.get("DEBUG", False) and True or False
+    app.debug = debug
+    app.secret_key = SECRET_KEY
+
+def run():
+    # sets the debug control in the application
+    # then checks the current environment variable
+    # for the target port for execution (external)
+    # and then start running it (continuous loop)
+    debug = os.environ.get("DEBUG", False) and True or False
+    reloader = os.environ.get("RELOADER", False) and True or False
+    port = int(os.environ.get("PORT", 5000))
+    app.debug = debug
+    app.secret_key = SECRET_KEY
+    app.run(
+        use_debugger = debug,
+        debug = debug,
+        use_reloader = reloader,
+        host = "0.0.0.0",
+        port = port
+    )
+
+if __name__ == "__main__": run()
+else: load()
