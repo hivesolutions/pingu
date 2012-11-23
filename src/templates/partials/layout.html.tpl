@@ -12,13 +12,7 @@
         {% block header %}
             <h1>{% block name %}{% endblock %}</h1>
             <div class="links">
-                {% if "index" in session.tokens %}
-                    {% if link == "home" %}
-                        <a href="{{ url_for('index') }}" class="active">home</a>
-                    {% else %}
-                        <a href="{{ url_for('index') }}">home</a>
-                    {% endif %}
-                {% endif %}
+                <a href="{{ url_for('index') }}" class="active">home</a>
             </div>
         {% endblock %}
     </div>
