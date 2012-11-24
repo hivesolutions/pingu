@@ -40,6 +40,7 @@ __license__ = "GNU General Public License (GPL), Version 3"
 import os
 import time
 import flask
+import atexit
 import httplib
 import urlparse
 
@@ -111,6 +112,17 @@ def _ping_m(url, method = "GET", timeout = 1.0):
     def _pingu(): _ping(url, method = method, timeout = timeout)
     return _pingu
 
+def _schedule_tasks():
+    # retrieves the current time and then iterates over
+    # all the tasks to insert them into the execution thread
+    current_time = time.time()
+    for task in TASKS:
+        url, method, timeout = task
+        execution_thread.insert_work(
+            current_time + timeout,
+            _ping_m(url, method = method, timeout = timeout)
+        )
+
 def load():
     # sets the global wide application settings and
     # configures the application object according to
@@ -137,21 +149,21 @@ def run():
         port = port
     )
 
+@atexit.register
+def stop_thread():
+    # stop the execution thread so that it's possible to
+    # the process to return the calling
+    execution_thread.stop()
+
 # creates the thread that it's going to be used to
 # execute the various background tasks and starts
 # it, providing the mechanism for execution
 execution_thread = execution.ExecutionThread()
 execution_thread.start()
 
-# retrieves the current time and then iterates over
-# all the tasks to insert them into the execution thread
-current_time = time.time()
-for task in TASKS:
-    url, method, timeout = task
-    execution_thread.insert_work(
-        current_time + timeout,
-        _ping_m(url, method = method, timeout = timeout)
-    )
+# schedules the various tasks currently registered in
+# the system internal structures
+_schedule_tasks()
 
 if __name__ == "__main__": run()
 else: load()
