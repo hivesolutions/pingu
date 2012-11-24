@@ -156,6 +156,17 @@ def _ping_m(name, url, method = "GET", timeout = 1.0):
     def _pingu(): _ping(name, url, method = method, timeout = timeout)
     return _pingu
 
+def _ensure_db():
+    db = mongo.get_db()
+
+    db.log.ensure_index("name")
+    db.log.ensure_index("up")
+    db.log.ensure_index("timestamp")
+
+    db.status.ensure_index("name")
+    db.status.ensure_index("up")
+    db.status.ensure_index("timestamp")
+
 def _schedule_tasks():
     # retrieves the current time and then iterates over
     # all the tasks to insert them into the execution thread
@@ -204,6 +215,10 @@ def stop_thread():
 # it, providing the mechanism for execution
 execution_thread = execution.ExecutionThread()
 execution_thread.start()
+
+# ensures the various requirements for the database
+# so that it becomes ready for usage
+_ensure_db()
 
 # schedules the various tasks currently registered in
 # the system internal structures
