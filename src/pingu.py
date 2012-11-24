@@ -38,13 +38,24 @@ __license__ = "GNU General Public License (GPL), Version 3"
 """ The license for the module """
 
 import os
+import time
 import flask
+import httplib
+import urlparse
 
 import execution
 
 SECRET_KEY = "kyjbqt4828ky8fdl7ifwgawt60erk8wg"
 """ The "secret" key to be at the internal encryption
 processes handled by flask (eg: sessions) """
+
+TASKS = (
+    ("http://www.sapo.pt/", "GET", 10.0),
+    ("http://www.google.pt/", "GET", 30.0),
+    ("https://app.frontdoorhq.com", "GET", 5.0),
+)
+""" The set of tasks to be executed by ping operations
+this is the standard hardcoded values """
 
 app = flask.Flask(__name__)
 #app.config["PERMANENT_SESSION_LIFETIME"] = datetime.timedelta(365)
@@ -58,6 +69,47 @@ def index():
         "index.html.tpl",
         link = "home"
     )
+
+def _ping(url = None, method = "GET", timeout = 1.0):
+    # creates the map that hold the various headers
+    # to be used in the http connection
+    headers = {
+        "User-Agent" : "pingu/0.1.0"
+    }
+
+    # parses the provided url values, retrieving the various
+    # components of it to be used in the ping operation
+    url_s = urlparse.urlparse(url)
+    host = url_s.netloc
+    port = url_s.port
+    path = url_s.path
+
+    # retrieves the timestamp for the start of the connection
+    # to the remote host and then creates a new connection to
+    # the remote host to proceed with the "ping" operation
+    start_time = time.time()
+    connection = httplib.HTTPConnection(host, port)
+    try:
+        connection.request(method, path, headers = headers)
+        response = connection.getresponse()
+    finally:
+        connection.close()
+    end_time = time.time()
+    latency = (end_time - start_time) * 1000.0
+
+    # prints a debug message about the ping operation
+    # with the complete diagnostics information
+    print "%s :: %s %s / %dms" % (url, response.status, response.reason, latency)
+
+    current_time = time.time()
+    execution_thread.insert_work(
+        current_time + timeout,
+        _ping_m(url, method = method, timeout = timeout)
+    )
+
+def _ping_m(url, method = "GET", timeout = 1.0):
+    def _pingu(): _ping(url, method = method, timeout = timeout)
+    return _pingu
 
 def load():
     # sets the global wide application settings and
@@ -90,6 +142,16 @@ def run():
 # it, providing the mechanism for execution
 execution_thread = execution.ExecutionThread()
 execution_thread.start()
+
+# retrieves the current time and then iterates over
+# all the tasks to insert them into the execution thread
+current_time = time.time()
+for task in TASKS:
+    url, method, timeout = task
+    execution_thread.insert_work(
+        current_time + timeout,
+        _ping_m(url, method = method, timeout = timeout)
+    )
 
 if __name__ == "__main__": run()
 else: load()
