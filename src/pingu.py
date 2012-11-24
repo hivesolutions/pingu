@@ -40,6 +40,7 @@ __license__ = "GNU General Public License (GPL), Version 3"
 import os
 import time
 import flask
+import mongo
 import atexit
 import httplib
 import urlparse
@@ -53,7 +54,7 @@ processes handled by flask (eg: sessions) """
 TASKS = (
     ("http://www.sapo.pt/", "GET", 10.0),
     ("http://www.google.pt/", "GET", 30.0),
-    ("https://app.frontdoorhq.com", "GET", 5.0),
+    ("https://app.frontdoorhq.com/", "GET", 5.0),
 )
 """ The set of tasks to be executed by ping operations
 this is the standard hardcoded values """
@@ -101,12 +102,26 @@ def _ping(url = None, method = "GET", timeout = 1.0):
     finally:
         connection.close()
     end_time = time.time()
-    latency = (end_time - start_time) * 1000.0
+    latency = int((end_time - start_time) * 1000.0)
 
     # prints a debug message about the ping operation
     # with the complete diagnostics information
     print "%s :: %s %s / %dms" % (url, response.status, response.reason, latency)
 
+    # inserts the log document into the database so that
+    # the information is registered
+    db = mongo.get_db()
+    db.log.insert({
+        "url" : url,
+        "status" : response.status,
+        "reason" : response.reason,
+        "latency" : latency,
+        "timestamp" : start_time
+    })
+
+    # retrieves the current time and uses that value to
+    # re-insert a new task into the execution thread, this
+    # is considered the re-schedule operation
     current_time = time.time()
     execution_thread.insert_work(
         current_time + timeout,
