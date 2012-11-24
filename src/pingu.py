@@ -92,10 +92,6 @@ def _ping(name, url = None, method = "GET", timeout = 1.0):
     # to the scheme defined in the url
     connection_c = scheme == "https" and httplib.HTTPSConnection or httplib.HTTPConnection
 
-    # sets the initial value for the (server) up flag indicating
-    # that by default the server is considered to be up
-    up = True
-
     # retrieves the timestamp for the start of the connection
     # to the remote host and then creates a new connection to
     # the remote host to proceed with the "ping" operation
@@ -105,15 +101,22 @@ def _ping(name, url = None, method = "GET", timeout = 1.0):
         connection.request(method, path, headers = headers)
         response = connection.getresponse()
     except:
-        up = False
         response = None
     finally:
         connection.close()
     end_time = time.time()
     latency = int((end_time - start_time) * 1000.0)
 
+    # retrieves both the status and the reason values
+    # defaulting to "down" values in case the response
+    # is not available
     status = response and response.status or 0
-    reason = response and response.reason or "down"
+    reason = response and response.reason or "Down"
+    
+    # checks if the current status code is in the
+    # correct range these are considered the "valid"
+    # status codes for an up server 
+    up = (status / 100) in (2, 3)
 
     # prints a debug message about the ping operation
     # with the complete diagnostics information
