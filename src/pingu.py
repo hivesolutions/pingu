@@ -52,9 +52,10 @@ SECRET_KEY = "kyjbqt4828ky8fdl7ifwgawt60erk8wg"
 processes handled by flask (eg: sessions) """
 
 TASKS = (
-    ("http://www.sapo.pt/", "GET", 10.0),
-    ("http://www.google.pt/", "GET", 30.0),
-    ("https://app.frontdoorhq.com/", "GET", 5.0),
+    ("sapo", "http://www.sapo.pt/", "GET", 10.0),
+    ("google", "http://www.google.pt/", "GET", 30.0),
+    ("frontdoor", "https://app.frontdoorhq.com/", "GET", 5.0),
+    ("localhost", "http://localhost:9090/", "GET", 5.0),
 )
 """ The set of tasks to be executed by ping operations
 this is the standard hardcoded values """
@@ -72,7 +73,7 @@ def index():
         link = "home"
     )
 
-def _ping(url = None, method = "GET", timeout = 1.0):
+def _ping(name, url = None, method = "GET", timeout = 1.0):
     # creates the map that hold the various headers
     # to be used in the http connection
     headers = {
@@ -91,6 +92,10 @@ def _ping(url = None, method = "GET", timeout = 1.0):
     # to the scheme defined in the url
     connection_c = scheme == "https" and httplib.HTTPSConnection or httplib.HTTPConnection
 
+    # sets the initial value for the (server) up flag indicating
+    # that by default the server is considered to be up
+    up = True
+
     # retrieves the timestamp for the start of the connection
     # to the remote host and then creates a new connection to
     # the remote host to proceed with the "ping" operation
@@ -99,25 +104,41 @@ def _ping(url = None, method = "GET", timeout = 1.0):
     try:
         connection.request(method, path, headers = headers)
         response = connection.getresponse()
+    except:
+        up = False
+        response = None
     finally:
         connection.close()
     end_time = time.time()
     latency = int((end_time - start_time) * 1000.0)
 
+    status = response and response.status or 0
+    reason = response and response.reason or "down"
+
     # prints a debug message about the ping operation
     # with the complete diagnostics information
-    print "%s :: %s %s / %dms" % (url, response.status, response.reason, latency)
+    print "%s :: %s %s / %dms" % (url, status, reason, latency)
 
     # inserts the log document into the database so that
     # the information is registered
     db = mongo.get_db()
     db.log.insert({
+        "name" : name,
         "url" : url,
-        "status" : response.status,
-        "reason" : response.reason,
+        "up" : up,
+        "status" : status,
+        "reason" : reason,
         "latency" : latency,
         "timestamp" : start_time
     })
+
+    value = db.status.find_one({"name" : name}) or {
+        "name" : name
+    }
+    value["up"] = up
+    value["latency"] = latency
+    value["timestamp"] = start_time
+    db.status.save(value)
 
     # retrieves the current time and uses that value to
     # re-insert a new task into the execution thread, this
@@ -125,11 +146,11 @@ def _ping(url = None, method = "GET", timeout = 1.0):
     current_time = time.time()
     execution_thread.insert_work(
         current_time + timeout,
-        _ping_m(url, method = method, timeout = timeout)
+        _ping_m(name, url, method = method, timeout = timeout)
     )
 
-def _ping_m(url, method = "GET", timeout = 1.0):
-    def _pingu(): _ping(url, method = method, timeout = timeout)
+def _ping_m(name, url, method = "GET", timeout = 1.0):
+    def _pingu(): _ping(name, url, method = method, timeout = timeout)
     return _pingu
 
 def _schedule_tasks():
@@ -137,10 +158,10 @@ def _schedule_tasks():
     # all the tasks to insert them into the execution thread
     current_time = time.time()
     for task in TASKS:
-        url, method, timeout = task
+        name, url, method, timeout = task
         execution_thread.insert_work(
             current_time + timeout,
-            _ping_m(url, method = method, timeout = timeout)
+            _ping_m(name, url, method = method, timeout = timeout)
         )
 
 def load():
