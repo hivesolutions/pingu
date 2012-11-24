@@ -81,15 +81,20 @@ def _ping(url = None, method = "GET", timeout = 1.0):
     # parses the provided url values, retrieving the various
     # components of it to be used in the ping operation
     url_s = urlparse.urlparse(url)
-    host = url_s.netloc
+    scheme = url_s.scheme
+    hostname = url_s.hostname
     port = url_s.port
     path = url_s.path
+
+    # retrieves the connection class to be used according
+    # to the scheme defined in the url
+    connection_c = scheme == "https" and httplib.HTTPSConnection or httplib.HTTPConnection
 
     # retrieves the timestamp for the start of the connection
     # to the remote host and then creates a new connection to
     # the remote host to proceed with the "ping" operation
     start_time = time.time()
-    connection = httplib.HTTPConnection(host, port)
+    connection = connection_c(hostname, port)
     try:
         connection.request(method, path, headers = headers)
         response = connection.getresponse()
