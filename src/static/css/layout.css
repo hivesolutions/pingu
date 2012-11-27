@@ -326,11 +326,19 @@ pre {
     width: 24px;
 }
 
-.table-row {
+.filter {
+    user-select: none;
+    -o-user-select: none;
+    -moz-user-select: none;
+    -khtml-user-select: none;
+    -webkit-user-select: none;
+}
+
+.filter .table-row {
     height: 18px;
     padding: 12px 20px 12px 20px;
 }
 
-.table-row > * {
+.filter .table-row > * {
     float: left;
 }
