@@ -44,10 +44,14 @@ connection = None
 """ The global connection object that should persist
 the connection relation with the database service """
 
+url = "mongodb://localhost:27017"
+""" The global variable containing the url to be used
+for the connection with the service """ 
+
 def get_connection():
     global connection
     if pymongo == None: return None
-    if not connection: connection = pymongo.Connection("localhost", 27017)
+    if not connection: connection = pymongo.Connection(url)
     return connection
 
 def get_db():

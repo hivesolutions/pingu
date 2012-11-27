@@ -60,6 +60,9 @@ app = flask.Flask(__name__)
 #app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 #app.config["MAX_CONTENT_LENGTH"] = 1024 ** 3
 
+mongo_url = os.getenv("MONGOHQ_URL", "localhost:27017")
+mongo.url = mongo_url
+
 @app.route("/", methods = ("GET",))
 @app.route("/index", methods = ("GET",))
 def index():
@@ -336,7 +339,9 @@ def run():
     # and then start running it (continuous loop)
     debug = os.environ.get("DEBUG", False) and True or False
     reloader = os.environ.get("RELOADER", False) and True or False
+    mongo_url = os.getenv("MONGOHQ_URL", "localhost:27017")
     port = int(os.environ.get("PORT", 5000))
+    mongo.url = mongo_url
     app.debug = debug
     app.secret_key = SECRET_KEY
     app.run(
