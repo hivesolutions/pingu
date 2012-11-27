@@ -44,7 +44,7 @@ connection = None
 """ The global connection object that should persist
 the connection relation with the database service """
 
-url = "mongodb://localhost:27017"
+url = "mongodb://root:root@localhost:27017/master"
 """ The global variable containing the url to be used
 for the connection with the service """ 
 
@@ -57,5 +57,7 @@ def get_connection():
 def get_db():
     connection = get_connection()
     if not connection: return None
-    db = connection.pingu
+    result = pymongo.uri_parser.parse_uri(url)
+    database = result.get("database", None)
+    db = connection[database]
     return db
