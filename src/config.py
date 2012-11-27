@@ -38,5 +38,13 @@ __license__ = "GNU General Public License (GPL), Version 3"
 """ The license for the module """
 
 SMTP_HOST = "localhost"
+""" The host to be used in the smtp connection with
+the remote host """
+
 SMTP_USER = None
+""" The used to be used in authentication with the
+smtp remote host """
+
 SMTP_PASSWORD = None
+""" The password to be used in the authentication with
+the remote smtp server """
