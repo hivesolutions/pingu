@@ -78,28 +78,6 @@ mongo_url = os.getenv("MONGOHQ_URL", MONGO_URL)
 mongo.url = mongo_url
 mongo.database = MONGO_DATABASE
 
-def _render(template_name, **context):
-    template = app.jinja_env.get_or_select_template(template_name)
-    return flask.templating._render(template, context, app)
-
-@app.route("/send_email", methods = ("GET",))
-def send_email():
-    import thread
-    parameters = {
-        "subject" : "You server is currently down",
-        "sender" : "Pingu Mailer <mailer@pingu.com>",
-        "receivers" : ["João Magalhães <joamag@hive.pt>"],
-        "plain" : "email/down.txt.tpl",
-        "rich" : "email/down.html.tpl",
-        "context" : {
-            "server" : {
-                "name" : "TOBIAS"
-            }
-        }
-    }
-    thread.start_new_thread(_send_email, (), parameters)
-    return "enviado"
-
 @app.route("/", methods = ("GET",))
 @app.route("/index", methods = ("GET",))
 def index():
@@ -379,23 +357,9 @@ def _ping(name, url = None, method = "GET", timeout = 1.0):
     server["timestamp"] = start_time
     db.server.save(server)
 
-
-    if change_down:
-        import thread
-        parameters = {
-            "subject" : "Your %s server, is currently down" % name,
-            "sender" : "Pingu Mailer <mailer@pingu.com>",
-            "receivers" : ["João Magalhães <joamag@hive.pt>"],
-            "plain" : "email/down.txt.tpl",
-            "rich" : "email/down.html.tpl",
-            "context" : {
-                "server" : server
-            }
-        }
-        thread.start_new_thread(_send_email, (), parameters)
-
-
-
+    # in case there's a change from server state up to down
+    # must trigger the down event so that the user is notified
+    if change_down: _event_down(server)
 
     # retrieves the value for the enabled flag of the server
     # in case the values is not enable no re-scheduling is done
@@ -413,6 +377,25 @@ def _ping(name, url = None, method = "GET", timeout = 1.0):
 def _ping_m(name, url, method = "GET", timeout = 1.0):
     def _pingu(): _ping(name, url, method = method, timeout = timeout)
     return _pingu
+
+def _event_down(server):
+    import thread
+    name = server.get("name", None)
+    parameters = {
+        "subject" : "Your %s server, is currently down" % name,
+        "sender" : "Pingu Mailer <mailer@pingu.com>",
+        "receivers" : ["João Magalhães <joamag@hive.pt>"],
+        "plain" : "email/down.txt.tpl",
+        "rich" : "email/down.html.tpl",
+        "context" : {
+            "server" : server
+        }
+    }
+    thread.start_new_thread(_send_email, (), parameters)
+
+def _render(template_name, **context):
+    template = app.jinja_env.get_or_select_template(template_name)
+    return flask.templating._render(template, context, app)
 
 def _ensure_db():
     db = mongo.get_db()
