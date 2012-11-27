@@ -102,6 +102,17 @@ def accounts():
         accounts = accounts
     )
 
+@app.route("/accounts/new", methods = ("GET",))
+def new_account():
+    return flask.render_template(
+        "account_new.html.tpl",
+        link = "new_account"
+    )
+
+@app.route("/accounts", methods = ("POST",))
+def create_account():
+    return "DUMMY"
+
 @app.route("/servers", methods = ("GET",))
 def servers():
     servers = _get_servers()
@@ -215,27 +226,38 @@ def not_empty(value):
     if len(value): return True
     raise RuntimeError("value is empty")
 
+def _get_accounts():
+    db = mongo.get_db()
+    accounts = db.account.find({"enabled" : True})
+    return accounts
+
+def _get_account(id):
+    db = mongo.get_db()
+    account = db.accounts.find_one({"id" : id})
+    #_build_account(account)
+    return account
+
 def _get_servers():
     db = mongo.get_db()
-    servers = db.server.find({"enabled" : True})
+    servers = db.servers.find({"enabled" : True})
     return servers
 
 def _get_server(name):
     db = mongo.get_db()
-    server = db.server.find_one({"name" : name})
+    server = db.servers.find_one({"name" : name})
     _build_server(server)
     return server
 
 def _save_server(server):
     db = mongo.get_db()
-    db.server.save(server)
+    db.servers.save(server)
     return server
 
 def _delete_server(name):
     db = mongo.get_db()
-    server = db.server.find_one({"name" : name})
+    server = db.servers.find_one({"name" : name})
     server["enabled"] = False
-    db.server.save(server)
+    db.servers.save(server)
     return server
 
 def _get_log(name, start = 0, count = 5):
@@ -352,14 +374,14 @@ def _ping(name, url = None, method = "GET", timeout = 1.0):
         "timestamp" : start_time
     })
 
-    server = db.server.find_one({"name" : name}) or {
+    server = db.servers.find_one({"name" : name}) or {
         "name" : name
     }
     change_down = not server.get("up", True) == up and not up
     server["up"] = up
     server["latency"] = latency
     server["timestamp"] = start_time
-    db.server.save(server)
+    db.servers.save(server)
 
     # in case there's a change from server state up to down
     # must trigger the down event so that the user is notified
@@ -408,12 +430,12 @@ def _ensure_db():
     db.log.ensure_index("up")
     db.log.ensure_index("timestamp")
 
-    db.server.ensure_index("enabled")
-    db.server.ensure_index("name")
-    db.server.ensure_index("url")
-    db.server.ensure_index("up")
-    db.server.ensure_index("latency")
-    db.server.ensure_index("timestamp")
+    db.servers.ensure_index("enabled")
+    db.servers.ensure_index("name")
+    db.servers.ensure_index("url")
+    db.servers.ensure_index("up")
+    db.servers.ensure_index("latency")
+    db.servers.ensure_index("timestamp")
 
 def _get_tasks():
     tasks = []
