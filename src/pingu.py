@@ -51,12 +51,7 @@ SECRET_KEY = "kyjbqt4828ky8fdl7ifwgawt60erk8wg"
 """ The "secret" key to be at the internal encryption
 processes handled by flask (eg: sessions) """
 
-TASKS = (
-    ("sapo", "http://www.sapo.pt/", "GET", 10.0),
-    ("google", "http://www.google.pt/", "GET", 30.0),
-    ("frontdoor", "https://app.frontdoorhq.com/", "GET", 5.0),
-    ("localhost", "http://localhost:9090/", "GET", 5.0),
-)
+TASKS = ()
 """ The set of tasks to be executed by ping operations
 this is the standard hardcoded values """
 
@@ -72,6 +67,125 @@ def index():
         "index.html.tpl",
         link = "home"
     )
+
+@app.route("/servers", methods = ("GET",))
+def servers():
+    # retrieves the various entries from the servers
+    # folder as the various servers
+    servers = _get_servers()
+    return flask.render_template(
+        "server_list.html.tpl",
+        link = "servers",
+        servers = servers
+    )
+
+@app.route("/servers/new", methods = ("GET",))
+def new_server():
+    return flask.render_template(
+        "server_new.html.tpl",
+        link = "new_server"
+    )
+
+@app.route("/servers", methods = ("POST",))
+def create_server():
+    return update_server()
+
+@app.route("/servers/<name>", methods = ("GET",))
+def show_server(name):
+    server = _get_server(name)
+    return flask.render_template(
+        "server_show.html.tpl",
+        link = "servers",
+        sub_link = "info",
+        server = server
+    )
+
+@app.route("/servers/<name>/edit", methods = ("GET",))
+def edit_server(name):
+    server = _get_server(name)
+    return flask.render_template(
+        "server_edit.html.tpl",
+        link = "servers",
+        sub_link = "edit",
+        server = server
+    )
+
+@app.route("/servers/<name>/edit", methods = ("POST",))
+def update_server(name = None):
+    # retrieves all the parameters from the request to be
+    # handled then validated the required ones
+    _name = flask.request.form.get("name", None)
+    url = flask.request.form.get("url", None)
+    description = flask.request.form.get("description", None)
+
+    # sets the validation method in the various attributes
+    # coming from the client form
+    not_null(_name) and not_empty(_name)
+    not_null(url) and not_empty(url)
+    not_null(description) and not_empty(description)
+
+    # creates the structure to be used as the server description
+    # using the values provided as parameters
+    server = name and _get_server(name) or {}
+    enabled = server.get("enabled", True)
+    server["enabled"] = enabled
+    server["name"] = _name
+    server["url"] = url
+    server["description"] = description
+
+    # creates a task for the server that has just been created
+    # this tuple is going to be used by the scheduling thread
+    task = (_name, url, "GET", 5.0)
+
+    # saves the server instance and schedules the task, this
+    # should ensure coherence in the internal data structures
+    _save_server(server)
+    not name and _schedule_task(task)
+
+    # redirects the user to the show page of the server that
+    # was just created
+    return flask.redirect(
+        flask.url_for("show_server", name = _name)
+    )
+
+@app.route("/servers/<name>/delete", methods = ("GET", "POST"))
+def delete_server(name):
+    _delete_server(name)
+    return flask.redirect(
+        flask.url_for("servers")
+    )
+
+def not_null(value):
+    if not value == None: return True
+    raise RuntimeError("value is not set")
+
+def not_empty(value):
+    if len(value): return True
+    raise RuntimeError("value is empty")
+
+def _get_servers():
+    db = mongo.get_db()
+    servers = db.server.find({"enabled" : True})
+    return servers
+
+def _get_server(name):
+    db = mongo.get_db()
+    server = db.server.find_one({"name" : name})
+    up = server.get("up", False)
+    server["up_l"] = up and "up" or "down"
+    return server
+
+def _save_server(server):
+    db = mongo.get_db()
+    db.server.save(server)
+    return server
+
+def _delete_server(name):
+    db = mongo.get_db()
+    server = db.server.find_one({"name" : name})
+    server["enabled"] = False
+    db.server.save(server)
+    return server
 
 def _ping(name, url = None, method = "GET", timeout = 1.0):
     # creates the map that hold the various headers
@@ -112,10 +226,10 @@ def _ping(name, url = None, method = "GET", timeout = 1.0):
     # is not available
     status = response and response.status or 0
     reason = response and response.reason or "Down"
-    
+
     # checks if the current status code is in the
     # correct range these are considered the "valid"
-    # status codes for an up server 
+    # status codes for an up server
     up = (status / 100) in (2, 3)
 
     # prints a debug message about the ping operation
@@ -126,6 +240,7 @@ def _ping(name, url = None, method = "GET", timeout = 1.0):
     # the information is registered
     db = mongo.get_db()
     db.log.insert({
+        "enabled" : True,
         "name" : name,
         "url" : url,
         "up" : up,
@@ -135,19 +250,23 @@ def _ping(name, url = None, method = "GET", timeout = 1.0):
         "timestamp" : start_time
     })
 
-    value = db.status.find_one({"name" : name}) or {
+    server = db.server.find_one({"name" : name}) or {
         "name" : name
     }
-    value["up"] = up
-    value["latency"] = latency
-    value["timestamp"] = start_time
-    db.status.save(value)
+    server["up"] = up
+    server["latency"] = latency
+    server["timestamp"] = start_time
+    db.server.save(server)
+
+    # retrieves the value for the enabled flag of the server
+    # in case the values is not enable no re-scheduling is done
+    enabled = server.get("enabled", False)
 
     # retrieves the current time and uses that value to
     # re-insert a new task into the execution thread, this
     # is considered the re-schedule operation
     current_time = time.time()
-    execution_thread.insert_work(
+    enabled and execution_thread.insert_work(
         current_time + timeout,
         _ping_m(name, url, method = method, timeout = timeout)
     )
@@ -163,20 +282,44 @@ def _ensure_db():
     db.log.ensure_index("up")
     db.log.ensure_index("timestamp")
 
-    db.status.ensure_index("name")
-    db.status.ensure_index("up")
-    db.status.ensure_index("timestamp")
+    db.server.ensure_index("enabled")
+    db.server.ensure_index("name")
+    db.server.ensure_index("url")
+    db.server.ensure_index("up")
+    db.server.ensure_index("latency")
+    db.server.ensure_index("timestamp")
+
+def _get_tasks():
+    tasks = []
+    servers = _get_servers()
+
+    for server in servers:
+        name = server.get("name", None)
+        url = server.get("url", None)
+        method = server.get("method", "GET")
+        timeout = server.get("timeout", 5.0)
+        tasks.append((
+            name,
+            url,
+            method,
+            timeout
+        ))
+
+    return tasks + list(TASKS)
 
 def _schedule_tasks():
     # retrieves the current time and then iterates over
     # all the tasks to insert them into the execution thread
+    tasks = _get_tasks()
+    for task in tasks: _schedule_task(task)
+
+def _schedule_task(task):
     current_time = time.time()
-    for task in TASKS:
-        name, url, method, timeout = task
-        execution_thread.insert_work(
-            current_time + timeout,
-            _ping_m(name, url, method = method, timeout = timeout)
-        )
+    name, url, method, timeout = task
+    execution_thread.insert_work(
+        current_time + timeout,
+        _ping_m(name, url, method = method, timeout = timeout)
+    )
 
 def load():
     # sets the global wide application settings and
