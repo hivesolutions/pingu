@@ -29,6 +29,12 @@
                 {% else %}
                     <a href="{{ url_for('new_server') }}">new server</a>
                 {% endif %}
+                //
+                {% if link == "about" %}
+                    <a href="{{ url_for('about') }}" class="active">about</a>
+                {% else %}
+                    <a href="{{ url_for('about') }}">about</a>
+                {% endif %}
             </div>
         {% endblock %}
     </div>
