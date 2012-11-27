@@ -43,8 +43,14 @@ import flask
 import mongo
 import atexit
 import httplib
+import smtplib
+import datetime
 import urlparse
 
+import email.mime.multipart
+import email.mime.text
+
+import config
 import execution
 
 SECRET_KEY = "kyjbqt4828ky8fdl7ifwgawt60erk8wg"
@@ -71,6 +77,28 @@ app = flask.Flask(__name__)
 mongo_url = os.getenv("MONGOHQ_URL", MONGO_URL)
 mongo.url = mongo_url
 mongo.database = MONGO_DATABASE
+
+def _render(template_name, **context):
+    template = app.jinja_env.get_or_select_template(template_name)
+    return flask.templating._render(template, context, app)
+
+@app.route("/send_email", methods = ("GET",))
+def send_email():
+    import thread
+    parameters = {
+        "subject" : "You server is currently down",
+        "sender" : "Pingu Mailer <mailer@pingu.com>",
+        "receivers" : ["João Magalhães <joamag@hive.pt>"],
+        "plain" : "email/down.txt.tpl",
+        "rich" : "email/down.html.tpl",
+        "context" : {
+            "server" : {
+                "name" : "TOBIAS"
+            }
+        }
+    }
+    thread.start_new_thread(_send_email, (), parameters)
+    return "enviado"
 
 @app.route("/", methods = ("GET",))
 @app.route("/index", methods = ("GET",))
@@ -186,6 +214,17 @@ def log_server(name):
         log = log
     )
 
+@app.route("/servers/<name>/log.json", methods = ("GET",))
+def log_server_json(name):
+    start_record = int(flask.request.args.get("start_record", 0))
+    number_records = int(flask.request.args.get("number_records", 5))
+    log = _get_log(name, start = start_record, count = number_records)
+
+    return flask.Response(
+        mongo.dumps(log),
+        mimetype = "application/json"
+    )
+
 def not_null(value):
     if not value == None: return True
     raise RuntimeError("value is not set")
@@ -202,8 +241,7 @@ def _get_servers():
 def _get_server(name):
     db = mongo.get_db()
     server = db.server.find_one({"name" : name})
-    up = server.get("up", False)
-    server["up_l"] = up and "up" or "down"
+    _build_server(server)
     return server
 
 def _save_server(server):
@@ -218,10 +256,56 @@ def _delete_server(name):
     db.server.save(server)
     return server
 
-def _get_log(name):
+def _get_log(name, start = 0, count = 5):
     db = mongo.get_db()
-    log = db.log.find({"name" : name})
-    return log
+    log = db.log.find(
+        {"name" : name},
+        skip = start,
+        limit = count,
+        sort = [("timestamp", mongo.pymongo.DESCENDING)]
+    )
+    log_b = []
+    for _log in log: _build_log(_log); log_b.append(_log)
+    return log_b
+
+def _build_server(server):
+    up = server.get("up", False)
+    server["up_l"] = up and "up" or "down"
+
+def _build_log(log):
+    up = log.get("up", False)
+    timestamp = log.get("timestamp", None)
+    date = datetime.datetime.utcfromtimestamp(timestamp)
+    date_string = date.strftime("%d/%m/%Y %H:%M:%S")
+    log["up_l"] = up and "up" or "down"
+    log["date_l"] = date_string
+
+def _send_email(subject = "", sender = "", receivers = [], plain = None, rich = None, context = {}):
+    plain_data = plain and _render(plain, **context)
+    html_data = rich and _render(rich, **context)
+
+    message = email.mime.multipart.MIMEMultipart("alternative")
+    message["Subject"] = subject
+    message["From"] = sender
+    message["To"] = ", ".join(receivers)
+
+    # creates both the plain text and the rich text (html) objects
+    # from the provided data and then attached them to the message
+    # (multipart alternative) that is the base structure
+    plain = plain_data and email.mime.text.MIMEText(plain_data, "plain")
+    html = html_data and email.mime.text.MIMEText(html_data, "html")
+    plain and message.attach(plain)
+    html and message.attach(html)
+
+    # creates the connection with the smtp server and starts the tls
+    # connection to send the created email message
+    server = smtplib.SMTP(config.SMTP_HOST)
+    try:
+        server.starttls()
+        server.login(config.SMTP_USER, config.SMTP_PASSWORD)
+        server.sendmail(sender, receivers, message.as_string())
+    finally:
+        server.quit()
 
 def _ping(name, url = None, method = "GET", timeout = 1.0):
     # creates the map that hold the various headers
@@ -289,10 +373,29 @@ def _ping(name, url = None, method = "GET", timeout = 1.0):
     server = db.server.find_one({"name" : name}) or {
         "name" : name
     }
+    change_down = not server.get("up", True) == up and not up
     server["up"] = up
     server["latency"] = latency
     server["timestamp"] = start_time
     db.server.save(server)
+
+
+    if change_down:
+        import thread
+        parameters = {
+            "subject" : "Your %s server, is currently down" % name,
+            "sender" : "Pingu Mailer <mailer@pingu.com>",
+            "receivers" : ["João Magalhães <joamag@hive.pt>"],
+            "plain" : "email/down.txt.tpl",
+            "rich" : "email/down.html.tpl",
+            "context" : {
+                "server" : server
+            }
+        }
+        thread.start_new_thread(_send_email, (), parameters)
+
+
+
 
     # retrieves the value for the enabled flag of the server
     # in case the values is not enable no re-scheduling is done
@@ -373,9 +476,15 @@ def run():
     debug = os.environ.get("DEBUG", False) and True or False
     reloader = os.environ.get("RELOADER", False) and True or False
     mongo_url = os.getenv("MONGOHQ_URL", MONGO_URL)
+    smtp_host = os.environ.get("SMTP_HOST", "localhost")
+    smtp_user = os.environ.get("SMTP_USER", None)
+    smtp_password = os.environ.get("SMTP_PASSWORD", None)
     port = int(os.environ.get("PORT", 5000))
     mongo.url = mongo_url
     mongo.database = MONGO_DATABASE
+    config.SMTP_HOST = smtp_host
+    config.SMTP_USER = smtp_user
+    config.SMTP_PASSWORD = smtp_password
     app.debug = debug
     app.secret_key = SECRET_KEY
     app.run(
