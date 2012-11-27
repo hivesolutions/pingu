@@ -93,10 +93,17 @@ def about():
         link = "about"
     )
 
+@app.route("/accounts", methods = ("GET",))
+def accounts():
+    accounts = _get_accounts()
+    return flask.render_template(
+        "account_list.html.tpl",
+        link = "accounts",
+        accounts = accounts
+    )
+
 @app.route("/servers", methods = ("GET",))
 def servers():
-    # retrieves the various entries from the servers
-    # folder as the various servers
     servers = _get_servers()
     return flask.render_template(
         "server_list.html.tpl",
