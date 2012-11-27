@@ -1,0 +1,3 @@
+include src/pingu.wsgi
+recursive-include src/static *
+recursive-include src/templates *
