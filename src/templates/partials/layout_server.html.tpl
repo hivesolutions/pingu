@@ -8,6 +8,12 @@
             <a href="{{ url_for('show_server', name = server.name) }}">info</a>
         {% endif %}
         //
+        {% if sub_link == "log" %}
+            <a href="{{ url_for('log_server', name = server.name) }}" class="active">log</a>
+        {% else %}
+            <a href="{{ url_for('log_server', name = server.name) }}">log</a>
+        {% endif %}
+        //
         {% if sub_link == "edit" %}
             <a href="{{ url_for('edit_server', name = server.name) }}" class="active">edit</a>
         {% else %}

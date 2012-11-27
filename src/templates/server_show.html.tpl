@@ -2,7 +2,7 @@
 {% block title %}Servers{% endblock %}
 {% block name %}{{ server.name }}{% endblock %}
 {% block content %}
-    <div class="quote">{{ server.description }}</div>
+    <div class="quote">{{ server.name }}</div>
     <div class="separator-horizontal"></div>
     <table>
         <tbody>

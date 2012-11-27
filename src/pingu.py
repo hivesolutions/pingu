@@ -80,6 +80,13 @@ def index():
         link = "home"
     )
 
+@app.route("/about", methods = ("GET",))
+def about():
+    return flask.render_template(
+        "about.html.tpl",
+        link = "about"
+    )
+
 @app.route("/servers", methods = ("GET",))
 def servers():
     # retrieves the various entries from the servers
@@ -167,6 +174,18 @@ def delete_server(name):
         flask.url_for("servers")
     )
 
+@app.route("/servers/<name>/log", methods = ("GET",))
+def log_server(name):
+    server = _get_server(name)
+    log = _get_log(name)
+    return flask.render_template(
+        "server_log.html.tpl",
+        link = "servers",
+        sub_link = "log",
+        server = server,
+        log = log
+    )
+
 def not_null(value):
     if not value == None: return True
     raise RuntimeError("value is not set")
@@ -198,6 +217,11 @@ def _delete_server(name):
     server["enabled"] = False
     db.server.save(server)
     return server
+
+def _get_log(name):
+    db = mongo.get_db()
+    log = db.log.find({"name" : name})
+    return log
 
 def _ping(name, url = None, method = "GET", timeout = 1.0):
     # creates the map that hold the various headers
