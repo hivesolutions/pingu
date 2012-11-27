@@ -55,8 +55,12 @@ TASKS = ()
 """ The set of tasks to be executed by ping operations
 this is the standard hardcoded values """
 
-MONGO_URL = "mongodb://root:root@localhost:27017/pingu"
+MONGO_URL = "mongodb://localhost:27017"
 """ The default url to be used for the connection with
+the mongo database """
+
+MONGO_DATABASE = "pingu"
+""" The default database to be used for the connection with
 the mongo database """
 
 app = flask.Flask(__name__)
@@ -66,6 +70,7 @@ app = flask.Flask(__name__)
 
 mongo_url = os.getenv("MONGOHQ_URL", MONGO_URL)
 mongo.url = mongo_url
+mongo.database = MONGO_DATABASE
 
 @app.route("/", methods = ("GET",))
 @app.route("/index", methods = ("GET",))
@@ -346,6 +351,7 @@ def run():
     mongo_url = os.getenv("MONGOHQ_URL", MONGO_URL)
     port = int(os.environ.get("PORT", 5000))
     mongo.url = mongo_url
+    mongo.database = MONGO_DATABASE
     app.debug = debug
     app.secret_key = SECRET_KEY
     app.run(
