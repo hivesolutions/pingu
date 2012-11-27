@@ -190,13 +190,11 @@ def delete_server(name):
 @app.route("/servers/<name>/log", methods = ("GET",))
 def log_server(name):
     server = _get_server(name)
-    log = _get_log(name)
     return flask.render_template(
         "server_log.html.tpl",
         link = "servers",
         sub_link = "log",
-        server = server,
-        log = log
+        server = server
     )
 
 @app.route("/servers/<name>/log.json", methods = ("GET",))
@@ -204,7 +202,6 @@ def log_server_json(name):
     start_record = int(flask.request.args.get("start_record", 0))
     number_records = int(flask.request.args.get("number_records", 5))
     log = _get_log(name, start = start_record, count = number_records)
-
     return flask.Response(
         mongo.dumps(log),
         mimetype = "application/json"
