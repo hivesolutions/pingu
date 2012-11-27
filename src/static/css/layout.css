@@ -326,10 +326,11 @@ pre {
     width: 24px;
 }
 
-.table-cell {
-    height: 22px;
+.table-row {
+    height: 18px;
+    padding: 12px 20px 12px 20px;
 }
 
-.table-cell > * {
+.table-row > * {
     float: left;
 }
