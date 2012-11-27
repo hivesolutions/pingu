@@ -37,8 +37,13 @@ __copyright__ = "Copyright (c) 2008-2012 Hive Solutions Lda."
 __license__ = "GNU General Public License (GPL), Version 3"
 """ The license for the module """
 
+import json
+
 try: import pymongo
 except: pymongo = None
+
+try: import bson.json_util
+except: pass
 
 connection = None
 """ The global connection object that should persist
@@ -65,3 +70,6 @@ def get_db():
     _database = result.get("database", None) or database
     db = connection[_database]
     return db
+
+def dumps(*args):
+    return json.dumps(default = bson.json_util.default, *args)
