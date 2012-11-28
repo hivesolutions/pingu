@@ -19,9 +19,9 @@
                 {% endif %}
                 //
                 {% if link == "servers" %}
-                    <a href="{{ url_for('servers') }}" class="active">servers</a>
+                    <a href="{{ url_for('list_servers') }}" class="active">servers</a>
                 {% else %}
-                    <a href="{{ url_for('servers') }}">servers</a>
+                    <a href="{{ url_for('list_servers') }}">servers</a>
                 {% endif %}
                 //
                 {% if link == "new_server" %}
