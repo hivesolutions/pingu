@@ -9,9 +9,9 @@
         {% endif %}
         //
         {% if sub_link == "log" %}
-            <a href="{{ url_for('log_server', name = server.name) }}" class="active">log</a>
+            <a href="{{ url_for('list_log', name = server.name) }}" class="active">log</a>
         {% else %}
-            <a href="{{ url_for('log_server', name = server.name) }}">log</a>
+            <a href="{{ url_for('list_log', name = server.name) }}">log</a>
         {% endif %}
         //
         {% if sub_link == "edit" %}
