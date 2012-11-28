@@ -135,10 +135,19 @@ def provision():
 @app.route("/heroku/resources/<id>", methods = ("DELETE",))
 @quorum.extras.ensure_auth(heroku_username, heroku_password, json = True)
 def deprovision(id):
+    data = flask.request.data
+    object = json.loads(data)
+    print object
+    
     return "ok"
 
 @app.route("/heroku/resources/<id>", methods = ("PUT",))
+@quorum.extras.ensure_auth(heroku_username, heroku_password, json = True)
 def plan_change(id):
+    data = flask.request.data
+    object = json.loads(data)
+    print "plan -> %s" % object["plan"]
+    
     return "ok"
 
 @app.route("/heroku/resources/<id>", methods = ("GET",))
