@@ -1,7 +1,7 @@
 {
     "id" : "pingu",
     "api" : {
-        "config_vars" : [],
+        "config_vars" : ["PINGU_URL"],
         "password" : "0jlw8sq7ows5Sd3K",
         "sso_salt" : "OrgjVavU6PErWLPE",
         "production" : {
