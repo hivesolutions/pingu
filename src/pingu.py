@@ -42,6 +42,7 @@ import time
 import flask
 import mongo
 import atexit
+import hashlib
 import httplib
 import smtplib
 import datetime
@@ -56,6 +57,10 @@ import execution
 SECRET_KEY = "kyjbqt4828ky8fdl7ifwgawt60erk8wg"
 """ The "secret" key to be at the internal encryption
 processes handled by flask (eg: sessions) """
+
+PASSWORD_SALT = "pingu"
+""" The salt suffix to be used during the encoding
+of the password into an hash value """
 
 TASKS = ()
 """ The set of tasks to be executed by ping operations
@@ -86,6 +91,85 @@ def index():
         link = "home"
     )
 
+@app.route("/signin", methods = ("GET",))
+def signin():
+    return flask.render_template(
+        "signin.html.tpl"
+    )
+
+@app.route("/signin", methods = ("POST",))
+def login():
+    # retrieves both the username and the password from
+    # the flask request form, these are the values that
+    # are going to be used in the username validation
+    username = flask.request.form.get("username", None)
+    password = flask.request.form.get("password", None)
+
+    # in case any of the mandatory arguments is not provided
+    # an error is set in the current page
+    if not username or not password:
+        return flask.render_template(
+            "signin.html.tpl",
+            username = username,
+            error = "Both username and password must be provided"
+        )
+
+    # retrieves the structure containing the information
+    # on the currently available users and unpacks the
+    # various attributes from it (defaulting to base values)
+    account = _get_account(username, build = False) or {}
+    _username = account.get("username", None)
+    _password = account.get("password", None)
+
+    # encodes the provided password into an sha1 hash appending
+    # the salt value to it before the encoding
+    password_sha1 = hashlib.sha1(password + PASSWORD_SALT).hexdigest()
+
+    # checks that both the account structure and the password values
+    # are present and that the password matched, if one of these
+    # values fails the login process fails and the user is redirected
+    # to the signin page with an error string
+    if not account or not _password or not password_sha1 == _password:
+        return flask.render_template(
+            "signin.html.tpl",
+            username = username,
+            error = "Invalid username and/or password"
+        )
+
+    # sets the login count and last login values in the account as the
+    # current time and then saves it in the data store
+    login_count = account.get("login_count", 0)
+    account["login_count"] = login_count + 1
+    account["last_login"] = time.time()
+    _save_account(account)
+
+    # retrieves the tokens from the user to set
+    # them in the current session
+    tokens = account.get("tokens", ())
+
+    # updates the current user (name) in session with
+    # the username that has just be accepted in the login
+    flask.session["username"] = username
+    flask.session["tokens"] = tokens
+
+    # makes the current session permanent this will allow
+    # the session to persist along multiple browser initialization
+    flask.session.permanent = True
+
+    return flask.redirect(
+        flask.url_for("index")
+    )
+
+@app.route("/signout", methods = ("GET", "POST"))
+def logout():
+    if "username" in flask.session: del flask.session["username"]
+    if "tokens" in flask.session: del flask.session["tokens"]
+    if "cameras" in flask.session: del flask.session["cameras"]
+
+    return flask.redirect(
+        flask.url_for("signin")
+    )
+
 @app.route("/about", methods = ("GET",))
 def about():
     return flask.render_template(
@@ -102,6 +186,16 @@ def accounts():
         accounts = accounts
     )
 
+@app.route("/accounts.json", methods = ("GET",))
+def accounts_json():
+    start_record = int(flask.request.args.get("start_record", 0))
+    number_records = int(flask.request.args.get("number_records", 6))
+    accounts = _get_accounts(start = start_record, count = number_records)
+    return flask.Response(
+        mongo.dumps(accounts),
+        mimetype = "application/json"
+    )
+
 @app.route("/accounts/new", methods = ("GET",))
 def new_account():
     return flask.render_template(
@@ -111,7 +205,78 @@ def new_account():
 
 @app.route("/accounts", methods = ("POST",))
 def create_account():
-    return "DUMMY"
+    return update_account()
+
+@app.route("/accounts/<username>", methods = ("GET",))
+def show_account(username):
+    account = _get_account(username)
+    return flask.render_template(
+        "account_show.html.tpl",
+        link = "accounts",
+        sub_link = "info",
+        account = account
+    )
+
+@app.route("/accounts/<username>/edit", methods = ("GET",))
+def edit_account(username):
+    account = _get_account(username)
+    return flask.render_template(
+        "account_edit.html.tpl",
+        link = "accounts",
+        sub_link = "edit",
+        account = account
+    )
+
+@app.route("/accounts/<username>/edit", methods = ("POST",))
+def update_account(username = None):
+    # retrieves all the parameters from the request to be
+    # handled then validated the required ones
+    _username = flask.request.form.get("username", None)
+    password = flask.request.form.get("password", None)
+    email = flask.request.form.get("email", None)
+    email_confirm = flask.request.form.get("email_confirm", None)
+
+    # sets the validation method in the various attributes
+    # coming from the client form
+    not_null(_username) and not_empty(_username)
+    not_null(password) and not_empty(password)
+    not_null(email) and not_empty(email)
+    not_null(email_confirm) and not_empty(email_confirm)
+    equals(email, email_confirm)
+
+    # "encrypts" the password into the target format defined
+    # by the salt and the sha1 hash function
+    password_sha1 = hashlib.sha1(password + PASSWORD_SALT).hexdigest()
+
+    # creates the structure to be used as the server description
+    # using the values provided as parameters
+    account = username and _get_account(username) or {}
+    enabled = account.get("enabled", True)
+    login_count = account.get("login_count", 0)
+    last_login = account.get("last_login", None)
+    account["enabled"] = enabled
+    account["username"] = _username
+    account["password"] = password_sha1
+    account["email"] = email
+    account["login_count"] = login_count
+    account["last_login"] = last_login
+
+    # saves the account instance into the data source, ensures
+    # that the account is ready for login
+    _save_account(account)
+
+    # redirects the user to the show page of the account that
+    # was just created
+    return flask.redirect(
+        flask.url_for("show_account", username = _username)
+    )
+
+@app.route("/accounts/<username>/delete", methods = ("GET", "POST"))
+def delete_account(username):
+    #_delete_account(name)
+    return flask.redirect(
+        flask.url_for("accounts")
+    )
 
 @app.route("/servers", methods = ("GET",))
 def servers():
@@ -211,7 +376,7 @@ def log_server(name):
 @app.route("/servers/<name>/log.json", methods = ("GET",))
 def log_server_json(name):
     start_record = int(flask.request.args.get("start_record", 0))
-    number_records = int(flask.request.args.get("number_records", 5))
+    number_records = int(flask.request.args.get("number_records", 6))
     log = _get_log(name, start = start_record, count = number_records)
     return flask.Response(
         mongo.dumps(log),
@@ -226,26 +391,42 @@ def not_empty(value):
     if len(value): return True
     raise RuntimeError("value is empty")
 
-def _get_accounts():
+def equals(first_value, second_value):
+    if first_value == second_value: return True
+    raise RuntimeError("value is not equals")
+
+def _get_accounts(start = 0, count = 6):
     db = mongo.get_db()
-    accounts = db.account.find({"enabled" : True})
+    accounts = db.accounts.find(
+        {"enabled" : True},
+        skip = start,
+        limit = count,
+        sort = [("last_login", mongo.pymongo.DESCENDING)]
+    )
+    accounts = [_build_account(account) for account in accounts]
     return accounts
 
-def _get_account(id):
+def _get_account(username, build = True):
     db = mongo.get_db()
-    account = db.accounts.find_one({"id" : id})
-    #_build_account(account)
+    account = db.accounts.find_one({"username" : username})
+    build and _build_account(account)
+    return account
+
+def _save_account(account):
+    db = mongo.get_db()
+    db.accounts.save(account)
     return account
 
 def _get_servers():
     db = mongo.get_db()
     servers = db.servers.find({"enabled" : True})
+    server = [_build_server(server) for server in servers]
     return servers
 
-def _get_server(name):
+def _get_server(name, build = True):
     db = mongo.get_db()
     server = db.servers.find_one({"name" : name})
-    _build_server(server)
+    build and _build_server(server)
     return server
 
 def _save_server(server):
@@ -260,7 +441,7 @@ def _delete_server(name):
     db.servers.save(server)
     return server
 
-def _get_log(name, start = 0, count = 5):
+def _get_log(name, start = 0, count = 6):
     db = mongo.get_db()
     log = db.log.find(
         {"name" : name},
@@ -268,13 +449,21 @@ def _get_log(name, start = 0, count = 5):
         limit = count,
         sort = [("timestamp", mongo.pymongo.DESCENDING)]
     )
-    log_b = []
-    for _log in log: _build_log(_log); log_b.append(_log)
-    return log_b
+    log = [_build_log(_log) for _log in log]
+    return log
+
+def _build_account(account):
+    last_login = account.get("last_login", None)
+    last_login_date = datetime.datetime.utcfromtimestamp(last_login)
+    last_login_string = last_login_date.strftime("%d/%m/%Y %H:%M:%S")
+    account["last_login_l"] = last_login_string
+    del account["password"]
+    return account
 
 def _build_server(server):
     up = server.get("up", False)
     server["up_l"] = up and "up" or "down"
+    return server
 
 def _build_log(log):
     up = log.get("up", False)
@@ -283,6 +472,7 @@ def _build_log(log):
     date_string = date.strftime("%d/%m/%Y %H:%M:%S")
     log["up_l"] = up and "up" or "down"
     log["date_l"] = date_string
+    return log
 
 def _send_email(subject = "", sender = "", receivers = [], plain = None, rich = None, context = {}):
     plain_data = plain and _render(plain, **context)
@@ -426,9 +616,10 @@ def _render(template_name, **context):
 def _ensure_db():
     db = mongo.get_db()
 
-    db.log.ensure_index("name")
-    db.log.ensure_index("up")
-    db.log.ensure_index("timestamp")
+    db.log.ensure_index("username")
+    db.log.ensure_index("email")
+    db.log.ensure_index("twitter")
+    db.log.ensure_index("facebook")
 
     db.servers.ensure_index("enabled")
     db.servers.ensure_index("name")
@@ -436,6 +627,10 @@ def _ensure_db():
     db.servers.ensure_index("up")
     db.servers.ensure_index("latency")
     db.servers.ensure_index("timestamp")
+
+    db.log.ensure_index("name")
+    db.log.ensure_index("up")
+    db.log.ensure_index("timestamp")
 
 def _get_tasks():
     tasks = []
