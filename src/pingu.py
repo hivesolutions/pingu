@@ -165,7 +165,7 @@ def login():
     # retrieves the structure containing the information
     # on the currently available users and unpacks the
     # various attributes from it (defaulting to base values)
-    account = _get_account(username, build = False) or {}
+    account = _get_account(username, build = False, raise_e = False) or {}
     _username = account.get("username", None)
     _password = account.get("password", None)
 
