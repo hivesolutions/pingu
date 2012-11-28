@@ -323,6 +323,10 @@ def ensure_user(username):
     if not _username == None and username == _username: return
     raise RuntimeError("Permission denied")
 
+def ensure_session(object):
+    if object.get("sesion_id", None) == flask.session.get("session_id", None): return
+    raise RuntimeError("Permission denied")
+
 def ensure(token = None, json = False):
 
     def decorator(function):
