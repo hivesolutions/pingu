@@ -122,7 +122,7 @@ quorum.mongo.database = MONGO_DATABASE
 
 @app.route("/heroku/resources", methods = ("POST",))
 def provision():
-    json.dumps({
+    return json.dumps({
         "id" : str(uuid.uuid4())
     })
 
@@ -132,6 +132,22 @@ def plan_change(id):
 
 @app.route("/heroku/resources/<id>", methods = ("PUT",))
 def deprovision(id):
+    return "ok"
+
+@app.route("/heroku/resources/<id>", methods = ("GET",))
+def sso_resources(id):
+    return flask.redirect(
+        flask.url_for("sso")
+    )
+
+@app.route("/sso/login", methods = ("POST",))
+def sso_login(id):
+    return flask.redirect(
+        flask.url_for("sso_redirect")
+    )
+
+@app.route("/sso/redirect", methods = ("GET",))
+def sso_redirect():
     return "ok"
 
 #@app.route("/heroku/resources/<id>", methods = ("PUT",))
