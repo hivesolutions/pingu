@@ -11,28 +11,28 @@
         </div>
         <div class="input">
             <input class="text-field focus" name="username" autocomplete="off" value="{{ account.username }}"
-            	   data-error="{{ errors.username }}" />
+                   data-error="{{ errors.username }}" />
         </div>
         <div class="label label-left">
             <label>Password</label>
         </div>
         <div class="input">
             <input class="text-field" name="password" type="password" autocomplete="off"
-            	   value="{{ account.password }}" data-error="{{ errors.password }}" />
+                   value="{{ account.password }}" data-error="{{ errors.password }}" />
         </div>
         <div class="label label-left">
             <label>E-mail</label>
         </div>
         <div class="input">
             <input class="text-field" name="email" autocomplete="off" value="{{ account.email }}"
-            	   data-error="{{ errors.email }}" />
+                   data-error="{{ errors.email }}" />
         </div>
         <div class="label label-left">
             <label>Confirm E-mail</label>
         </div>
         <div class="input">
             <input class="text-field" name="email_confirm" autocomplete="off" value="{{ account.email_confirm }}"
-            	   data-error="{{ errors.email_confirm }}" />
+                   data-error="{{ errors.email_confirm }}" />
         </div>
         <div class="quote">
             By clicking Create Account, you agree to our Service Agreement and that you have

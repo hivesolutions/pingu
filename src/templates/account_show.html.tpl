@@ -8,19 +8,31 @@
         <tbody>
             <tr>
                 <td class="right label" width="50%">email</td>
-                <td class="left value" width="50%">{{ account.email }}</td>
+                <td class="left value" width="50%">{{ account.email | default('-') }}</td>
             </tr>
             <tr>
                 <td class="right label" width="50%">phone</td>
-                <td class="left value" width="50%">{{ account.phone }}</td>
+                <td class="left value" width="50%">{{ account.phone | default('-') }}</td>
             </tr>
             <tr>
                 <td class="right label" width="50%">twitter</td>
-                <td class="left value" width="50%">{{ account.twitter }}</td>
+                <td class="left value" width="50%">
+                    {% if account.facebook %}
+                        twitter.com/<a href="http://twitter.com/{{ account.twitter }}">{{ account.twitter }}</a>
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
             </tr>
             <tr>
                 <td class="right label" width="50%">facebook</td>
-                <td class="left value" width="50%">{{ account.facebook }}</td>
+                <td class="left value" width="50%">
+                    {% if account.facebook %}
+                        facebook.com/<a href="http://facebook.com/{{ account.facebook }}">{{ account.facebook }}</a>
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
             </tr>
         </tbody>
     </table>
