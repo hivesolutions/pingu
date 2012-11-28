@@ -262,7 +262,7 @@ def new_account():
 def create_account():
     # runs the validation process on the various arguments
     # provided to the account
-    errors, account = validate("account_new")
+    errors, account = quorum.validate("account_new")
     if errors:
         return flask.render_template(
             "account_new.html.tpl",
@@ -333,7 +333,7 @@ def edit_account(username):
 def update_account(username):
     # runs the validation process on the various arguments
     # provided to the account
-    errors, account = validate("account")
+    errors, account = quorum.validate("account")
     if errors:
         return flask.render_template(
             "server_edit.html.tpl",
@@ -405,7 +405,7 @@ def new_server():
 def create_server():
     # runs the validation process on the various arguments
     # provided to the server
-    errors, server = validate("server")
+    errors, server = quorum.validate("server")
     if errors:
         return flask.render_template(
             "server_new.html.tpl",
@@ -475,7 +475,7 @@ def edit_server(name):
 def update_server(name):
     # runs the validation process on the various arguments
     # provided to the server
-    errors, server = validate("server")
+    errors, server = quorum.validate("server")
     if errors:
         return flask.render_template(
             "server_edit.html.tpl",
@@ -620,29 +620,6 @@ def _get_log(name, start = 0, count = 6):
     )
     log = [_build_log(_log) for _log in log]
     return log
-
-def validate(name):
-    map = globals()
-    validate_method = map.get("_validate_" + name, None)
-    methods = validate_method and validate_method() or []
-    errors = []
-
-    object = {}
-    for name, value in flask.request.form.items(): object[name] = value
-    for name, value in flask.request.args.items(): object[name] = value
-
-    for method in methods:
-        try: method()
-        except quorum.ValidationError, error:
-            errors.append((error.name, error.message))
-
-    errors_map = {}
-    for name, message in errors:
-        if not name in errors_map: errors_map[name] = []
-        _errors = errors_map[name]
-        _errors.append(message)
-
-    return errors_map, object
 
 def _validate_account_new():
     return [
