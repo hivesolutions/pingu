@@ -116,11 +116,34 @@ mongo_url = os.getenv("MONGOHQ_URL", MONGO_URL)
 quorum.mongo.url = mongo_url
 quorum.mongo.database = MONGO_DATABASE
 
+# TENHO DE FAZER UM ENSURE COMO O OUTRO (decorator)
+# mas com usernames e password (ver o do json)
+
+def check_auth():
+    authorization = flask.request.authorization
+    if not authorization: return False
+    if not authorization.username == "pingu": return False
+    if not authorization.password == "0jlw8sq7ows5Sd3K": return False
+    return True
+
 @app.route("/heroku/resources", methods = ("POST",))
 def provision():
-    return json.dumps({
-        "id" : str(uuid.uuid4())
-    })
+    if not check_auth(): return flask.Response(
+        json.dumps({
+            "exception" : {
+                "message" : "Not enough permissions for operation"
+            }
+        }),
+        status = 401,
+        mimetype = "application/json"
+    )
+
+    return flask.Response(
+        json.dumps({
+            "id" : str(uuid.uuid4())
+        }),
+        mimetype = "application/json"
+    )
 
 @app.route("/heroku/resources/<id>", methods = ("PUT",))
 def plan_change(id):
