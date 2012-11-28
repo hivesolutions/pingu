@@ -7,25 +7,25 @@
             <label>Username</label>
         </div>
         <div class="input">
-            <input name="username" placeholder="" />
+            <input name="username" />
         </div>
         <div class="label label-left">
             <label>Password</label>
         </div>
         <div class="input">
-            <input name="password" type="password" placeholder="" />
+            <input name="password" type="password" />
         </div>
         <div class="label label-left">
             <label>E-mail</label>
         </div>
         <div class="input">
-            <input name="email" placeholder="" />
+            <input name="email" />
         </div>
         <div class="label label-left">
             <label>Confirm E-mail</label>
         </div>
         <div class="input">
-            <input name="confirm_email" placeholder="" />
+            <input name="email_confirm" />
         </div>
         <div class="quote">
             By clicking Create Account, you agree to our Service Agreement and that you have
