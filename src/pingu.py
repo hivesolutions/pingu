@@ -39,6 +39,7 @@ __license__ = "GNU General Public License (GPL), Version 3"
 
 import os
 import uuid
+import json
 import time
 import flask
 import atexit
@@ -118,6 +119,54 @@ mongo_url = os.getenv("MONGOHQ_URL", MONGO_URL)
 quorum.mongo.url = mongo_url
 quorum.mongo.database = MONGO_DATABASE
 
+
+@app.route("/heroku/resources", methods = ("POST",))
+def provision():
+    json.dumps({
+        "id" : str(uuid.uuid4())
+    })
+
+@app.route("/heroku/resources/<id>", methods = ("PUT",))
+def plan_change(id):
+    return "ok"
+
+@app.route("/heroku/resources/<id>", methods = ("PUT",))
+def deprovision(id):
+    return "ok"
+
+#@app.route("/heroku/resources/<id>", methods = ("PUT",))
+#def deprovision(id):
+#    return "ok"
+#
+#//GET SSO
+#app.get('/heroku/resources/:id', sso_auth, function(request, response) {
+#  response.redirect("/")
+#})
+#
+#//POST SSO
+#app.post('/sso/login', express.bodyParser(), sso_auth, function(request, response){
+#  response.redirect("/")
+#})
+
+#===============================================================================
+# app.put('/heroku/resources/:id', express.bodyParser(), basic_auth, function(request, response) {
+#  console.log(request.body)
+#  console.log(request.params)
+#  var resource =  get_resource(request.params.id)
+#  if(!resource){
+#    response.send("Not found", 404);
+#    return;
+#  }
+#  resource.plan = request.body.plan
+#  response.send("ok")
+# })
+#===============================================================================
+
+
+
+
+
+
 @app.route("/", methods = ("GET",))
 @app.route("/index", methods = ("GET",))
 @quorum.extras.ensure("index")
@@ -129,12 +178,14 @@ def index():
 
 @app.route("/pending", methods = ("GET",))
 def pending():
+    #@TODO: must implement this
     return flask.render_template(
         "pending.html.tpl"
     )
 
 @app.route("/resend", methods = ("GET",))
 def resend():
+    #@TODO: must implement this
     return flask.render_template(
         "pending.html.tpl"
     )
