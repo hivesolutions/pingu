@@ -119,25 +119,12 @@ quorum.mongo.database = MONGO_DATABASE
 # TENHO DE FAZER UM ENSURE COMO O OUTRO (decorator)
 # mas com usernames e password (ver o do json)
 
-def check_auth():
-    authorization = flask.request.authorization
-    if not authorization: return False
-    if not authorization.username == "pingu": return False
-    if not authorization.password == "0jlw8sq7ows5Sd3K": return False
-    return True
+heroku_username = "pingu"
+heroku_password = "0jlw8sq7ows5Sd3K"
 
 @app.route("/heroku/resources", methods = ("POST",))
+@quorum.extras.ensure_auth(heroku_username, heroku_password, json = True)
 def provision():
-    if not check_auth(): return flask.Response(
-        json.dumps({
-            "exception" : {
-                "message" : "Not enough permissions for operation"
-            }
-        }),
-        status = 401,
-        mimetype = "application/json"
-    )
-
     return flask.Response(
         json.dumps({
             "id" : str(uuid.uuid4())
@@ -145,12 +132,13 @@ def provision():
         mimetype = "application/json"
     )
 
-@app.route("/heroku/resources/<id>", methods = ("PUT",))
-def plan_change(id):
+@app.route("/heroku/resources/<id>", methods = ("DELETE",))
+@quorum.extras.ensure_auth(heroku_username, heroku_password, json = True)
+def deprovision(id):
     return "ok"
 
 @app.route("/heroku/resources/<id>", methods = ("PUT",))
-def deprovision(id):
+def plan_change(id):
     return "ok"
 
 @app.route("/heroku/resources/<id>", methods = ("GET",))
@@ -1057,5 +1045,8 @@ _ensure_db()
 # the system internal structures
 _schedule_tasks()
 
-if __name__ == "__main__": run()
-else: load()
+from waitress import serve
+serve(app, host='0.0.0.0', port=5000)
+
+#if __name__ == "__main__": run()
+#else: load()
