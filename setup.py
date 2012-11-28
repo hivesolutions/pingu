@@ -128,6 +128,9 @@ setuptools.setup(
     keywords = "pingu server control system",
     url = "http://pingu.com",
     zip_safe = False,
+    packages = [
+        "quorum"
+    ],
     py_modules = [
         "pingu"
     ],
