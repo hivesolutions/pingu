@@ -1,7 +1,10 @@
-{% extends "partials/layout.html.tpl" %}
+{% extends "partials/layout_simple.html.tpl" %}
 {% block title %}Account{% endblock %}
 {% block name %}New Account{% endblock %}
 {% block content %}
+	<div class="quote">
+		We'll only need a couple of your details to create your Pingu account.
+	</div>
     <form action="{{ url_for('create_account') }}" method="post" class="form">
         <div class="label label-left">
             <label>Username</label>
