@@ -38,6 +38,7 @@ __license__ = "GNU General Public License (GPL), Version 3"
 """ The license for the module """
 
 import os
+import uuid
 import time
 import flask
 import mongo
@@ -52,6 +53,7 @@ import email.mime.multipart
 import email.mime.text
 
 import config
+import extras
 import execution
 
 SECRET_KEY = "kyjbqt4828ky8fdl7ifwgawt60erk8wg"
@@ -74,6 +76,41 @@ MONGO_DATABASE = "pingu"
 """ The default database to be used for the connection with
 the mongo database """
 
+USER_TYPE = 1
+""" The identifier (integer) to be used to represent an user
+of type (normal) user """
+
+ADMIN_TYPE = 2
+""" The identifier (integer) to be used to represent an user
+of type admin (administrator) """
+
+USER_ACL = {
+    USER_TYPE : (
+        "index",
+        "about",
+        "servers.list",
+        "servers.new",
+        "servers.show",
+        "servers.edit",
+        "servers.delete",
+        "log.list",
+        "accounts.show",
+        "accounts.edit"
+    ),
+    ADMIN_TYPE : (
+        "*",
+    )
+}
+""" The map associating the user type with the corresponding
+list (sequence) of access control tokens """
+
+HEADERS = {
+    "User-Agent" : "pingu/0.1.0",
+    "X-Powered-By" : "hive-server/0.1.0"
+}
+""" The map of headers to be used as base for the pingu
+http client to use """
+
 app = flask.Flask(__name__)
 #app.config["PERMANENT_SESSION_LIFETIME"] = datetime.timedelta(365)
 #app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
@@ -85,10 +122,23 @@ mongo.database = MONGO_DATABASE
 
 @app.route("/", methods = ("GET",))
 @app.route("/index", methods = ("GET",))
+@extras.ensure("index")
 def index():
     return flask.render_template(
         "index.html.tpl",
         link = "home"
+    )
+
+@app.route("/pending", methods = ("GET",))
+def pending():
+    return flask.render_template(
+        "pending.html.tpl"
+    )
+
+@app.route("/resend", methods = ("GET",))
+def resend():
+    return flask.render_template(
+        "pending.html.tpl"
     )
 
 @app.route("/signin", methods = ("GET",))
@@ -143,14 +193,16 @@ def login():
     account["last_login"] = time.time()
     _save_account(account)
 
-    # retrieves the tokens from the user to set
+    # retrieves the tokens and instance id from the user to set
     # them in the current session
     tokens = account.get("tokens", ())
+    instance_id = account.get("instance_id", None)
 
     # updates the current user (name) in session with
     # the username that has just be accepted in the login
     flask.session["username"] = username
     flask.session["tokens"] = tokens
+    flask.session["instance_id"] = instance_id
 
     # makes the current session permanent this will allow
     # the session to persist along multiple browser initialization
@@ -171,6 +223,7 @@ def logout():
     )
 
 @app.route("/about", methods = ("GET",))
+@extras.ensure("about")
 def about():
     return flask.render_template(
         "about.html.tpl",
@@ -178,7 +231,8 @@ def about():
     )
 
 @app.route("/accounts", methods = ("GET",))
-def accounts():
+@extras.ensure("accounts.list")
+def list_accounts():
     accounts = _get_accounts()
     return flask.render_template(
         "account_list.html.tpl",
@@ -187,6 +241,7 @@ def accounts():
     )
 
 @app.route("/accounts.json", methods = ("GET",))
+@extras.ensure("accounts.list", json = True)
 def accounts_json():
     start_record = int(flask.request.args.get("start_record", 0))
     number_records = int(flask.request.args.get("number_records", 6))
@@ -200,49 +255,29 @@ def accounts_json():
 def new_account():
     return flask.render_template(
         "account_new.html.tpl",
-        link = "new_account"
+        link = "new_account",
+        account = {},
+        errors = {}
     )
 
 @app.route("/accounts", methods = ("POST",))
 def create_account():
-    return update_account()
+    # runs the validation process on the various arguments
+    # provided to the account
+    errors, account = validate("account_new")
+    if errors:
+        return flask.render_template(
+            "account_new.html.tpl",
+            link = "new_account",
+            account = account,
+            errors = errors
+        )
 
-@app.route("/accounts/<username>", methods = ("GET",))
-def show_account(username):
-    account = _get_account(username)
-    return flask.render_template(
-        "account_show.html.tpl",
-        link = "accounts",
-        sub_link = "info",
-        account = account
-    )
-
-@app.route("/accounts/<username>/edit", methods = ("GET",))
-def edit_account(username):
-    account = _get_account(username)
-    return flask.render_template(
-        "account_edit.html.tpl",
-        link = "accounts",
-        sub_link = "edit",
-        account = account
-    )
-
-@app.route("/accounts/<username>/edit", methods = ("POST",))
-def update_account(username = None):
     # retrieves all the parameters from the request to be
     # handled then validated the required ones
     _username = flask.request.form.get("username", None)
     password = flask.request.form.get("password", None)
     email = flask.request.form.get("email", None)
-    email_confirm = flask.request.form.get("email_confirm", None)
-
-    # sets the validation method in the various attributes
-    # coming from the client form
-    not_null(_username) and not_empty(_username)
-    not_null(password) and not_empty(password)
-    not_null(email) and not_empty(email)
-    not_null(email_confirm) and not_empty(email_confirm)
-    equals(email, email_confirm)
 
     # "encrypts" the password into the target format defined
     # by the salt and the sha1 hash function
@@ -250,16 +285,17 @@ def update_account(username = None):
 
     # creates the structure to be used as the server description
     # using the values provided as parameters
-    account = username and _get_account(username) or {}
-    enabled = account.get("enabled", True)
-    login_count = account.get("login_count", 0)
-    last_login = account.get("last_login", None)
-    account["enabled"] = enabled
-    account["username"] = _username
-    account["password"] = password_sha1
-    account["email"] = email
-    account["login_count"] = login_count
-    account["last_login"] = last_login
+    account = {
+        "enabled" : False,
+        "instance_id" : str(uuid.uuid4()),
+        "username" : _username,
+        "password" : password_sha1,
+        "email" : email,
+        "login_count" : 0,
+        "last_login" : None,
+        "type" : USER_TYPE,
+        "tokens" : USER_ACL.get(USER_TYPE, ())
+    }
 
     # saves the account instance into the data source, ensures
     # that the account is ready for login
@@ -271,15 +307,84 @@ def update_account(username = None):
         flask.url_for("show_account", username = _username)
     )
 
-@app.route("/accounts/<username>/delete", methods = ("GET", "POST"))
-def delete_account(username):
-    #_delete_account(name)
+@app.route("/accounts/<username>", methods = ("GET",))
+@extras.ensure("accounts.show")
+def show_account(username):
+    account = _get_account(username)
+    return flask.render_template(
+        "account_show.html.tpl",
+        link = "accounts",
+        sub_link = "info",
+        account = account
+    )
+
+@app.route("/accounts/<username>/edit", methods = ("GET",))
+@extras.ensure("accounts.edit")
+def edit_account(username):
+    account = _get_account(username)
+    return flask.render_template(
+        "account_edit.html.tpl",
+        link = "accounts",
+        sub_link = "edit",
+        account = account,
+        errors = {}
+    )
+
+@app.route("/accounts/<username>/edit", methods = ("POST",))
+@extras.ensure("accounts.edit")
+def update_account(username):
+    # runs the validation process on the various arguments
+    # provided to the account
+    errors, account = validate("account")
+    if errors:
+        return flask.render_template(
+            "server_edit.html.tpl",
+            link = "accounts",
+            sub_link = "edit",
+            account = account,
+            errors = errors
+        )
+
+    # retrieves all the parameters from the request to be
+    # handled then validated the required ones
+    password = flask.request.form.get("password", None)
+    phone = flask.request.form.get("phone", None)
+    twitter = flask.request.form.get("twitter", None)
+    facebook = flask.request.form.get("facebook", None)
+
+    # "encrypts" the password into the target format defined
+    # by the salt and the sha1 hash function
+    password_sha1 = password and hashlib.sha1(password + PASSWORD_SALT).hexdigest()
+
+    # populates the structure to be used as the server description
+    # using the values provided as parameters
+    account = _get_account(username, build = False)
+    if password_sha1: account["password"] = password_sha1
+    account["phone"] = phone
+    account["twitter"] = twitter
+    account["facebook"] = facebook
+
+    # saves the account instance into the data source, ensures
+    # that the account is ready for login
+    _save_account(account)
+
+    # redirects the user to the show page of the account that
+    # was just created
     return flask.redirect(
-        flask.url_for("accounts")
+        flask.url_for("show_account", username = username)
+    )
+
+@app.route("/accounts/<username>/delete", methods = ("GET", "POST"))
+@extras.ensure("accounts.delete")
+def delete_account(username):
+    _delete_account(username)
+    return flask.redirect(
+        flask.url_for("list_accounts")
     )
 
 @app.route("/servers", methods = ("GET",))
-def servers():
+@extras.ensure("servers.list")
+def list_servers():
     servers = _get_servers()
     return flask.render_template(
         "server_list.html.tpl",
@@ -288,17 +393,64 @@ def servers():
     )
 
 @app.route("/servers/new", methods = ("GET",))
+@extras.ensure("servers.new")
 def new_server():
     return flask.render_template(
         "server_new.html.tpl",
-        link = "new_server"
+        link = "new_server",
+        server = {},
+        errors = {}
     )
 
 @app.route("/servers", methods = ("POST",))
+@extras.ensure("servers.new")
 def create_server():
+    # runs the validation process on the various arguments
+    # provided to the server
+    errors, server = validate("server")
+    if errors:
+        return flask.render_template(
+            "server_new.html.tpl",
+            link = "new_server",
+            server = server,
+            errors = errors
+        )
+
+    # retrieves all the parameters from the request to be
+    # handled then validated the required ones
+    _name = flask.request.form.get("name", None)
+    url = flask.request.form.get("url", None)
+    description = flask.request.form.get("description", None)
+
+    # creates the structure to be used as the server description
+    # using the values provided as parameters
+    server = {
+        "enabled" : True,
+        "instance_id" : flask.session["instance_id"],
+        "name" : _name,
+        "url" : url,
+        "description" : description
+    }
+
+    # creates a task for the server that has just been created
+    # this tuple is going to be used by the scheduling thread
+    task = (server, 5.0)
+
+    # saves the server instance and schedules the task, this
+    # should ensure coherence in the internal data structures
+    _save_server(server)
+    _schedule_task(task)
+
+    # redirects the user to the show page of the server that
+    # was just created
+    return flask.redirect(
+        flask.url_for("show_server", name = _name)
+    )
+
     return update_server()
 
 @app.route("/servers/<name>", methods = ("GET",))
+@extras.ensure("servers.show")
 def show_server(name):
     server = _get_server(name)
     return flask.render_template(
@@ -309,62 +461,64 @@ def show_server(name):
     )
 
 @app.route("/servers/<name>/edit", methods = ("GET",))
+@extras.ensure("servers.edit")
 def edit_server(name):
     server = _get_server(name)
     return flask.render_template(
         "server_edit.html.tpl",
         link = "servers",
         sub_link = "edit",
-        server = server
+        server = server,
+        errors = {}
     )
 
 @app.route("/servers/<name>/edit", methods = ("POST",))
-def update_server(name = None):
+@extras.ensure("servers.edit")
+def update_server(name):
+    # runs the validation process on the various arguments
+    # provided to the server
+    errors, server = validate("server")
+    if errors:
+        return flask.render_template(
+            "server_edit.html.tpl",
+            link = "servers",
+            sub_link = "edit",
+            server = server,
+            errors = errors
+        )
+
     # retrieves all the parameters from the request to be
     # handled then validated the required ones
-    _name = flask.request.form.get("name", None)
     url = flask.request.form.get("url", None)
     description = flask.request.form.get("description", None)
 
-    # sets the validation method in the various attributes
-    # coming from the client form
-    not_null(_name) and not_empty(_name)
-    not_null(url) and not_empty(url)
-    not_null(description) and not_empty(description)
-
-    # creates the structure to be used as the server description
+    # populates the structure to be used as the server description
     # using the values provided as parameters
-    server = name and _get_server(name) or {}
-    enabled = server.get("enabled", True)
-    server["enabled"] = enabled
-    server["name"] = _name
+    server = _get_server(name)
     server["url"] = url
     server["description"] = description
 
-    # creates a task for the server that has just been created
-    # this tuple is going to be used by the scheduling thread
-    task = (_name, url, "GET", 5.0)
-
-    # saves the server instance and schedules the task, this
-    # should ensure coherence in the internal data structures
+    # saves the server instance, this should ensure coherence
+    # in the internal data structures
     _save_server(server)
-    not name and _schedule_task(task)
 
     # redirects the user to the show page of the server that
     # was just created
     return flask.redirect(
-        flask.url_for("show_server", name = _name)
+        flask.url_for("show_server", name = name)
     )
 
 @app.route("/servers/<name>/delete", methods = ("GET", "POST"))
+@extras.ensure("servers.delete")
 def delete_server(name):
     _delete_server(name)
     return flask.redirect(
-        flask.url_for("servers")
+        flask.url_for("list_servers")
     )
 
 @app.route("/servers/<name>/log", methods = ("GET",))
-def log_server(name):
+@extras.ensure("log.list")
+def list_log(name):
     server = _get_server(name)
     return flask.render_template(
         "server_log.html.tpl",
@@ -374,7 +528,8 @@ def log_server(name):
     )
 
 @app.route("/servers/<name>/log.json", methods = ("GET",))
-def log_server_json(name):
+@extras.ensure("log.list", json = True)
+def list_log_json(name):
     start_record = int(flask.request.args.get("start_record", 0))
     number_records = int(flask.request.args.get("number_records", 6))
     log = _get_log(name, start = start_record, count = number_records)
@@ -383,17 +538,61 @@ def log_server_json(name):
         mimetype = "application/json"
     )
 
-def not_null(value):
-    if not value == None: return True
-    raise RuntimeError("value is not set")
+class ValidationError(RuntimeError):
 
-def not_empty(value):
-    if len(value): return True
-    raise RuntimeError("value is empty")
+    name = None
+    """ The name of the attribute that failed
+    the validation """
 
-def equals(first_value, second_value):
-    if first_value == second_value: return True
-    raise RuntimeError("value is not equals")
+    def __init__(self, name, message):
+        RuntimeError.__init__(self, message)
+        self.name = name
+
+def not_null(name):
+    def validation():
+        value = flask.request.args.get(
+            name, flask.request.form.get(name, None)
+        )
+        if not value == None: return True
+        raise ValidationError(name, "value is not set")
+    return validation
+
+def not_empty(name):
+    def validation():
+        value = flask.request.args.get(
+            name, flask.request.form.get(name, None)
+        )
+        if len(value): return True
+        raise ValidationError(name, "value is empty")
+    return validation
+
+def equals(first_name, second_name):
+    def validation():
+        first_value = flask.request.args.get(
+            first_name, flask.request.form.get(first_name, None)
+        )
+        second_value = flask.request.args.get(
+            second_name, flask.request.form.get(second_name, None)
+        )
+        if first_value == second_value: return True
+        raise ValidationError(first_name, "value is not equals")
+    return validation
+
+def not_duplicate(name, collection):
+    def validation():
+        _id = flask.request.args.get(
+            "_id", flask.request.form.get("_id", None)
+        )
+        value = flask.request.args.get(
+            name, flask.request.form.get(name, None)
+        )
+        db = mongo.get_db()
+        _collection = db[collection]
+        item = _collection.find_one({name : value})
+        if not item: return True
+        if str(item["_id"]) == _id: return True
+        raise ValidationError(name, "value is duplicate")
+    return validation
 
 def _get_accounts(start = 0, count = 6):
     db = mongo.get_db()
@@ -406,9 +605,10 @@ def _get_accounts(start = 0, count = 6):
     accounts = [_build_account(account) for account in accounts]
     return accounts
 
-def _get_account(username, build = True):
+def _get_account(username, build = True, raise_e = True):
     db = mongo.get_db()
     account = db.accounts.find_one({"username" : username})
+    if not account and raise_e: raise RuntimeError("Account not found")
     build and _build_account(account)
     return account
 
@@ -417,15 +617,37 @@ def _save_account(account):
     db.accounts.save(account)
     return account
 
+def _delete_account(username):
+    db = mongo.get_db()
+    account = db.accounts.find_one({"username" : username})
+    account["enabled"] = False
+    db.accounts.save(account)
+    return account
+
 def _get_servers():
     db = mongo.get_db()
-    servers = db.servers.find({"enabled" : True})
-    server = [_build_server(server) for server in servers]
+    servers = db.servers.find({
+        "enabled" : True,
+        "instance_id" : flask.session["instance_id"]
+    })
+    servers = [_build_server(server) for server in servers]
     return servers
 
-def _get_server(name, build = True):
+def _get_all_servers():
     db = mongo.get_db()
-    server = db.servers.find_one({"name" : name})
+    servers = db.servers.find({
+        "enabled" : True
+    })
+    servers = [_build_server(server) for server in servers]
+    return servers
+
+def _get_server(name, build = True, raise_e = True):
+    db = mongo.get_db()
+    server = db.servers.find_one({
+        "instance_id" : flask.session["instance_id"],
+        "name" : name
+    })
+    if not server and raise_e: raise RuntimeError("Server not found")
     build and _build_server(server)
     return server
 
@@ -444,7 +666,10 @@ def _delete_server(name):
 def _get_log(name, start = 0, count = 6):
     db = mongo.get_db()
     log = db.log.find(
-        {"name" : name},
+        {
+            "instance_id" : flask.session["instance_id"],
+            "name" : name
+        },
         skip = start,
         limit = count,
         sort = [("timestamp", mongo.pymongo.DESCENDING)]
@@ -452,10 +677,70 @@ def _get_log(name, start = 0, count = 6):
     log = [_build_log(_log) for _log in log]
     return log
 
+def validate(name):
+    map = globals()
+    validate_method = map.get("_validate_" + name, None)
+    methods = validate_method and validate_method() or []
+    errors = []
+
+    object = {}
+    for name, value in flask.request.form.items(): object[name] = value
+    for name, value in flask.request.args.items(): object[name] = value
+
+    for method in methods:
+        try: method()
+        except ValidationError, error:
+            errors.append((error.name, error.message))
+
+    errors_map = {}
+    for name, message in errors:
+        if not name in errors_map: errors_map[name] = []
+        _errors = errors_map[name]
+        _errors.append(message)
+
+    return errors_map, object
+
+def _validate_account_new():
+    return [
+        not_null("username"),
+        not_empty("username"),
+        not_duplicate("username", "accounts"),
+
+        not_null("email"),
+        not_empty("email"),
+        not_duplicate("email", "accounts"),
+
+        not_null("password"),
+        not_empty("password"),
+
+        not_null("email_confirm"),
+        not_empty("email_confirm"),
+
+        equals("email_confirm", "email")
+    ] + _validate_account()
+
+def _validate_account():
+    return []
+
+def _validate_server():
+    return [
+        not_null("name"),
+        not_empty("name"),
+        not_duplicate("name", "servers"),
+
+        not_null("url"),
+        not_empty("url"),
+
+        not_null("description"),
+        not_empty("description")
+    ]
+
 def _build_account(account):
+    enabled = account.get("enabled", False)
     last_login = account.get("last_login", None)
-    last_login_date = datetime.datetime.utcfromtimestamp(last_login)
-    last_login_string = last_login_date.strftime("%d/%m/%Y %H:%M:%S")
+    last_login_date = last_login and datetime.datetime.utcfromtimestamp(last_login)
+    last_login_string = last_login_date and last_login_date.strftime("%d/%m/%Y %H:%M:%S")
+    account["enabled_l"] = enabled and "enabled" or "disabled"
     account["last_login_l"] = last_login_string
     del account["password"]
     return account
@@ -501,12 +786,22 @@ def _send_email(subject = "", sender = "", receivers = [], plain = None, rich = 
     finally:
         server.quit()
 
-def _ping(name, url = None, method = "GET", timeout = 1.0):
-    # creates the map that hold the various headers
-    # to be used in the http connection
-    headers = {
-        "User-Agent" : "pingu/0.1.0"
-    }
+def _ping(server, timeout = 1.0):
+    # retrieves the name of the server that is goin to be
+    # targeted by the "ping" operation
+    name = server["name"]
+
+    # retrieves the server again to ensure that the data
+    # is correct in it
+    db = mongo.get_db()
+    server = db.servers.find_one({"name" : name})
+
+    # retrieves the various attribute values from the server
+    # that are going to be used in the method
+    instance_id = server["instance_id"]
+    name = server["name"]
+    url = server["url"]
+    method = server.get("method", "GET")
 
     # parses the provided url values, retrieving the various
     # components of it to be used in the ping operation
@@ -526,7 +821,7 @@ def _ping(name, url = None, method = "GET", timeout = 1.0):
     start_time = time.time()
     connection = connection_c(hostname, port)
     try:
-        connection.request(method, path, headers = headers)
+        connection.request(method, path, headers = HEADERS)
         response = connection.getresponse()
     except:
         response = None
@@ -552,9 +847,9 @@ def _ping(name, url = None, method = "GET", timeout = 1.0):
 
     # inserts the log document into the database so that
     # the information is registered
-    db = mongo.get_db()
     db.log.insert({
         "enabled" : True,
+        "instance_id" : instance_id,
         "name" : name,
         "url" : url,
         "up" : up,
@@ -564,9 +859,6 @@ def _ping(name, url = None, method = "GET", timeout = 1.0):
         "timestamp" : start_time
     })
 
-    server = db.servers.find_one({"name" : name}) or {
-        "name" : name
-    }
     change_down = not server.get("up", True) == up and not up
     server["up"] = up
     server["latency"] = latency
@@ -587,11 +879,11 @@ def _ping(name, url = None, method = "GET", timeout = 1.0):
     current_time = time.time()
     enabled and execution_thread.insert_work(
         current_time + timeout,
-        _ping_m(name, url, method = method, timeout = timeout)
+        _ping_m(server, timeout = timeout)
     )
 
-def _ping_m(name, url, method = "GET", timeout = 1.0):
-    def _pingu(): _ping(name, url, method = method, timeout = timeout)
+def _ping_m(server, timeout = 1.0):
+    def _pingu(): _ping(server, timeout = timeout)
     return _pingu
 
 def _event_down(server):
@@ -616,12 +908,16 @@ def _render(template_name, **context):
 def _ensure_db():
     db = mongo.get_db()
 
-    db.log.ensure_index("username")
-    db.log.ensure_index("email")
-    db.log.ensure_index("twitter")
-    db.log.ensure_index("facebook")
+    db.accounts.ensure_index("enabled")
+    db.accounts.ensure_index("instance_id")
+    db.accounts.ensure_index("username")
+    db.accounts.ensure_index("email")
+    db.accounts.ensure_index("twitter")
+    db.accounts.ensure_index("facebook")
+    db.accounts.ensure_index("last_login")
 
     db.servers.ensure_index("enabled")
+    db.servers.ensure_index("instance_id")
     db.servers.ensure_index("name")
     db.servers.ensure_index("url")
     db.servers.ensure_index("up")
@@ -632,19 +928,44 @@ def _ensure_db():
     db.log.ensure_index("up")
     db.log.ensure_index("timestamp")
 
+def _setup_db():
+    db = mongo.get_db()
+    root = db.accounts.find_one({
+        "username" : "root",
+        "type" : ADMIN_TYPE
+    })
+    if root: return
+
+    # encodes the provided password into an sha1 hash appending
+    # the salt value to it before the encoding
+    password_sha1 = hashlib.sha1("root" + PASSWORD_SALT).hexdigest()
+
+    # creates the structure to be used as the server description
+    # using the values provided as parameters
+    account = {
+        "enabled" : True,
+        "instance_id" : str(uuid.uuid4()),
+        "username" : "root",
+        "password" : password_sha1,
+        "email" : "root@pinguapp.com",
+        "login_count" : 0,
+        "last_login" : None,
+        "type" : ADMIN_TYPE,
+        "tokens" : USER_ACL.get(ADMIN_TYPE, ())
+    }
+
+    # saves the account instance into the data source, ensures
+    # that the account is ready for login
+    _save_account(account)
+
 def _get_tasks():
     tasks = []
-    servers = _get_servers()
+    servers = _get_all_servers()
 
     for server in servers:
-        name = server.get("name", None)
-        url = server.get("url", None)
-        method = server.get("method", "GET")
         timeout = server.get("timeout", 5.0)
         tasks.append((
-            name,
-            url,
-            method,
+            server,
             timeout
         ))
 
@@ -658,10 +979,10 @@ def _schedule_tasks():
 
 def _schedule_task(task):
     current_time = time.time()
-    name, url, method, timeout = task
+    server, timeout = task
     execution_thread.insert_work(
         current_time + timeout,
-        _ping_m(name, url, method = method, timeout = timeout)
+        _ping_m(server, timeout = timeout)
     )
 
 def load():
@@ -713,6 +1034,7 @@ execution_thread.start()
 
 # ensures the various requirements for the database
 # so that it becomes ready for usage
+_setup_db()
 _ensure_db()
 
 # schedules the various tasks currently registered in
