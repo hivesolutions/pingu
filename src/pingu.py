@@ -41,7 +41,6 @@ import os
 import uuid
 import time
 import flask
-import mongo
 import atexit
 import hashlib
 import httplib
@@ -53,8 +52,7 @@ import email.mime.multipart
 import email.mime.text
 
 import config
-import extras
-import execution
+import quorum
 
 SECRET_KEY = "kyjbqt4828ky8fdl7ifwgawt60erk8wg"
 """ The "secret" key to be at the internal encryption
@@ -117,12 +115,12 @@ app = flask.Flask(__name__)
 #app.config["MAX_CONTENT_LENGTH"] = 1024 ** 3
 
 mongo_url = os.getenv("MONGOHQ_URL", MONGO_URL)
-mongo.url = mongo_url
-mongo.database = MONGO_DATABASE
+quorum.mongo.url = mongo_url
+quorum.mongo.database = MONGO_DATABASE
 
 @app.route("/", methods = ("GET",))
 @app.route("/index", methods = ("GET",))
-@extras.ensure("index")
+@quorum.extras.ensure("index")
 def index():
     return flask.render_template(
         "index.html.tpl",
@@ -223,7 +221,7 @@ def logout():
     )
 
 @app.route("/about", methods = ("GET",))
-@extras.ensure("about")
+@quorum.extras.ensure("about")
 def about():
     return flask.render_template(
         "about.html.tpl",
@@ -231,7 +229,7 @@ def about():
     )
 
 @app.route("/accounts", methods = ("GET",))
-@extras.ensure("accounts.list")
+@quorum.extras.ensure("accounts.list")
 def list_accounts():
     accounts = _get_accounts()
     return flask.render_template(
@@ -241,13 +239,13 @@ def list_accounts():
     )
 
 @app.route("/accounts.json", methods = ("GET",))
-@extras.ensure("accounts.list", json = True)
+@quorum.extras.ensure("accounts.list", json = True)
 def accounts_json():
     start_record = int(flask.request.args.get("start_record", 0))
     number_records = int(flask.request.args.get("number_records", 6))
     accounts = _get_accounts(start = start_record, count = number_records)
     return flask.Response(
-        mongo.dumps(accounts),
+        quorum.mongo.dumps(accounts),
         mimetype = "application/json"
     )
 
@@ -308,7 +306,7 @@ def create_account():
     )
 
 @app.route("/accounts/<username>", methods = ("GET",))
-@extras.ensure("accounts.show")
+@quorum.extras.ensure("accounts.show")
 def show_account(username):
     account = _get_account(username)
     return flask.render_template(
@@ -319,7 +317,7 @@ def show_account(username):
     )
 
 @app.route("/accounts/<username>/edit", methods = ("GET",))
-@extras.ensure("accounts.edit")
+@quorum.extras.ensure("accounts.edit")
 def edit_account(username):
     account = _get_account(username)
     return flask.render_template(
@@ -331,7 +329,7 @@ def edit_account(username):
     )
 
 @app.route("/accounts/<username>/edit", methods = ("POST",))
-@extras.ensure("accounts.edit")
+@quorum.extras.ensure("accounts.edit")
 def update_account(username):
     # runs the validation process on the various arguments
     # provided to the account
@@ -375,7 +373,7 @@ def update_account(username):
     )
 
 @app.route("/accounts/<username>/delete", methods = ("GET", "POST"))
-@extras.ensure("accounts.delete")
+@quorum.extras.ensure("accounts.delete")
 def delete_account(username):
     _delete_account(username)
     return flask.redirect(
@@ -383,7 +381,7 @@ def delete_account(username):
     )
 
 @app.route("/servers", methods = ("GET",))
-@extras.ensure("servers.list")
+@quorum.extras.ensure("servers.list")
 def list_servers():
     servers = _get_servers()
     return flask.render_template(
@@ -393,7 +391,7 @@ def list_servers():
     )
 
 @app.route("/servers/new", methods = ("GET",))
-@extras.ensure("servers.new")
+@quorum.extras.ensure("servers.new")
 def new_server():
     return flask.render_template(
         "server_new.html.tpl",
@@ -403,7 +401,7 @@ def new_server():
     )
 
 @app.route("/servers", methods = ("POST",))
-@extras.ensure("servers.new")
+@quorum.extras.ensure("servers.new")
 def create_server():
     # runs the validation process on the various arguments
     # provided to the server
@@ -450,7 +448,7 @@ def create_server():
     return update_server()
 
 @app.route("/servers/<name>", methods = ("GET",))
-@extras.ensure("servers.show")
+@quorum.extras.ensure("servers.show")
 def show_server(name):
     server = _get_server(name)
     return flask.render_template(
@@ -461,7 +459,7 @@ def show_server(name):
     )
 
 @app.route("/servers/<name>/edit", methods = ("GET",))
-@extras.ensure("servers.edit")
+@quorum.extras.ensure("servers.edit")
 def edit_server(name):
     server = _get_server(name)
     return flask.render_template(
@@ -473,7 +471,7 @@ def edit_server(name):
     )
 
 @app.route("/servers/<name>/edit", methods = ("POST",))
-@extras.ensure("servers.edit")
+@quorum.extras.ensure("servers.edit")
 def update_server(name):
     # runs the validation process on the various arguments
     # provided to the server
@@ -509,7 +507,7 @@ def update_server(name):
     )
 
 @app.route("/servers/<name>/delete", methods = ("GET", "POST"))
-@extras.ensure("servers.delete")
+@quorum.extras.ensure("servers.delete")
 def delete_server(name):
     _delete_server(name)
     return flask.redirect(
@@ -517,7 +515,7 @@ def delete_server(name):
     )
 
 @app.route("/servers/<name>/log", methods = ("GET",))
-@extras.ensure("log.list")
+@quorum.extras.ensure("log.list")
 def list_log(name):
     server = _get_server(name)
     return flask.render_template(
@@ -528,104 +526,49 @@ def list_log(name):
     )
 
 @app.route("/servers/<name>/log.json", methods = ("GET",))
-@extras.ensure("log.list", json = True)
+@quorum.extras.ensure("log.list", json = True)
 def list_log_json(name):
     start_record = int(flask.request.args.get("start_record", 0))
     number_records = int(flask.request.args.get("number_records", 6))
     log = _get_log(name, start = start_record, count = number_records)
     return flask.Response(
-        mongo.dumps(log),
+        quorum.mongo.dumps(log),
         mimetype = "application/json"
     )
 
-class ValidationError(RuntimeError):
-
-    name = None
-    """ The name of the attribute that failed
-    the validation """
-
-    def __init__(self, name, message):
-        RuntimeError.__init__(self, message)
-        self.name = name
-
-def not_null(name):
-    def validation():
-        value = flask.request.args.get(
-            name, flask.request.form.get(name, None)
-        )
-        if not value == None: return True
-        raise ValidationError(name, "value is not set")
-    return validation
-
-def not_empty(name):
-    def validation():
-        value = flask.request.args.get(
-            name, flask.request.form.get(name, None)
-        )
-        if len(value): return True
-        raise ValidationError(name, "value is empty")
-    return validation
-
-def equals(first_name, second_name):
-    def validation():
-        first_value = flask.request.args.get(
-            first_name, flask.request.form.get(first_name, None)
-        )
-        second_value = flask.request.args.get(
-            second_name, flask.request.form.get(second_name, None)
-        )
-        if first_value == second_value: return True
-        raise ValidationError(first_name, "value is not equals")
-    return validation
-
-def not_duplicate(name, collection):
-    def validation():
-        _id = flask.request.args.get(
-            "_id", flask.request.form.get("_id", None)
-        )
-        value = flask.request.args.get(
-            name, flask.request.form.get(name, None)
-        )
-        db = mongo.get_db()
-        _collection = db[collection]
-        item = _collection.find_one({name : value})
-        if not item: return True
-        if str(item["_id"]) == _id: return True
-        raise ValidationError(name, "value is duplicate")
-    return validation
-
 def _get_accounts(start = 0, count = 6):
-    db = mongo.get_db()
+    pymongo = quorum.mongo.pymongo
+    db = quorum.mongo.get_db()
     accounts = db.accounts.find(
         {"enabled" : True},
         skip = start,
         limit = count,
-        sort = [("last_login", mongo.pymongo.DESCENDING)]
+        sort = [("last_login", pymongo.DESCENDING)]
     )
     accounts = [_build_account(account) for account in accounts]
     return accounts
 
 def _get_account(username, build = True, raise_e = True):
-    db = mongo.get_db()
+    db = quorum.mongo.get_db()
     account = db.accounts.find_one({"username" : username})
     if not account and raise_e: raise RuntimeError("Account not found")
     build and _build_account(account)
     return account
 
 def _save_account(account):
-    db = mongo.get_db()
+    db = quorum.mongo.get_db()
     db.accounts.save(account)
     return account
 
 def _delete_account(username):
-    db = mongo.get_db()
+    db = quorum.mongo.get_db()
     account = db.accounts.find_one({"username" : username})
     account["enabled"] = False
     db.accounts.save(account)
     return account
 
 def _get_servers():
-    db = mongo.get_db()
+    db = quorum.mongo.get_db()
     servers = db.servers.find({
         "enabled" : True,
         "instance_id" : flask.session["instance_id"]
@@ -634,7 +577,7 @@ def _get_servers():
     return servers
 
 def _get_all_servers():
-    db = mongo.get_db()
+    db = quorum.mongo.get_db()
     servers = db.servers.find({
         "enabled" : True
     })
@@ -642,7 +585,7 @@ def _get_all_servers():
     return servers
 
 def _get_server(name, build = True, raise_e = True):
-    db = mongo.get_db()
+    db = quorum.mongo.get_db()
     server = db.servers.find_one({
         "instance_id" : flask.session["instance_id"],
         "name" : name
@@ -652,19 +595,20 @@ def _get_server(name, build = True, raise_e = True):
     return server
 
 def _save_server(server):
-    db = mongo.get_db()
+    db = quorum.mongo.get_db()
     db.servers.save(server)
     return server
 
 def _delete_server(name):
-    db = mongo.get_db()
+    db = quorum.mongo.get_db()
     server = db.servers.find_one({"name" : name})
     server["enabled"] = False
     db.servers.save(server)
     return server
 
 def _get_log(name, start = 0, count = 6):
-    db = mongo.get_db()
+    pymongo = quorum.mongo.pymongo
+    db = quorum.mongo.get_db()
     log = db.log.find(
         {
             "instance_id" : flask.session["instance_id"],
@@ -672,7 +616,7 @@ def _get_log(name, start = 0, count = 6):
         },
         skip = start,
         limit = count,
-        sort = [("timestamp", mongo.pymongo.DESCENDING)]
+        sort = [("timestamp", pymongo.DESCENDING)]
     )
     log = [_build_log(_log) for _log in log]
     return log
@@ -689,7 +633,7 @@ def validate(name):
 
     for method in methods:
         try: method()
-        except ValidationError, error:
+        except quorum.ValidationError, error:
             errors.append((error.name, error.message))
 
     errors_map = {}
@@ -702,21 +646,21 @@ def validate(name):
 
 def _validate_account_new():
     return [
-        not_null("username"),
-        not_empty("username"),
-        not_duplicate("username", "accounts"),
+        quorum.not_null("username"),
+        quorum.not_empty("username"),
+        quorum.not_duplicate("username", "accounts"),
 
-        not_null("email"),
-        not_empty("email"),
-        not_duplicate("email", "accounts"),
+        quorum.not_null("email"),
+        quorum.not_empty("email"),
+        quorum.not_duplicate("email", "accounts"),
 
-        not_null("password"),
-        not_empty("password"),
+        quorum.validation.not_null("password"),
+        quorum.validation.not_empty("password"),
 
-        not_null("email_confirm"),
-        not_empty("email_confirm"),
+        quorum.not_null("email_confirm"),
+        quorum.not_empty("email_confirm"),
 
-        equals("email_confirm", "email")
+        quorum.equals("email_confirm", "email")
     ] + _validate_account()
 
 def _validate_account():
@@ -724,15 +668,15 @@ def _validate_account():
 
 def _validate_server():
     return [
-        not_null("name"),
-        not_empty("name"),
-        not_duplicate("name", "servers"),
+        quorum.not_null("name"),
+        quorum.not_empty("name"),
+        quorum.not_duplicate("name", "servers"),
 
-        not_null("url"),
-        not_empty("url"),
+        quorum.not_null("url"),
+        quorum.not_empty("url"),
 
-        not_null("description"),
-        not_empty("description")
+        quorum.not_null("description"),
+        quorum.not_empty("description")
     ]
 
 def _build_account(account):
@@ -793,7 +737,7 @@ def _ping(server, timeout = 1.0):
 
     # retrieves the server again to ensure that the data
     # is correct in it
-    db = mongo.get_db()
+    db = quorum.mongo.get_db()
     server = db.servers.find_one({"name" : name})
 
     # retrieves the various attribute values from the server
@@ -906,7 +850,7 @@ def _render(template_name, **context):
     return flask.templating._render(template, context, app)
 
 def _ensure_db():
-    db = mongo.get_db()
+    db = quorum.mongo.get_db()
 
     db.accounts.ensure_index("enabled")
     db.accounts.ensure_index("instance_id")
@@ -929,7 +873,7 @@ def _ensure_db():
     db.log.ensure_index("timestamp")
 
 def _setup_db():
-    db = mongo.get_db()
+    db = quorum.mongo.get_db()
     root = db.accounts.find_one({
         "username" : "root",
         "type" : ADMIN_TYPE
@@ -1005,8 +949,8 @@ def run():
     smtp_user = os.environ.get("SMTP_USER", None)
     smtp_password = os.environ.get("SMTP_PASSWORD", None)
     port = int(os.environ.get("PORT", 5000))
-    mongo.url = mongo_url
-    mongo.database = MONGO_DATABASE
+    quorum.mongo.url = mongo_url
+    quorum.mongo.database = MONGO_DATABASE
     config.SMTP_HOST = smtp_host
     config.SMTP_USER = smtp_user
     config.SMTP_PASSWORD = smtp_password
@@ -1029,7 +973,7 @@ def stop_thread():
 # creates the thread that it's going to be used to
 # execute the various background tasks and starts
 # it, providing the mechanism for execution
-execution_thread = execution.ExecutionThread()
+execution_thread = quorum.execution.ExecutionThread()
 execution_thread.start()
 
 # ensures the various requirements for the database
