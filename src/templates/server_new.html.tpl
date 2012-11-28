@@ -8,21 +8,21 @@
         </div>
         <div class="input">
             <input class="text-field focus" name="name" placeholder="eg: colony" value="{{ server.name }}"
-            	   data-error="{{ errors.name }}" />
+                   data-error="{{ errors.name }}" />
         </div>
         <div class="label">
             <label>URL</label>
         </div>
         <div class="input">
             <input class="text-field" name="url" placeholder="eg: http://getcolony.com" value="{{ server.url }}"
-            	   data-error="{{ errors.url }}" />
+                   data-error="{{ errors.url }}" />
         </div>
         <div class="label">
             <label>Description</label>
         </div>
         <div class="input">
             <textarea class="text-area" name="description" placeholder="eg: some words about the server"
-            		  data-error="{{ errors.description }}">{{ server.description }}</textarea>
+                      data-error="{{ errors.description }}">{{ server.description }}</textarea>
         </div>
         <div class="quote">
             By clicking Submit Server, you agree to our Service Agreement and that you have
