@@ -119,9 +119,9 @@ mongo_url = os.getenv("MONGOHQ_URL", MONGO_URL)
 quorum.mongo.url = mongo_url
 quorum.mongo.database = MONGO_DATABASE
 
-
 @app.route("/heroku/resources", methods = ("POST",))
 def provision():
+    print "provision"
     return json.dumps({
         "id" : str(uuid.uuid4())
     })
@@ -134,21 +134,21 @@ def plan_change(id):
 def deprovision(id):
     return "ok"
 
-@app.route("/heroku/resources/<id>", methods = ("GET",))
-def sso_resources(id):
-    return flask.redirect(
-        flask.url_for("sso")
-    )
-
-@app.route("/sso/login", methods = ("POST",))
-def sso_login(id):
-    return flask.redirect(
-        flask.url_for("sso_redirect")
-    )
-
-@app.route("/sso/redirect", methods = ("GET",))
-def sso_redirect():
-    return "ok"
+#@app.route("/heroku/resources/<id>", methods = ("GET",))
+#def sso_resources(id):
+#    return flask.redirect(
+#        flask.url_for("sso")
+#    )
+#
+#@app.route("/sso/login", methods = ("POST",))
+#def sso_login(id):
+#    return flask.redirect(
+#        flask.url_for("sso_redirect")
+#    )
+#
+#@app.route("/sso/redirect", methods = ("GET",))
+#def sso_redirect():
+#    return "ok"
 
 #@app.route("/heroku/resources/<id>", methods = ("PUT",))
 #def deprovision(id):
@@ -978,6 +978,15 @@ def load():
     # configures the application object according to
     # this settings
     debug = os.environ.get("DEBUG", False) and True or False
+    mongo_url = os.getenv("MONGOHQ_URL", MONGO_URL)
+    smtp_host = os.environ.get("SMTP_HOST", "localhost")
+    smtp_user = os.environ.get("SMTP_USER", None)
+    smtp_password = os.environ.get("SMTP_PASSWORD", None)
+    quorum.mongo.url = mongo_url
+    quorum.mongo.database = MONGO_DATABASE
+    config.SMTP_HOST = smtp_host
+    config.SMTP_USER = smtp_user
+    config.SMTP_PASSWORD = smtp_password
     app.debug = debug
     app.secret_key = SECRET_KEY
 
