@@ -1,0 +1,16 @@
+{
+    "id" : "pingu",
+    "api" : {
+        "config_vars" : [],
+        "password" : "0jlw8sq7ows5Sd3K",
+        "sso_salt" : "OrgjVavU6PErWLPE",
+        "production" : {
+            "base_url" : "https://pinguapp.com/heroku/resources",
+            "sso_url" : "https://pinguapp.com/sso/login"
+        },
+        "test" : {
+            "base_url" : "http://localhost:5000/heroku/resources",
+            "sso_url" : "http://localhost:5000/sso/login"
+        }
+    }
+}
