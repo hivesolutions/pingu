@@ -116,14 +116,19 @@ mongo_url = os.getenv("MONGOHQ_URL", MONGO_URL)
 quorum.mongo.url = mongo_url
 quorum.mongo.database = MONGO_DATABASE
 
-# TENHO DE FAZER UM ENSURE COMO O OUTRO (decorator)
-# mas com usernames e password (ver o do json)
+# @TODO: improve this code
+base_path = os.path.dirname(__file__)
+heroku_conf = os.path.join(base_path, "heroku", "addon-manifest.json")
+file = open(heroku_conf, "rb")
+try: data = json.load(file)
+finally: file.close()
 
-heroku_username = "pingu"
-heroku_password = "0jlw8sq7ows5Sd3K"
+api = data.get("api", {})
+username_h = data.get("id", None)
+password_h = api.get("password", None)
 
 @app.route("/heroku/resources", methods = ("POST",))
-@quorum.extras.ensure_auth(heroku_username, heroku_password, json = True)
+@quorum.extras.ensure_auth(username_h, password_h, json = True)
 def provision():
     return flask.Response(
         json.dumps({
@@ -133,21 +138,17 @@ def provision():
     )
 
 @app.route("/heroku/resources/<id>", methods = ("DELETE",))
-@quorum.extras.ensure_auth(heroku_username, heroku_password, json = True)
+@quorum.extras.ensure_auth(username_h, password_h, json = True)
 def deprovision(id):
-    data = flask.request.data
-    object = json.loads(data)
-    print object
-    
     return "ok"
 
 @app.route("/heroku/resources/<id>", methods = ("PUT",))
-@quorum.extras.ensure_auth(heroku_username, heroku_password, json = True)
+@quorum.extras.ensure_auth(username_h, password_h, json = True)
 def plan_change(id):
     data = flask.request.data
     object = json.loads(data)
     print "plan -> %s" % object["plan"]
-    
+
     return "ok"
 
 @app.route("/heroku/resources/<id>", methods = ("GET",))
@@ -1054,6 +1055,8 @@ _ensure_db()
 # the system internal structures
 _schedule_tasks()
 
+
+load()
 from waitress import serve
 serve(app, host='0.0.0.0', port=5000)
 
