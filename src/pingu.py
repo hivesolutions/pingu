@@ -154,54 +154,13 @@ def plan_change(id):
 
     return "ok"
 
-@app.route("/heroku/resources/<id>", methods = ("GET",))
-def sso_resources(id):
-    return flask.redirect(
-        flask.url_for("sso")
-    )
-
 @app.route("/sso/login", methods = ("POST",))
 def sso_login(id):
+    # AKI TENHO DE FAZER O LOGIN !!!
+    # e depois faço o redirecionmento !!!
     return flask.redirect(
-        flask.url_for("sso_redirect")
+        flask.url_for("index")
     )
-
-@app.route("/sso/redirect", methods = ("GET",))
-def sso_redirect():
-    return "ok"
-
-#@app.route("/heroku/resources/<id>", methods = ("PUT",))
-#def deprovision(id):
-#    return "ok"
-#
-#//GET SSO
-#app.get('/heroku/resources/:id', sso_auth, function(request, response) {
-#  response.redirect("/")
-#})
-#
-#//POST SSO
-#app.post('/sso/login', express.bodyParser(), sso_auth, function(request, response){
-#  response.redirect("/")
-#})
-
-#===============================================================================
-# app.put('/heroku/resources/:id', express.bodyParser(), basic_auth, function(request, response) {
-#  console.log(request.body)
-#  console.log(request.params)
-#  var resource =  get_resource(request.params.id)
-#  if(!resource){
-#    response.send("Not found", 404);
-#    return;
-#  }
-#  resource.plan = request.body.plan
-#  response.send("ok")
-# })
-#===============================================================================
-
-
-
-
-
 
 @app.route("/", methods = ("GET",))
 @app.route("/index", methods = ("GET",))
