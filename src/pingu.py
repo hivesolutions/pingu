@@ -132,7 +132,10 @@ password_h = api.get("password", None)
 def provision():
     return flask.Response(
         json.dumps({
-            "id" : str(uuid.uuid4())
+            "id" : str(uuid.uuid4()),
+            "config" : {
+                "PINGU_URL" : "https://www.sapo.pt/urlbase_do_gajo"
+            }
         }),
         mimetype = "application/json"
     )
