@@ -316,20 +316,20 @@ def sso_login():
     # re-creates the token from the provided id and timestamp
     # and the "secret" salt value
     _token = id + ":" + salt_h + ":" + timestamp
-    _token_s = hashlib.sha1(token).hexdigest()
+    _token_s = hashlib.sha1(_token).hexdigest()
 
     # retrieves the current time to be used in the timestamp
     # validation process
     current_time = time.time()
 
     # validation the token and then checks if the provided timestamp
-    # is not defined in the future
+    # is not defined in the past
     if not _token_s == token: return "invalid token", 403
-    if not current_time > timestamp: return "invalid timestamp (in the future)", 403
+    if not current_time < timestamp: return "invalid timestamp (in the past)", 403
 
     # tries to retrieve the account associated with the provided
     # id value in case none is found returns in error
-    account = _get_account(id)
+    account = _get_account(id, raise_e = False)
     if not account: return "no user found", 403
 
     # retrieves the various account information values and retrieves
