@@ -17,7 +17,7 @@ After installing Pingu the application should be configured to fully integrate w
 
 ## Troubleshooting
 
-If it seems pingu is having sme problems please talk with us at support@pinguapp.com, we'll be more thant
+If it seems pingu is having some problems please talk with us at support@pinguapp.com, we'll be more than
 happy to talk and solve the issue.
 
 ## Migrating between plans
