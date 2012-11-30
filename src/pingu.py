@@ -79,6 +79,10 @@ MONGO_DATABASE = "pingu"
 """ The default database to be used for the connection with
 the mongo database """
 
+DEFAULT_TIMEOUT = 60.0
+""" The default timeout value to be used in between "ping"
+requests, this values is only used as a fallback """
+
 USER_TYPE = 1
 """ The identifier (integer) to be used to represent an user
 of type (normal) user """
@@ -224,7 +228,7 @@ def create_servers_h(heroku_id, account, sleep_time = 5.0):
 
         # creates a task for the server that has just been created
         # this tuple is going to be used by the scheduling thread
-        task = (server, 5.0)
+        task = (server, DEFAULT_TIMEOUT)
 
         # saves the server instance and schedules the task, this
         # should ensure coherence in the internal data structures
@@ -683,7 +687,7 @@ def create_server():
 
     # creates a task for the server that has just been created
     # this tuple is going to be used by the scheduling thread
-    task = (server, 5.0)
+    task = (server, DEFAULT_TIMEOUT)
 
     # saves the server instance and schedules the task, this
     # should ensure coherence in the internal data structures
@@ -1134,7 +1138,7 @@ def _get_tasks():
     servers = _get_all_servers()
 
     for server in servers:
-        timeout = server.get("timeout", 5.0)
+        timeout = server.get("timeout", DEFAULT_TIMEOUT)
         tasks.append((
             server,
             timeout
