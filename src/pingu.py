@@ -173,15 +173,18 @@ def create_servers_h(heroku_id, account):
     # from the account structure provided, then encodes
     # the provided heroku id into url encode
     instance_id = account["instance_id"]
-    heroku_id_e = urllib.urlencode(heroku_id)
+    heroku_id_e = urllib.quote(heroku_id)
 
     # creates the complete url string from the username,
-    # password and heroku id to be used and the opend the
+    # password and heroku id to be used and the opens the
     # url reading its data
     url = "https://%s:%s@api.heroku.com/vendor/apps/%s" % (username_h, password_h, heroku_id_e)
-    remote = urllib.urlopen(url)
-    try: data = remote.read()
-    finally: remote.close()
+    try:
+        remote = urllib.urlopen(url)
+        try: data = remote.read()
+        finally: remote.close()
+    except:
+        data = "{}"
 
     # loads the json structure from the data and obtains the
     # various domains contained in it
