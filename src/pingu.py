@@ -324,7 +324,7 @@ def sso_login():
 
     # validation the token and then checks if the provided timestamp
     # is not defined in the future
-    if not _token == token: return "invalid token", 403
+    if not _token_s == token: return "invalid token", 403
     if not current_time > timestamp: return "invalid timestamp (in the future)", 403
 
     # tries to retrieve the account associated with the provided
