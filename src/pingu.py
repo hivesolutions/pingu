@@ -434,6 +434,7 @@ def login():
     flask.session["username"] = username
     flask.session["tokens"] = tokens
     flask.session["instance_id"] = instance_id
+    flask.session["nav_data"] = None
 
     # makes the current session permanent this will allow
     # the session to persist along multiple browser initialization
@@ -447,7 +448,8 @@ def login():
 def logout():
     if "username" in flask.session: del flask.session["username"]
     if "tokens" in flask.session: del flask.session["tokens"]
-    if "cameras" in flask.session: del flask.session["cameras"]
+    if "instance_id" in flask.session: del flask.session["instance_id"]
+    if "nav_data" in flask.session: del flask.session["nav_data"]
 
     return flask.redirect(
         flask.url_for("signin")
