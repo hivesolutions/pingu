@@ -17,7 +17,7 @@
             <tr>
                 <td class="right label" width="50%">twitter</td>
                 <td class="left value" width="50%">
-                    {% if account.facebook %}
+                    {% if account.twitter %}
                         twitter.com/<a href="http://twitter.com/{{ account.twitter }}">{{ account.twitter }}</a>
                     {% else %}
                         -

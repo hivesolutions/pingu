@@ -123,6 +123,7 @@ file = open(heroku_conf, "rb")
 try: data = json.load(file)
 finally: file.close()
 
+# @TODO: improve this code
 api = data.get("api", {})
 username_h = data.get("id", None)
 password_h = api.get("password", None)
