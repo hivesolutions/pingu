@@ -131,6 +131,10 @@ api = data.get("api", {})
 username_h = data.get("id", None)
 password_h = api.get("password", None)
 
+# @TODO, put this log into quorum
+def log(message):
+    print "[LOG] - %s" % message
+
 def id_generator(size = 16, chars = string.ascii_uppercase + string.digits):
     return "".join(random.choice(chars) for _index in range(size))
 
@@ -183,7 +187,8 @@ def create_servers_h(heroku_id, account):
         remote = urllib.urlopen(url)
         try: data = remote.read()
         finally: remote.close()
-    except:
+    except BaseException, exception:
+        log("Problem loading remote url - %s" % str(exception))
         data = "{}"
 
     # loads the json structure from the data and obtains the
