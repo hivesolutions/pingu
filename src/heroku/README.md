@@ -1,8 +1,7 @@
-[Pingu](http://addons.heroku.com/pingu) is an [add-on](http://addons.heroku.com) for providing functionality X.
+[Pingu](http://addons.heroku.com/pingu) makes sure your applications don't sleep on the job.
 
-Adding functionality X to an application provides benefits X, Y and Z. [[Sell the benefits here! Don't skimp - developers have many options these days.]]
-
-Pingu is accessible via an API and has supported client libraries for [[Java|Ruby|Python|Node.js|Clojure|Scala]]*.
+Adding pingu to you application will make it be checked constantly for being awake and how
+well it's performing (latency).
 
 ## Installing the Pingu add-on
 
@@ -18,8 +17,8 @@ After installing Pingu the application should be configured to fully integrate w
 
 ## Troubleshooting
 
-If [[feature X]] does not seem to be [[common issue Y]] then 
-[[add specific commands to look for symptoms of common issue Y]].
+If it seems pingu is having sme problems please talk with us at support@pinguapp.com, we'll be more thant
+happy to talk and solve the issue.
 
 ## Migrating between plans
 
@@ -29,12 +28,9 @@ If [[feature X]] does not seem to be [[common issue Y]] then
 
 Use the `heroku addons:upgrade` command to migrate to a new plan.
 
-    :::term
     $ heroku addons:upgrade pingu:newplan
-    -----> Upgrading pingu:newplan to sharp-mountain-4005... done, v18 ($49/mo)
-           Your plan has been updated to: pingu:newplan
 
-## Removing the PIngu add-on
+## Removing the Pingu add-on
 
 Pingu may be removed via the CLI. Note that any data stored in the server may become lost
 and may not be recoverable.
