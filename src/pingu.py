@@ -43,6 +43,7 @@ import json
 import time
 import flask
 import atexit
+import urllib
 import hashlib
 import httplib
 import smtplib
@@ -167,6 +168,52 @@ def create_heroku(heroku_id, plan = "basic"):
     _save_account(account)
     return account
 
+def create_servers_h(heroku_id, account):
+    # retrieves the current instance id to be used
+    # from the account structure provided, then encodes
+    # the provided heroku id into url encode
+    instance_id = account["instance_id"]
+    heroku_id_e = urllib.urlencode(heroku_id)
+
+    # creates the complete url string from the username,
+    # password and heroku id to be used and the opend the
+    # url reading its data
+    url = "https://%s:%s@api.heroku.com/vendor/apps/%s" % (username_h, password_h, heroku_id_e)
+    remote = urllib.urlopen(url)
+    try: data = remote.read()
+    finally: remote.close()
+
+    # loads the json structure from the data and obtains the
+    # various domains contained in it
+    object = json.loads(data)
+    domains = object.get("domains", [])
+
+    # iterates over all the domains to insert the associated servers
+    # into the data source
+    for domain in domains:
+        # creates the url string from the domain, note that the url to
+        # be used is the root one (index page)
+        url = "http://" + domain + "/"
+
+        # creates the structure to be used as the server description
+        # using the values provided as parameters
+        server = {
+            "enabled" : True,
+            "instance_id" : instance_id,
+            "name" : domain,
+            "url" : url,
+            "description" : domain
+        }
+
+        # creates a task for the server that has just been created
+        # this tuple is going to be used by the scheduling thread
+        task = (server, 5.0)
+
+        # saves the server instance and schedules the task, this
+        # should ensure coherence in the internal data structures
+        _save_server(server)
+        _schedule_task(task)
+
 @app.route("/heroku/resources", methods = ("POST",))
 @quorum.extras.ensure_auth(username_h, password_h, json = True)
 def provision():
@@ -176,8 +223,9 @@ def provision():
     plan = object["plan"]
 
     account = create_heroku(heroku_id, plan = plan)
+    create_servers_h(heroku_id, account)
     api_key = account["api_key"]
-    
+
     print "provision -> %s" % str(object)
 
     return flask.Response(
@@ -206,7 +254,7 @@ def plan_change(id):
     data = flask.request.data
     object = json.loads(data)
     plan = object["plan"]
-    
+
     print "change -> %s" % str(object)
 
     account = _get_account(id, build = False)
