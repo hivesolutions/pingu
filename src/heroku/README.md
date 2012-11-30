@@ -37,9 +37,7 @@ and may not be recoverable.
 
     $ heroku addons:remove pingu
 
-## Support
-
-Additional information
+## Additional information
 
 Check out Pingu or email us at support@pinguapp.com.
 
