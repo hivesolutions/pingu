@@ -38,3 +38,7 @@
     top: 0px;
     width: 100%;
 }
+
+.heroku-nav ul li:hover {
+    background-color: transparent;
+}
