@@ -177,6 +177,8 @@ def provision():
 
     account = create_heroku(heroku_id, plan = plan)
     api_key = account["api_key"]
+    
+    print "provision -> %s" % str(object)
 
     return flask.Response(
         json.dumps({
@@ -204,6 +206,8 @@ def plan_change(id):
     data = flask.request.data
     object = json.loads(data)
     plan = object["plan"]
+    
+    print "change -> %s" % str(object)
 
     account = _get_account(id, build = False)
     account["plan"] = plan
