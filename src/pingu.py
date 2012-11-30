@@ -294,7 +294,20 @@ def plan_change(id):
     return "ok"
 
 @app.route("/sso/login", methods = ("POST",))
-def sso_login(id):
+def sso_login():
+#    pre_token = params[:id] + ':' + HEROKU_SSO_SALT + ':' + params[:timestamp]
+#    
+#    token = Digest::SHA1.hexdigest(pre_token).to_s
+#    halt 403 if token != params[:token]
+#    halt 403 if params[:timestamp].to_i < (Time.now - 2*60).to_i
+#          account = Account.find(params[:id])
+#      halt 404 unless account
+#    
+#      session[:user] = account.id
+#      session[:heroku_sso] = true
+#      response.set_cookie('heroku-nav-data', :value => params['nav-data'], :path => '/')
+#      redirect "/dashboard"
+    
     # AKI TENHO DE FAZER O LOGIN !!!
     # e depois faço o redirecionmento !!!
     return flask.redirect(
