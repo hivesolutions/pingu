@@ -240,6 +240,7 @@ def create_servers_h(heroku_id, account, sleep_time = 5.0):
     return servers
 
 def get_navbar_h():
+    global navbar_h
     if navbar_h: return navbar_h
     server = urllib.urlopen("http://nav.heroku.com/v1/providers/header")
     try: data = server.read()

@@ -44,7 +44,7 @@
 
         // increments the margin top of the body and sets it in
         // the current body object
-        marginTop = marginTop + herokuHeight;
+        marginTop = marginTop + height;
         _body.css("margin-top", marginTop + "px");
     };
 })(jQuery);
