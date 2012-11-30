@@ -4,41 +4,17 @@ Adding functionality X to an application provides benefits X, Y and Z. [[Sell th
 
 Pingu is accessible via an API and has supported client libraries for [[Java|Ruby|Python|Node.js|Clojure|Scala]]*.
 
-## Provisioning the add-on
+## Installing the Pingu add-on
 
-Pingu can be attached to a Heroku application via the  CLI:
+To use Ranger on Heroku, install the addon:
 
-<div class="callout" markdown="1">
-A list of all plans available can be found [here](http://addons.heroku.com/pingu).
-</div>
-
-    :::term
     $ heroku addons:add pingu
-    -----> Adding pingu to sharp-mountain-4005... done, v18 (free)
 
-Once Pingu has been added a `PINGU_APP_ID` setting will be available in the app configuration and will contain the [[variable purpose, i.e. "canonical URL used to access the newly provisioned Pingu service instance."]]. This can be confirmed using the `heroku config:get` command.
-
-    :::term
-    $ heroku config:get PINGU_APP_ID
-    http://user:pass@instance.ip/resourceid
+Once Pingu has been added a `PINGU_APP_ID` setting will be available in the app configuration and will contain the
+[[variable purpose, i.e. "canonical URL used to access the newly provisioned Pingu service instance."]].
+This can be confirmed using the `heroku config:get` command.
 
 After installing Pingu the application should be configured to fully integrate with the add-on.
-
-## Dashboard
-
-<div class="callout" markdown="1">
-For more information on the features available within the Pingu dashboard please see the docs at [mysite.com/docs](mysite.com/docs).
-</div>
-
-The Pingu dashboard allows you to [[describe dashboard features]].
-
-The dashboard can be accessed via the CLI:
-
-    :::term
-    $ heroku addons:open pingu
-    Opening pingu for sharp-mountain-4005…
-
-or by visiting the [Heroku apps web interface](http://heroku.com/myapps) and selecting the application in question. Select Pingu from the Add-ons menu.
 
 ## Troubleshooting
 
