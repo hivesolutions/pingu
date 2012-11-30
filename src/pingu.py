@@ -44,6 +44,7 @@ import time
 import flask
 import atexit
 import urllib
+import thread
 import string
 import random
 import hashlib
@@ -171,7 +172,11 @@ def create_heroku(heroku_id, plan = "basic"):
     _save_account(account)
     return account
 
-def create_servers_h(heroku_id, account):
+def create_servers_h(heroku_id, account, sleep_time = 5.0):
+    # sleeps for a while so that no collision with the remote
+    # server occurs (the application must be registered already)
+    time.sleep(sleep_time)
+    
     # retrieves the current instance id to be used
     # from the account structure provided, then encodes
     # the provided heroku id into url encode
@@ -182,13 +187,11 @@ def create_servers_h(heroku_id, account):
     # password and heroku id to be used and the opens the
     # url reading its data
     url = "https://%s:%s@api.heroku.com/vendor/apps/%s" % (username_h, password_h, heroku_id_e)
-    print "URL TO BE CALLED -> %s" % url
     try:
         remote = urllib.urlopen(url)
         try: data = remote.read()
         finally: remote.close()
-    except BaseException, exception:
-        log("Problem loading remote url - %s" % str(exception))
+    except:
         data = "{}"
 
     # loads the json structure from the data and obtains the
@@ -243,11 +246,18 @@ def provision():
     plan = object["plan"]
 
     account = create_heroku(heroku_id, plan = plan)
-    create_servers_h(heroku_id, account)
     api_key = account["api_key"]
 
-    print "provision -> %s" % str(object)
+    # schedules the execution of the server creation for
+    # the current provision, this will be deferred so that
+    # the call is only made after provision is complete
+    thread.start_new_thread(
+        create_servers_h,
+        (heroku_id, account)
+    )
 
+    print "provision -> %s" % str(object)
+    
     return flask.Response(
         json.dumps({
             "id" : heroku_id,
@@ -987,7 +997,6 @@ def _ping_m(server, timeout = 1.0):
     return _pingu
 
 def _event_down(server):
-    import thread
     name = server.get("name", None)
     parameters = {
         "subject" : "Your %s server, is currently down" % name,
