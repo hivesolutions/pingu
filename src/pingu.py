@@ -195,7 +195,6 @@ def create_servers_h(heroku_id, account, sleep_time = 5.0):
     except:
         data = "{}"
 
-
     # loads the json structure from the data and obtains the
     # owner email and the various domains contained in it
     object = json.loads(data)
@@ -273,8 +272,6 @@ def provision():
         (heroku_id, account)
     )
 
-    print "provision -> %s" % str(object)
-
     return flask.Response(
         json.dumps({
             "id" : heroku_id,
@@ -289,9 +286,7 @@ def provision():
 @app.route("/heroku/resources/<id>", methods = ("DELETE",))
 @quorum.extras.ensure_auth(username_h, password_h, json = True)
 def deprovision(id):
-    account = _get_account(id, build = False)
-    account["enabled"] = False
-    _save_account(account)
+    _remove_account(id)
 
     return "ok"
 
@@ -301,8 +296,6 @@ def plan_change(id):
     data = flask.request.data
     object = json.loads(data)
     plan = object["plan"]
-
-    print "change -> %s" % str(object)
 
     account = _get_account(id, build = False)
     account["plan"] = plan
@@ -823,6 +816,14 @@ def _delete_account(username):
     account["enabled"] = False
     db.accounts.save(account)
     return account
+
+def _remove_account(username):
+    db = quorum.mongo.get_db()
+    account = db.accounts.find_one({"username" : username})
+    instance_id = account["instance_id"]
+    db.log.remove({"instance_id" : instance_id})
+    db.servers.remove({"instance_id" : instance_id})
+    db.accounts.remove({"instance_id" : instance_id})
 
 def _get_servers():
     db = quorum.mongo.get_db()

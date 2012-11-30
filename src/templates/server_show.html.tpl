@@ -14,7 +14,7 @@
                 <td class="right label" width="50%">response time</td>
                 <td class="left value" width="50%">
                     {% if server.latency %}
-                    	{{ account.facebook }}">{{ server.latency }} ms
+                        {{ server.latency }} ms
                     {% else %}
                         -
                     {% endif %}
