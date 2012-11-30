@@ -332,6 +332,13 @@ def sso_login():
     account = _get_account(id, raise_e = False)
     if not account: return "no user found", 403
 
+    # sets the login count and last login values in the account as the
+    # current time and then saves it in the data store
+    login_count = account.get("login_count", 0)
+    account["login_count"] = login_count + 1
+    account["last_login"] = time.time()
+    _save_account(account)
+
     # retrieves the various account information values and retrieves
     # the navigation bar contents
     username = account["username"]
