@@ -307,6 +307,13 @@ def sso_login():
 #      session[:heroku_sso] = true
 #      response.set_cookie('heroku-nav-data', :value => params['nav-data'], :path => '/')
 #      redirect "/dashboard"
+
+    id = flask.request.form.get("id", None)
+    timestamp = flask.request.form.get("timestamp", None)
+    token = flask.request.form.get("token", None)    
+    nav_data = flask.request.form.get("nav-data", None)
+    
+    flask.session["nav_data"] = nav_data
     
     # AKI TENHO DE FAZER O LOGIN !!!
     # e depois faço o redirecionmento !!!
