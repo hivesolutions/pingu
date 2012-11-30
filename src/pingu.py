@@ -1077,11 +1077,5 @@ _ensure_db()
 # the system internal structures
 _schedule_tasks()
 
-
-#@TODO: change this to the final value
-load()
-from waitress import serve
-serve(app, host = '0.0.0.0', port = 5000)
-
-#if __name__ == "__main__": run()
-#else: load()
+if __name__ == "__main__": run()
+else: load()
