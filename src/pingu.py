@@ -1038,14 +1038,17 @@ def _ping(server, timeout = 1.0):
     })
 
     change_down = not server.get("up", True) == up and not up
+    change_up = not server.get("up", True) == up and up
     server["up"] = up
     server["latency"] = latency
     server["timestamp"] = start_time
     db.servers.save(server)
 
-    # in case there's a change from server state up to down
-    # must trigger the down event so that the user is notified
+    # in case there's a change from server state up to down, or
+    # down to up (reversed) must trigger the proper event so
+    # that the user is notified about the change
     if change_down: _event_down(server)
+    if change_up: _event_up(server)
 
     # retrieves the value for the enabled flag of the server
     # in case the values is not enable no re-scheduling is done
@@ -1072,6 +1075,20 @@ def _event_down(server):
         "receivers" : ["João Magalhães <joamag@hive.pt>"],
         "plain" : "email/down.txt.tpl",
         "rich" : "email/down.html.tpl",
+        "context" : {
+            "server" : server
+        }
+    }
+    thread.start_new_thread(_send_email, (), parameters)
+
+def _event_up(server):
+    name = server.get("name", None)
+    parameters = {
+        "subject" : "Your %s server, is back online" % name,
+        "sender" : "Pingu Mailer <mailer@pingu.com>",
+        "receivers" : ["João Magalhães <joamag@hive.pt>"],
+        "plain" : "email/up.txt.tpl",
+        "rich" : "email/up.html.tpl",
         "context" : {
             "server" : server
         }
