@@ -195,10 +195,17 @@ def create_servers_h(heroku_id, account, sleep_time = 5.0):
     except:
         data = "{}"
 
+
     # loads the json structure from the data and obtains the
-    # various domains contained in it
+    # owner email and the various domains contained in it
     object = json.loads(data)
+    owner_email = object.get("owner_email", "")
     domains = object.get("domains", [])
+
+    # sets the owner email of the instance as the email in the
+    # account and the saves the account
+    account["email"] = owner_email
+    _save_account(account)
 
     # creates the list that will be used to store the various
     # servers to be created from the domains
