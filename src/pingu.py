@@ -173,7 +173,7 @@ def create_heroku(heroku_id, plan = "basic"):
     _save_account(account)
     return account
 
-def create_servers_h(heroku_id, account, sleep_time = 5.0):
+def create_servers_h(heroku_id, account, sleep_time = 3.0):
     # sleeps for a while so that no collision with the remote
     # server occurs (the application must be registered already)
     time.sleep(sleep_time)
@@ -263,6 +263,8 @@ def provision():
 
     account = create_heroku(heroku_id, plan = plan)
     api_key = account["api_key"]
+
+    print "VAI FAZER START THREAD"
 
     # schedules the execution of the server creation for
     # the current provision, this will be deferred so that
