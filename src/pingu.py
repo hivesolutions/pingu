@@ -138,10 +138,6 @@ username_h = data.get("id", None)
 password_h = api.get("password", None)
 salt_h = api.get("sso_salt", None)
 
-# @TODO, put this log into quorum
-def log(message):
-    print "[LOG] - %s" % message
-
 def id_generator(size = 16, chars = string.ascii_uppercase + string.digits):
     return "".join(random.choice(chars) for _index in range(size))
 
@@ -165,7 +161,6 @@ def create_heroku(heroku_id, plan = "basic"):
         "password" : password_sha1,
         "api_key" : api_key_sha1,
         "plan" : plan,
-        "email" : None,
         "login_count" : 0,
         "last_login" : None,
         "type" : USER_TYPE,
