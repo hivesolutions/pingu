@@ -7,7 +7,7 @@
     {% endblock %}
 </head>
 <body class="ux">
-	{% include "partials/nav_data.html.tpl" %}
+    {% include "partials/nav_data.html.tpl" %}
     <div id="overlay"></div>
     <div id="header">
         {% block header %}

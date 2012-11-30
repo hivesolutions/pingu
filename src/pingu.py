@@ -176,7 +176,7 @@ def create_servers_h(heroku_id, account, sleep_time = 5.0):
     # sleeps for a while so that no collision with the remote
     # server occurs (the application must be registered already)
     time.sleep(sleep_time)
-    
+
     # retrieves the current instance id to be used
     # from the account structure provided, then encodes
     # the provided heroku id into url encode
@@ -257,7 +257,7 @@ def provision():
     )
 
     print "provision -> %s" % str(object)
-    
+
     return flask.Response(
         json.dumps({
             "id" : heroku_id,
@@ -296,13 +296,13 @@ def plan_change(id):
 @app.route("/sso/login", methods = ("POST",))
 def sso_login():
 #    pre_token = params[:id] + ':' + HEROKU_SSO_SALT + ':' + params[:timestamp]
-#    
+#
 #    token = Digest::SHA1.hexdigest(pre_token).to_s
 #    halt 403 if token != params[:token]
 #    halt 403 if params[:timestamp].to_i < (Time.now - 2*60).to_i
 #          account = Account.find(params[:id])
 #      halt 404 unless account
-#    
+#
 #      session[:user] = account.id
 #      session[:heroku_sso] = true
 #      response.set_cookie('heroku-nav-data', :value => params['nav-data'], :path => '/')
@@ -310,16 +310,30 @@ def sso_login():
 
     id = flask.request.form.get("id", None)
     timestamp = flask.request.form.get("timestamp", None)
-    token = flask.request.form.get("token", None)    
+    token = flask.request.form.get("token", None)
     nav_data = flask.request.form.get("nav-data", None)
-    
-    flask.session["nav_data"] = nav_data
-    
-    # AKI TENHO DE FAZER O LOGIN !!!
-    # e depois faço o redirecionmento !!!
-    return flask.redirect(
+
+    # @TODO: isto esta muito mal feito, tem de ser feito so no inicio
+    server = urllib.urlopen("http://nav.heroku.com/v1/providers/header")
+    try: data = server.read()
+    finally: server.close()
+
+    flask.session["nav_data"] = data
+
+    # creates a new redirect request and uses it to create
+    # the response object that is set with the cookie value
+    # to be used by heroku navigation bar
+    redirect = flask.redirect(
         flask.url_for("index")
     )
+    response = app.make_response(redirect)
+    response.set_cookie("heroku-nav-data", value = nav_data)
+
+
+
+    # AKI TENHO DE FAZER O LOGIN !!!
+    # e depois faço o redirecionmento !!!
+    return response
 
 @app.route("/", methods = ("GET",))
 @app.route("/index", methods = ("GET",))
