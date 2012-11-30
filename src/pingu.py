@@ -264,8 +264,6 @@ def provision():
     account = create_heroku(heroku_id, plan = plan)
     api_key = account["api_key"]
 
-    print "VAI FAZER START THREAD"
-
     # schedules the execution of the server creation for
     # the current provision, this will be deferred so that
     # the call is only made after provision is complete
