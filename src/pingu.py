@@ -1134,6 +1134,7 @@ def load():
     # configures the application object according to
     # this settings
     debug = os.environ.get("DEBUG", False) and True or False
+    redis_url = os.getenv("REDISTOGO_URL", None)
     mongo_url = os.getenv("MONGOHQ_URL", MONGO_URL)
     smtp_host = os.environ.get("SMTP_HOST", "localhost")
     smtp_user = os.environ.get("SMTP_USER", None)
@@ -1143,6 +1144,7 @@ def load():
     config.SMTP_HOST = smtp_host
     config.SMTP_USER = smtp_user
     config.SMTP_PASSWORD = smtp_password
+    app.session_interface = quorum.extras.RedisSessionInterface(url = redis_url)
     app.debug = debug
     app.secret_key = SECRET_KEY
 
@@ -1153,6 +1155,7 @@ def run():
     # and then start running it (continuous loop)
     debug = os.environ.get("DEBUG", False) and True or False
     reloader = os.environ.get("RELOADER", False) and True or False
+    redis_url = os.getenv("REDISTOGO_URL", None)
     mongo_url = os.getenv("MONGOHQ_URL", MONGO_URL)
     smtp_host = os.environ.get("SMTP_HOST", "localhost")
     smtp_user = os.environ.get("SMTP_USER", None)
@@ -1163,6 +1166,7 @@ def run():
     config.SMTP_HOST = smtp_host
     config.SMTP_USER = smtp_user
     config.SMTP_PASSWORD = smtp_password
+    app.session_interface = quorum.extras.RedisSessionInterface(url = redis_url)
     app.debug = debug
     app.secret_key = SECRET_KEY
     app.run(
