@@ -127,14 +127,62 @@ api = data.get("api", {})
 username_h = data.get("id", None)
 password_h = api.get("password", None)
 
+import string
+import random
+
+def id_generator(size = 16, chars = string.ascii_uppercase + string.digits):
+    return "".join(random.choice(chars) for _index in range(size))
+
+def create_heroku(heroku_id, plan = "basic"):
+    # generates a "random" password for the heroku based user
+    # to be created in the data source
+    password = id_generator()
+
+    # "encrypts" the password into the target format defined
+    # by the salt and the sha1 hash function and then creates
+    # the api key for the current account
+    password_sha1 = hashlib.sha1(password + PASSWORD_SALT).hexdigest()
+    api_key_sha1 = hashlib.sha1(str(uuid.uuid4())).hexdigest()
+
+    # creates the structure to be used as the server description
+    # using the values provided as parameters
+    account = {
+        "enabled" : True,
+        "instance_id" : str(uuid.uuid4()),
+        "username" : heroku_id,
+        "password" : password_sha1,
+        "api_key" : api_key_sha1,
+        "plan" : plan,
+        "email" : None,
+        "login_count" : 0,
+        "last_login" : None,
+        "type" : USER_TYPE,
+        "tokens" : USER_ACL.get(USER_TYPE, ())
+    }
+
+    # saves the account instance into the data source, ensures
+    # that the account is ready for login and returns it to the
+    # caller method
+    _save_account(account)
+    return account
+
 @app.route("/heroku/resources", methods = ("POST",))
 @quorum.extras.ensure_auth(username_h, password_h, json = True)
 def provision():
+    data = flask.request.data
+    object = json.loads(data)
+    heroku_id = object["heroku_id"]
+    plan = object["plan"]
+
+    account = create_heroku(heroku_id, plan = plan)
+    api_key = account["api_key"]
+
     return flask.Response(
         json.dumps({
-            "id" : str(uuid.uuid4()),
+            "id" : heroku_id,
             "config" : {
-                "PINGU_URL" : "https://www.sapo.pt/urlbase_do_gajo"
+                "PINGU_API_KEY" : api_key,
+                "PINGU_APP_ID" : heroku_id
             }
         }),
         mimetype = "application/json"
@@ -143,6 +191,10 @@ def provision():
 @app.route("/heroku/resources/<id>", methods = ("DELETE",))
 @quorum.extras.ensure_auth(username_h, password_h, json = True)
 def deprovision(id):
+    account = _get_account(id, build = False)
+    account["enabled"] = False
+    _save_account(account)
+
     return "ok"
 
 @app.route("/heroku/resources/<id>", methods = ("PUT",))
@@ -150,7 +202,11 @@ def deprovision(id):
 def plan_change(id):
     data = flask.request.data
     object = json.loads(data)
-    print "plan -> %s" % object["plan"]
+    plan = object["plan"]
+
+    account = _get_account(id, build = False)
+    account["plan"] = plan
+    _save_account(account)
 
     return "ok"
 
@@ -324,8 +380,10 @@ def create_account():
     email = flask.request.form.get("email", None)
 
     # "encrypts" the password into the target format defined
-    # by the salt and the sha1 hash function
+    # by the salt and the sha1 hash function and then creates
+    # the api key for the current account
     password_sha1 = hashlib.sha1(password + PASSWORD_SALT).hexdigest()
+    api_key_sha1 = hashlib.sha1(str(uuid.uuid4())).hexdigest()
 
     # creates the structure to be used as the server description
     # using the values provided as parameters
@@ -334,6 +392,8 @@ def create_account():
         "instance_id" : str(uuid.uuid4()),
         "username" : _username,
         "password" : password_sha1,
+        "api_key" : api_key_sha1,
+        "plan" : "basic",
         "email" : email,
         "login_count" : 0,
         "last_login" : None,
