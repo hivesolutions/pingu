@@ -7,6 +7,7 @@
     {% endblock %}
 </head>
 <body class="ux">
+    {% include "partials/nav_data.html.tpl" %}
     <div id="overlay"></div>
     <div id="header">
         {% block header %}
@@ -40,6 +41,5 @@
     </div>
     <div id="content">{% block content %}{% endblock %}</div>
     {% include "partials/footer.html.tpl" %}
-    {% include "partials/nav_data.html.tpl" %}
 </body>
 {% include "partials/end_doctype.html.tpl" %}
