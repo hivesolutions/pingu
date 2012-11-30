@@ -319,6 +319,7 @@ def sso_login():
     finally: server.close()
 
     flask.session["nav_data"] = data
+    flask.session.permanent = True
 
     # creates a new redirect request and uses it to create
     # the response object that is set with the cookie value
