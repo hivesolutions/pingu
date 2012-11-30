@@ -1,3 +1,5 @@
+## Introduction
+
 [Pingu](http://addons.heroku.com/pingu) makes sure your applications don't sleep on the job.
 
 Pingu will never let your applications slack off again. After adding Pingu, it will constantly
