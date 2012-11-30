@@ -22,3 +22,15 @@
 // __date__      = $LastChangedDate$
 // __copyright__ = Copyright (c) 2010-2012 Hive Solutions Lda.
 // __license__   = GNU General Public License (GPL), Version 3
+
+jQuery(document).ready(function() {
+    var herokuNav = jQuery(".heroku-nav");
+    if(herokuNav.length == 0) { return; }
+
+    var herokuHeight = herokuNav.outerHeight(true);
+
+    var _body = jQuery("body")
+    var marginTop = parseInt(_body.css("margin-top"));
+    marginTop = marginTop + herokuHeight;
+    _body.css("margin-top", marginTop + "px");
+});

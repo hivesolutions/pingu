@@ -28,3 +28,10 @@
  __copyright__ = Copyright (c) 2010-2012 Hive Solutions Lda.
  __license__   = GNU General Public License (GPL), Version 3
 */
+
+.heroku-nav-bar {
+    left: 0px;
+    position: absolute;
+    top: 0px;
+    width: 100%;
+}

@@ -1,1 +1,5 @@
-{% if session.nav_data %}{{ session.nav_data }}{% endif %}
+{% if session.nav_data %}
+    <div class="heroku-nav">
+        {{ session.nav_data }}
+    </div>
+{% endif %}
