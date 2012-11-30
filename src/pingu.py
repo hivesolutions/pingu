@@ -44,6 +44,8 @@ import time
 import flask
 import atexit
 import urllib
+import string
+import random
 import hashlib
 import httplib
 import smtplib
@@ -129,9 +131,6 @@ api = data.get("api", {})
 username_h = data.get("id", None)
 password_h = api.get("password", None)
 
-import string
-import random
-
 def id_generator(size = 16, chars = string.ascii_uppercase + string.digits):
     return "".join(random.choice(chars) for _index in range(size))
 
@@ -179,6 +178,7 @@ def create_servers_h(heroku_id, account):
     # password and heroku id to be used and the opens the
     # url reading its data
     url = "https://%s:%s@api.heroku.com/vendor/apps/%s" % (username_h, password_h, heroku_id_e)
+    print "URL TO BE CALLED -> %s" % url
     try:
         remote = urllib.urlopen(url)
         try: data = remote.read()
