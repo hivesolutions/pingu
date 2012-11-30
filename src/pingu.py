@@ -191,6 +191,10 @@ def create_servers_h(heroku_id, account):
     object = json.loads(data)
     domains = object.get("domains", [])
 
+    # creates the list that will be used to store the various
+    # servers to be created from the domains
+    servers = []
+
     # iterates over all the domains to insert the associated servers
     # into the data source
     for domain in domains:
@@ -216,6 +220,14 @@ def create_servers_h(heroku_id, account):
         # should ensure coherence in the internal data structures
         _save_server(server)
         _schedule_task(task)
+
+        # adds the servers structure to the list of servers that
+        # have been created
+        servers.append(server)
+
+    # returns the complete set of servers creates to the
+    # caller method
+    return servers
 
 @app.route("/heroku/resources", methods = ("POST",))
 @quorum.extras.ensure_auth(username_h, password_h, json = True)
