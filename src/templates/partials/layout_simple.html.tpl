@@ -6,8 +6,8 @@
         <title>Pingu / {% block title %}{% endblock %}</title>
     {% endblock %}
 </head>
+{% include "partials/nav_data.html.tpl" %}
 <body class="ux">
-    {% include "partials/nav_data.html.tpl" %}
     <div id="overlay"></div>
     <div id="header">
         {% block header %}
