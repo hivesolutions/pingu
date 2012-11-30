@@ -34,18 +34,18 @@ Use the `heroku addons:upgrade` command to migrate to a new plan.
     -----> Upgrading pingu:newplan to sharp-mountain-4005... done, v18 ($49/mo)
            Your plan has been updated to: pingu:newplan
 
-## Removing the add-on
+## Removing the PIngu add-on
 
-Pingu can be removed via the  CLI.
+Pingu may be removed via the CLI. Note that any data stored in the server may become lost
+and may not be recoverable.
 
-<div class="warning" markdown="1">This will destroy all associated data and cannot be undone!</div>
-
-    :::term
     $ heroku addons:remove pingu
-    -----> Removing pingu from sharp-mountain-4005... done, v20 (free)
-
-Before removing Pingu a data export can be performed by [[describe steps if export is available]].
 
 ## Support
 
-All Pingu support and runtime issues should be submitted via on of the [Heroku Support channels](support-channels). Any non-support related issues or product feedback is welcome at [[your channels]].
+Additional information
+
+Check out Pingu or email us at support@pinguapp.com.
+
+All Pingu support and runtime issues should be submitted via on of the [Heroku Support channels](support-channels).
+Any non-support related issues or product feedback is welcome at [[your channels]].
