@@ -115,6 +115,7 @@ HEADERS = {
 http client to use """
 
 app = flask.Flask(__name__)
+navbar_h = None
 
 mongo_url = os.getenv("MONGOHQ_URL", MONGO_URL)
 quorum.mongo.url = mongo_url
@@ -238,6 +239,14 @@ def create_servers_h(heroku_id, account, sleep_time = 5.0):
     # caller method
     return servers
 
+def get_navbar_h():
+    if navbar_h: return navbar_h
+    server = urllib.urlopen("http://nav.heroku.com/v1/providers/header")
+    try: data = server.read()
+    finally: server.close()
+    navbar_h = data
+    return navbar_h
+
 @app.route("/heroku/resources", methods = ("POST",))
 @quorum.extras.ensure_auth(username_h, password_h, json = True)
 def provision():
@@ -296,50 +305,46 @@ def plan_change(id):
 
 @app.route("/sso/login", methods = ("POST",))
 def sso_login():
-#    pre_token = params[:id] + ':' + HEROKU_SSO_SALT + ':' + params[:timestamp]
-#
-#    token = Digest::SHA1.hexdigest(pre_token).to_s
-#    halt 403 if token != params[:token]
-#    halt 403 if params[:timestamp].to_i < (Time.now - 2*60).to_i
-#          account = Account.find(params[:id])
-#      halt 404 unless account
-#
-#      session[:user] = account.id
-#      session[:heroku_sso] = true
-#      response.set_cookie('heroku-nav-data', :value => params['nav-data'], :path => '/')
-#      redirect "/dashboard"
-
+    # retrieves the various parameters provided by the
+    # caller post operation to be used in the construction
+    # of the response and security validations
     id = flask.request.form.get("id", None)
     timestamp = flask.request.form.get("timestamp", None)
     token = flask.request.form.get("token", None)
     nav_data = flask.request.form.get("nav-data", None)
-    
-    _token = id + ":" + salt_h + ":" + timestamp + "asdasdasd"
-    _token_s = hashlib.sha1(token).hexdigest()
-    
-    current_time = time.time()    
 
+    # re-creates the token from the provided id and timestamp
+    # and the "secret" salt value
+    _token = id + ":" + salt_h + ":" + timestamp
+    _token_s = hashlib.sha1(token).hexdigest()
+
+    # retrieves the current time to be used in the timestamp
+    # validation process
+    current_time = time.time()
+
+    # validation the token and then checks if the provided timestamp
+    # is not defined in the future
     if not _token == token: return "invalid token", 403
     if not current_time > timestamp: return "invalid timestamp (in the future)", 403
 
-    # @TODO: isto esta muito mal feito, tem de ser feito so no inicio
-    server = urllib.urlopen("http://nav.heroku.com/v1/providers/header")
-    try: data = server.read()
-    finally: server.close()
-
+    # tries to retrieve the account associated with the provided
+    # id value in case none is found returns in error
     account = _get_account(id)
     if not account: return "no user found", 403
-    
+
+    # retrieves the various account information values and retrieves
+    # the navigation bar contents
     username = account["username"]
     tokens = account["tokens"]
     instance_id = account["instance_id"]
+    navbar_h = get_navbar_h()
 
     # updates the current user (name) in session with
     # the username that has just be accepted in the login
     flask.session["username"] = username
     flask.session["tokens"] = tokens
     flask.session["instance_id"] = instance_id
-    flask.session["nav_data"] = data
+    flask.session["nav_data"] = navbar_h
 
     # makes the current session permanent this will allow
     # the session to persist along multiple browser initialization
