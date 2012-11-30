@@ -924,16 +924,16 @@ def _build_account(account):
     return account
 
 def _build_server(server):
-    up = server.get("up", False)
-    server["up_l"] = up and "up" or "down"
+    up = server.get("up", None)
+    server["up_l"] = up == True and "up" or up == False and "down" or "unknwon"
     return server
 
 def _build_log(log):
-    up = log.get("up", False)
+    up = log.get("up", None)
     timestamp = log.get("timestamp", None)
     date = datetime.datetime.utcfromtimestamp(timestamp)
     date_string = date.strftime("%d/%m/%Y %H:%M:%S")
-    log["up_l"] = up and "up" or "down"
+    log["up_l"] = up == True and "up" or up == False and "down" or "unknwon"
     log["date_l"] = date_string
     return log
 

@@ -9,7 +9,7 @@
                     <a href="{{ url_for('show_server', name = server.name) }}">{{ server.name }}</a>
                 </div>
                 <div class="description">
-                    {{ server.url }}
+                    <span class="{{ server.up_l }}">{{ server.up_l }}</span>
                 </div>
             </li>
         {% endfor %}

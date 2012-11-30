@@ -8,15 +8,21 @@
         <tbody>
             <tr>
                 <td class="right label" width="50%">status</td>
-                <td class="left value {{ server.up_l }}" width="50%">{{ server.up_l }}</td>
+                <td class="left value {{ server.up_l }}" width="50%">{{ server.up_l | default('-', true) }}</td>
             </tr>
             <tr>
                 <td class="right label" width="50%">response time</td>
-                <td class="left value" width="50%">{{ server.latency }} ms</td>
+                <td class="left value" width="50%">
+                    {% if server.latency %}
+                    	{{ account.facebook }}">{{ server.latency }} ms
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
             </tr>
             <tr>
                 <td class="right label" width="50%">url</td>
-                <td class="left value" width="50%">{{ server.url }}</td>
+                <td class="left value" width="50%">{{ server.url | default('-', true) }}</td>
             </tr>
         </tbody>
     </table>
