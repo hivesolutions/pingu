@@ -318,7 +318,20 @@ def sso_login():
     try: data = server.read()
     finally: server.close()
 
+    account = _get_account(id)
+    username = account["username"]
+    tokens = account["tokens"]
+    instance_id = account["instance_id"]
+
+    # updates the current user (name) in session with
+    # the username that has just be accepted in the login
+    flask.session["username"] = username
+    flask.session["tokens"] = tokens
+    flask.session["instance_id"] = instance_id
     flask.session["nav_data"] = data
+
+    # makes the current session permanent this will allow
+    # the session to persist along multiple browser initialization
     flask.session.permanent = True
 
     # creates a new redirect request and uses it to create

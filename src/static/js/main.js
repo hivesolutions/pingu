@@ -23,14 +23,35 @@
 // __copyright__ = Copyright (c) 2010-2012 Hive Solutions Lda.
 // __license__   = GNU General Public License (GPL), Version 3
 
+(function($) {
+    jQuery.fn.uheroku = function() {
+        // retrieves both the reference to the currently
+        // matched object and the body object
+        var matchedObject = this;
+        var _body = jQuery("body")
+
+        // in case there are currently no matched objects
+        // no need to continue with the processing
+        if (matchedObject.length = 0) {
+            return;
+        }
+
+        // retrieves the height of the currently matched object
+        // and the top margin of the body (to be updated)
+        var height = matchedObject.outerHeight(true);
+        var marginTop = _body.css("margin-top")
+        marginTop = parseInt(marginTop);
+
+        // increments the margin top of the body and sets it in
+        // the current body object
+        marginTop = marginTop + herokuHeight;
+        _body.css("margin-top", marginTop + "px");
+    };
+})(jQuery);
+
 jQuery(document).ready(function() {
-    var herokuNav = jQuery(".heroku-nav");
-    if(herokuNav.length == 0) { return; }
-
-    var herokuHeight = herokuNav.outerHeight(true);
-
-    var _body = jQuery("body")
-    var marginTop = parseInt(_body.css("margin-top"));
-    marginTop = marginTop + herokuHeight;
-    _body.css("margin-top", marginTop + "px");
-});
+            // tries to retrieves the heroku navigation bar
+            // and runs the jeroku extension on it
+            var herokuNav = jQuery(".heroku-nav");
+            herokuNav.uheroku();
+        });
