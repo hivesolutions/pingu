@@ -131,6 +131,7 @@ finally: file.close()
 api = data.get("api", {})
 username_h = data.get("id", None)
 password_h = api.get("password", None)
+salt_h = api.get("sso_salt", None)
 
 # @TODO, put this log into quorum
 def log(message):
@@ -312,6 +313,14 @@ def sso_login():
     timestamp = flask.request.form.get("timestamp", None)
     token = flask.request.form.get("token", None)
     nav_data = flask.request.form.get("nav-data", None)
+    
+    _token = id + ":" + salt_h + ":" + timestamp + "asdasdasd"
+    _token_s = hashlib.sha1(token).hexdigest()
+    
+    current_time = time.time()    
+
+    if not _token == token: return "invalid token", 403
+    if not current_time > timestamp: return "invalid timestamp (in the future)", 403
 
     # @TODO: isto esta muito mal feito, tem de ser feito so no inicio
     server = urllib.urlopen("http://nav.heroku.com/v1/providers/header")
@@ -319,6 +328,8 @@ def sso_login():
     finally: server.close()
 
     account = _get_account(id)
+    if not account: return "no user found", 403
+    
     username = account["username"]
     tokens = account["tokens"]
     instance_id = account["instance_id"]
@@ -338,15 +349,10 @@ def sso_login():
     # the response object that is set with the cookie value
     # to be used by heroku navigation bar
     redirect = flask.redirect(
-        flask.url_for("index")
+        flask.url_for("list_servers")
     )
     response = app.make_response(redirect)
     response.set_cookie("heroku-nav-data", value = nav_data)
-
-
-
-    # AKI TENHO DE FAZER O LOGIN !!!
-    # e depois faço o redirecionmento !!!
     return response
 
 @app.route("/", methods = ("GET",))
