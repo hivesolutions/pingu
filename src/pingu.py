@@ -329,7 +329,7 @@ def sso_login():
 
     # tries to retrieve the account associated with the provided
     # id value in case none is found returns in error
-    account = _get_account(id, raise_e = False)
+    account = _get_account(id, build = False, raise_e = False)
     if not account: return "no user found", 403
 
     # sets the login count and last login values in the account as the
