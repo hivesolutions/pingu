@@ -1,4 +1,4 @@
-{% extends "partials/layout.html.tpl" %}
+{% extends "partials/layout_account_l.html.tpl" %}
 {% block title %}Accounts{% endblock %}
 {% block name %}Accounts{% endblock %}
 {% block content %}
