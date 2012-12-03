@@ -1337,7 +1337,7 @@ def _ensure_db():
     db.servers.ensure_index("latency")
     db.servers.ensure_index("timestamp")
 
-    db.log.servers.ensure_index("instance_id")
+    db.log.ensure_index("instance_id")
     db.log.ensure_index("name")
     db.log.ensure_index("up")
     db.log.ensure_index("timestamp")
