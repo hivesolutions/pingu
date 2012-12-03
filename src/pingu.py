@@ -234,7 +234,7 @@ def create_servers_h(heroku_id, account, sleep_time = 3.0):
 
         # creates a task for the server that has just been created
         # this tuple is going to be used by the scheduling thread
-        task = (server, 0.0)
+        task = (server, DEFAULT_TIMEOUT)
 
         # saves the server instance and schedules the task, this
         # should ensure coherence in the internal data structures
@@ -706,7 +706,7 @@ def create_server():
 
     # creates a task for the server that has just been created
     # this tuple is going to be used by the scheduling thread
-    task = (server, 0.0)
+    task = (server, DEFAULT_TIMEOUT)
 
     # saves the server instance and schedules the task, this
     # should ensure coherence in the internal data structures
@@ -1386,7 +1386,7 @@ def _schedule_task(task):
     current_time = time.time()
     server, timeout = task
     execution_thread.insert_work(
-        current_time + timeout,
+        current_time,
         _ping_m(server, timeout = timeout)
     )
 
