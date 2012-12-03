@@ -13,29 +13,45 @@
         {% block header %}
             <h1>{% block name %}{% endblock %}</h1>
             <div class="links">
-                {% if link == "home" %}
-                    <a href="{{ url_for('index') }}" class="active">home</a>
-                {% else %}
-                    <a href="{{ url_for('index') }}">home</a>
-                {% endif %}
-                //
-                {% if link == "servers" %}
-                    <a href="{{ url_for('list_servers') }}" class="active">servers</a>
-                {% else %}
-                    <a href="{{ url_for('list_servers') }}">servers</a>
-                {% endif %}
-                //
-                {% if link == "contacts" %}
-                    <a href="{{ url_for('list_contacts') }}" class="active">contacts</a>
-                {% else %}
-                    <a href="{{ url_for('list_contacts') }}">contacts</a>
-                {% endif %}
-                //
-                {% if link == "about" %}
-                    <a href="{{ url_for('about') }}" class="active">about</a>
-                {% else %}
-                    <a href="{{ url_for('about') }}">about</a>
-                {% endif %}
+            	{% if session.acl("index") %}
+	                {% if link == "home" %}
+	                    <a href="{{ url_for('index') }}" class="active">home</a>
+	                {% else %}
+	                    <a href="{{ url_for('index') }}">home</a>
+	                {% endif %}
+	            {% endif %}
+                {% if session.acl("servers.list") %}
+                	//
+	                {% if link == "servers" %}
+	                    <a href="{{ url_for('list_servers') }}" class="active">servers</a>
+	                {% else %}
+	                    <a href="{{ url_for('list_servers') }}">servers</a>
+	                {% endif %}
+				{% endif %}
+				{% if session.acl("contacts.list") %}
+	                //
+	                {% if link == "contacts" %}
+	                    <a href="{{ url_for('list_contacts') }}" class="active">contacts</a>
+	                {% else %}
+	                    <a href="{{ url_for('list_contacts') }}">contacts</a>
+	                {% endif %}
+				{% endif %}
+				{% if session.acl("accounts.list") %}
+	                //
+	                {% if link == "accounts" %}
+	                    <a href="{{ url_for('list_accounts') }}" class="active">accounts</a>
+	                {% else %}
+	                    <a href="{{ url_for('list_accounts') }}">accounts</a>
+	                {% endif %}
+				{% endif %}
+				{% if session.acl("about") %}
+	                //
+	                {% if link == "about" %}
+	                    <a href="{{ url_for('about') }}" class="active">about</a>
+	                {% else %}
+	                    <a href="{{ url_for('about') }}">about</a>
+	                {% endif %}
+	            {% endif %}
             </div>
         {% endblock %}
     </div>

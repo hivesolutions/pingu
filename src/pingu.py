@@ -352,6 +352,7 @@ def sso_login():
     flask.session["tokens"] = tokens
     flask.session["instance_id"] = instance_id
     flask.session["nav_data"] = navbar_h
+    flask.session["acl"] = quorum.extras.check_login
 
     # makes the current session permanent this will allow
     # the session to persist along multiple browser initialization
@@ -452,7 +453,8 @@ def login():
     flask.session["username"] = username
     flask.session["tokens"] = tokens
     flask.session["instance_id"] = instance_id
-    flask.session["nav_data"] = None
+    flask.session["nav_data"] = None    
+    flask.session["acl"] = quorum.extras.check_login
 
     # makes the current session permanent this will allow
     # the session to persist along multiple browser initialization
@@ -488,6 +490,7 @@ def list_accounts():
     return flask.render_template(
         "account_list.html.tpl",
         link = "accounts",
+        sub_link = "list",
         accounts = accounts
     )
 
@@ -506,7 +509,8 @@ def accounts_json():
 def new_account():
     return flask.render_template(
         "account_new.html.tpl",
-        link = "new_account",
+        link = "accounts",
+        sub_link = "create",
         account = {},
         errors = {}
     )
@@ -519,7 +523,8 @@ def create_account():
     if errors:
         return flask.render_template(
             "account_new.html.tpl",
-            link = "new_account",
+            link = "accounts",
+            sub_link = "create",
             account = account,
             errors = errors
         )
