@@ -143,10 +143,6 @@ username_h = data.get("id", None)
 password_h = api.get("password", None)
 salt_h = api.get("sso_salt", None)
 
-@app.context_processor
-def utility_processor():
-    return dict(acl = quorum.extras.check_login)
-
 def id_generator(size = 16, chars = string.ascii_uppercase + string.digits):
     return "".join(random.choice(chars) for _index in range(size))
 
@@ -261,6 +257,10 @@ def get_navbar_h():
     finally: server.close()
     navbar_h = data
     return navbar_h
+
+@app.context_processor
+def utility_processor():
+    return dict(acl = quorum.extras.check_login)
 
 @app.route("/heroku/resources", methods = ("POST",))
 @quorum.extras.ensure_auth(username_h, password_h, json = True)
