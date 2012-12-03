@@ -101,6 +101,11 @@ USER_ACL = {
         "servers.edit",
         "servers.delete",
         "log.list",
+        "contacts.list",
+        "contacts.new",
+        "contacts.show",
+        "contacts.edit",
+        "contacts.delete",
         "accounts.show",
         "accounts.edit"
     ),
@@ -137,6 +142,10 @@ api = data.get("api", {})
 username_h = data.get("id", None)
 password_h = api.get("password", None)
 salt_h = api.get("sso_salt", None)
+
+@app.context_processor
+def utility_processor():
+    return dict(acl = quorum.extras.check_login)
 
 def id_generator(size = 16, chars = string.ascii_uppercase + string.digits):
     return "".join(random.choice(chars) for _index in range(size))
@@ -453,7 +462,7 @@ def login():
     flask.session["username"] = username
     flask.session["tokens"] = tokens
     flask.session["instance_id"] = instance_id
-    flask.session["nav_data"] = None    
+    flask.session["nav_data"] = None
     flask.session["acl"] = quorum.extras.check_login
 
     # makes the current session permanent this will allow
@@ -953,7 +962,10 @@ def _get_accounts(start = 0, count = 6):
 
 def _get_account(username, build = True, raise_e = True):
     db = quorum.mongo.get_db()
-    account = db.accounts.find_one({"username" : username})
+    account = db.accounts.find_one({
+        "enabled" : True,
+        "username" : username
+    })
     if not account and raise_e: raise RuntimeError("Account not found")
     build and _build_account(account)
     return account
@@ -1310,9 +1322,16 @@ def _ensure_db():
     db.servers.ensure_index("latency")
     db.servers.ensure_index("timestamp")
 
+    db.log.servers.ensure_index("instance_id")
     db.log.ensure_index("name")
     db.log.ensure_index("up")
     db.log.ensure_index("timestamp")
+
+    db.contacts.ensure_index("enabled")
+    db.contacts.ensure_index("instance_id")
+    db.contacts.ensure_index("name")
+    db.contacts.ensure_index("email")
+    db.contacts.ensure_index("phone")
 
 def _setup_db():
     db = quorum.mongo.get_db()
