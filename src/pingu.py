@@ -229,7 +229,7 @@ def create_servers_h(heroku_id, account, sleep_time = 3.0):
 
         # creates a task for the server that has just been created
         # this tuple is going to be used by the scheduling thread
-        task = (server, DEFAULT_TIMEOUT)
+        task = (server, 0.0)
 
         # saves the server instance and schedules the task, this
         # should ensure coherence in the internal data structures
@@ -662,7 +662,7 @@ def new_server():
 def create_server():
     # runs the validation process on the various arguments
     # provided to the server
-    errors, server = quorum.validate("server")
+    errors, server = quorum.validate("server_new")
     if errors:
         return flask.render_template(
             "server_new.html.tpl",
@@ -689,7 +689,7 @@ def create_server():
 
     # creates a task for the server that has just been created
     # this tuple is going to be used by the scheduling thread
-    task = (server, DEFAULT_TIMEOUT)
+    task = (server, 0.0)
 
     # saves the server instance and schedules the task, this
     # should ensure coherence in the internal data structures
@@ -908,12 +908,15 @@ def _validate_account_new():
 def _validate_account():
     return []
 
-def _validate_server():
+def _validate_server_new():
     return [
         quorum.not_null("name"),
         quorum.not_empty("name"),
         quorum.not_duplicate("name", "servers"),
+    ] + _validate_server()
 
+def _validate_server():
+    return [
         quorum.not_null("url"),
         quorum.not_empty("url"),
 
