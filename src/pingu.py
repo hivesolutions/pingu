@@ -550,7 +550,7 @@ def create_account():
     password_sha1 = hashlib.sha1(password + PASSWORD_SALT).hexdigest()
     api_key_sha1 = hashlib.sha1(str(uuid.uuid4())).hexdigest()
 
-    # creates the structure to be used as the server description
+    # creates the structure to be used as the account description
     # using the values provided as parameters
     account = {
         "enabled" : False,
@@ -566,14 +566,29 @@ def create_account():
         "tokens" : USER_ACL.get(USER_TYPE, ())
     }
 
+    # creates the structure to be used as the contact description
+    # using account values just created
+    contact = {
+        "enabled" : True,
+        "instance_id" : account["instance_id"],
+        "id" : str(uuid.uuid4()),
+        "name" : username,
+        "email" : email
+    }
+
     # saves the account instance into the data source, ensures
     # that the account is ready for login
     _save_account(account)
 
-    # redirects the user to the show page of the account that
-    # was just created
+    # saves the contact instance into the data source, ensures
+    # that the account is ready for contact
+    _save_contact(contact)
+
+    # redirects the user to the pending page, indicating that
+    # the account is not yet activated and is pending the email
+    # confirmation action
     return flask.redirect(
-        flask.url_for("show_account", username = username)
+        flask.url_for("pending")
     )
 
 @app.route("/accounts/<username>", methods = ("GET",))
@@ -882,7 +897,7 @@ def create_contact():
     )
 
 @app.route("/contacts/<id>", methods = ("GET",))
-@quorum.extras.ensure("contact.show")
+@quorum.extras.ensure("contacts.show")
 def show_contact(id):
     contact = _get_contact(id)
     return flask.render_template(
