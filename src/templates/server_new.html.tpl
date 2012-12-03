@@ -1,4 +1,4 @@
-{% extends "partials/layout.html.tpl" %}
+{% extends "partials/layout_server_l.html.tpl" %}
 {% block title %}Servers{% endblock %}
 {% block name %}New Server{% endblock %}
 {% block content %}

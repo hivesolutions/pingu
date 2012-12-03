@@ -526,7 +526,7 @@ def create_account():
 
     # retrieves all the parameters from the request to be
     # handled then validated the required ones
-    _username = flask.request.form.get("username", None)
+    username = flask.request.form.get("username", None)
     password = flask.request.form.get("password", None)
     email = flask.request.form.get("email", None)
 
@@ -541,7 +541,7 @@ def create_account():
     account = {
         "enabled" : False,
         "instance_id" : str(uuid.uuid4()),
-        "username" : _username,
+        "username" : username,
         "password" : password_sha1,
         "api_key" : api_key_sha1,
         "plan" : "basic",
@@ -559,7 +559,7 @@ def create_account():
     # redirects the user to the show page of the account that
     # was just created
     return flask.redirect(
-        flask.url_for("show_account", username = _username)
+        flask.url_for("show_account", username = username)
     )
 
 @app.route("/accounts/<username>", methods = ("GET",))
@@ -644,6 +644,7 @@ def list_servers():
     return flask.render_template(
         "server_list.html.tpl",
         link = "servers",
+        sub_link = "list",
         servers = servers
     )
 
@@ -652,7 +653,8 @@ def list_servers():
 def new_server():
     return flask.render_template(
         "server_new.html.tpl",
-        link = "new_server",
+        link = "servers",
+        sub_link = "create",
         server = {},
         errors = {}
     )
@@ -667,13 +669,14 @@ def create_server():
         return flask.render_template(
             "server_new.html.tpl",
             link = "new_server",
+            sub_link = "create",
             server = server,
             errors = errors
         )
 
     # retrieves all the parameters from the request to be
     # handled then validated the required ones
-    _name = flask.request.form.get("name", None)
+    name = flask.request.form.get("name", None)
     url = flask.request.form.get("url", None)
     description = flask.request.form.get("description", None)
 
@@ -682,7 +685,7 @@ def create_server():
     server = {
         "enabled" : True,
         "instance_id" : flask.session["instance_id"],
-        "name" : _name,
+        "name" : name,
         "url" : url,
         "description" : description
     }
@@ -699,10 +702,8 @@ def create_server():
     # redirects the user to the show page of the server that
     # was just created
     return flask.redirect(
-        flask.url_for("show_server", name = _name)
+        flask.url_for("show_server", name = name)
     )
-
-    return update_server()
 
 @app.route("/servers/<name>", methods = ("GET",))
 @quorum.extras.ensure("servers.show")
@@ -793,6 +794,146 @@ def list_log_json(name):
         mimetype = "application/json"
     )
 
+@app.route("/contacts", methods = ("GET",))
+@quorum.extras.ensure("contacts.list")
+def list_contacts():
+    contacts = _get_contacts()
+    return flask.render_template(
+        "contact_list.html.tpl",
+        link = "contacts",
+        sub_link = "list",
+        contacts = contacts
+    )
+
+@app.route("/contacts/new", methods = ("GET",))
+@quorum.extras.ensure("contacts.new")
+def new_contact():
+    return flask.render_template(
+        "contact_new.html.tpl",
+        link = "contacts",
+        sub_link = "create",
+        contact = {},
+        errors = {}
+    )
+
+@app.route("/contacts", methods = ("POST",))
+@quorum.extras.ensure("contacts.new")
+def create_contact():
+    # runs the validation process on the various arguments
+    # provided to the account
+    errors, contact = quorum.validate("contact_new")
+    if errors:
+        return flask.render_template(
+            "contact_new.html.tpl",
+            link = "new_contact",
+            contact = contact,
+            errors = errors
+        )
+
+    # retrieves all the parameters from the request to be
+    # handled then validated the required ones
+    name = flask.request.form.get("name", None)
+    email = flask.request.form.get("email", None)
+    phone = flask.request.form.get("phone", None)
+    xmpp = flask.request.form.get("xmpp", None)
+    twitter = flask.request.form.get("twitter", None)
+    facebook = flask.request.form.get("facebook", None)
+
+    # generates a new identifier for the contact to be created
+    # this will be used to access the contact
+    id = str(uuid.uuid4())
+
+    # creates the structure to be used as the server description
+    # using the values provided as parameters
+    contact = {
+        "enabled" : True,
+        "instance_id" : flask.session["instance_id"],
+        "id" : id,
+        "name" : name,
+        "email" : email,
+        "phone" : phone,
+        "xmpp" : xmpp,
+        "twitter" : twitter,
+        "facebook" : facebook
+    }
+
+    # saves the contact instance into the data source, ensures
+    # that the account is ready for processing
+    _save_contact(contact)
+
+    # redirects the user to the show page of the contact that
+    # was just created
+    return flask.redirect(
+        flask.url_for("show_contact", id = id)
+    )
+
+@app.route("/contacts/<id>", methods = ("GET",))
+@quorum.extras.ensure("contact.show")
+def show_contact(id):
+    contact = _get_contact(id)
+    return flask.render_template(
+        "contact_show.html.tpl",
+        link = "contacts",
+        sub_link = "info",
+        contact = contact
+    )
+
+@app.route("/contacts/<id>/edit", methods = ("GET",))
+@quorum.extras.ensure("contacts.edit")
+def edit_contact(id):
+    contact = _get_contact(id)
+    return flask.render_template(
+        "contact_edit.html.tpl",
+        link = "contacts",
+        sub_link = "edit",
+        contact = contact,
+        errors = {}
+    )
+
+@app.route("/contacts/<id>/edit", methods = ("POST",))
+@quorum.extras.ensure("contacts.edit")
+def update_contact(id):
+    # runs the validation process on the various arguments
+    # provided to the server
+    errors, contact = quorum.validate("contact")
+    if contact:
+        return flask.render_template(
+            "contact_edit.html.tpl",
+            link = "contacts",
+            sub_link = "edit",
+            contact = contact,
+            errors = errors
+        )
+
+    # retrieves all the parameters from the request to be
+    # handled then validated the required ones
+    url = flask.request.form.get("url", None)
+    description = flask.request.form.get("description", None)
+
+    # populates the structure to be used as the server description
+    # using the values provided as parameters
+    server = _get_contact(id)
+    server["url"] = url
+    server["description"] = description
+
+    # saves the server instance, this should ensure coherence
+    # in the internal data structures
+    _save_server(server)
+
+    # redirects the user to the show page of the contact that
+    # was just created
+    return flask.redirect(
+        flask.url_for("show_contact", id = id)
+    )
+
+@app.route("/contacts/<id>/delete", methods = ("GET", "POST"))
+@quorum.extras.ensure("contacts.delete")
+def delete_contact(id):
+    _delete_contact(id)
+    return flask.redirect(
+        flask.url_for("list_contacts")
+    )
+
 def _get_accounts(start = 0, count = 6):
     pymongo = quorum.mongo.pymongo
     db = quorum.mongo.get_db()
@@ -828,6 +969,7 @@ def _remove_account(username):
     db = quorum.mongo.get_db()
     account = db.accounts.find_one({"username" : username})
     instance_id = account["instance_id"]
+    db.contacts.remove({"instance_id" : instance_id})
     db.log.remove({"instance_id" : instance_id})
     db.servers.remove({"instance_id" : instance_id})
     db.accounts.remove({"instance_id" : instance_id})
@@ -885,6 +1027,37 @@ def _get_log(name, start = 0, count = 6):
     )
     log = [_build_log(_log) for _log in log]
     return log
+
+def _get_contacts():
+    db = quorum.mongo.get_db()
+    contacts = db.contacts.find({
+        "enabled" : True,
+        "instance_id" : flask.session["instance_id"]
+    })
+    contacts = [_build_contact(contact) for contact in contacts]
+    return contacts
+
+def _get_contact(id, build = True, raise_e = True):
+    db = quorum.mongo.get_db()
+    contact = db.contacts.find_one({
+        "instance_id" : flask.session["instance_id"],
+        "id" : id
+    })
+    if not contact and raise_e: raise RuntimeError("Contact not found")
+    build and _build_contact(contact)
+    return contact
+
+def _save_contact(contact):
+    db = quorum.mongo.get_db()
+    db.contacts.save(contact)
+    return contact
+
+def _delete_contact(id):
+    db = quorum.mongo.get_db()
+    contact = db.contacts.find_one({"id" : id})
+    contact["enabled"] = False
+    db.contacts.save(contact)
+    return contact
 
 def _validate_account_new():
     return [
@@ -947,6 +1120,9 @@ def _build_log(log):
     log["up_l"] = up == True and "up" or up == False and "down" or "unknwon"
     log["date_l"] = date_string
     return log
+
+def _build_contact(contact):
+    return contact
 
 def _send_email(subject = "", sender = "", receivers = [], plain = None, rich = None, context = {}):
     plain_data = plain and _render(plain, **context)
