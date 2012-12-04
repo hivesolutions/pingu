@@ -3,9 +3,9 @@
 {% block name %}Login{% endblock %}
 {% block content %}
     <div class="quote">
-        Please provide yor credentials to be able to access the restricted
+        Please provide your credentials to be able to access the restricted
         resources.<br />
-        This values will <strong>not be visible to any element</strong>.
+        These values will <strong>not be visible to any element</strong>.
     </div>
     <div class="quote error">
         {{ error }}
