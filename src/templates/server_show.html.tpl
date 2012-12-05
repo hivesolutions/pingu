@@ -22,7 +22,13 @@
             </tr>
             <tr>
                 <td class="right label" width="50%">url</td>
-                <td class="left value" width="50%">{{ server.url | default('-', true) }}</td>
+                <td class="left value" width="50%">
+                    {% if server.url %}
+                        <a href="{{ server.url }}">{{ server.url }}</a>
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
             </tr>
         </tbody>
     </table>
