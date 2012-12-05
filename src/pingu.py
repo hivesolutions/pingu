@@ -1408,7 +1408,7 @@ def _schedule_task(task):
 def load():
     # runs the loading of the quorum structures, this should
     # delegate a series of setup operations to quorum
-    quorum.load(redis_session = True)
+    quorum.load(app, redis_session = True)
 
     # sets the global wide application settings and
     # configures the application object according to
@@ -1427,7 +1427,7 @@ def load():
 def run():
     # runs the loading of the quorum structures, this should
     # delegate a series of setup operations to quorum
-    quorum.load(redis_session = True)
+    quorum.load(app, redis_session = True)
 
     # sets the debug control in the application
     # then checks the current environment variable
