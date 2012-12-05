@@ -1408,13 +1408,12 @@ def _schedule_task(task):
 def load():
     # runs the loading of the quorum structures, this should
     # delegate a series of setup operations to quorum
-    quorum.load()
+    quorum.load(redis_session = True)
 
     # sets the global wide application settings and
     # configures the application object according to
     # this settings
     debug = os.environ.get("DEBUG", False) and True or False
-    redis_url = os.getenv("REDISTOGO_URL", None)
     smtp_host = os.environ.get("SMTP_HOST", "localhost")
     smtp_user = os.environ.get("SMTP_USER", None)
     smtp_password = os.environ.get("SMTP_PASSWORD", None)
@@ -1422,14 +1421,13 @@ def load():
     config.SMTP_HOST = smtp_host
     config.SMTP_USER = smtp_user
     config.SMTP_PASSWORD = smtp_password
-    app.session_interface = quorum.session.RedisSessionInterface(url = redis_url)
     app.debug = debug
     app.secret_key = SECRET_KEY
 
 def run():
     # runs the loading of the quorum structures, this should
     # delegate a series of setup operations to quorum
-    quorum.load()
+    quorum.load(redis_session = True)
 
     # sets the debug control in the application
     # then checks the current environment variable
@@ -1437,7 +1435,6 @@ def run():
     # and then start running it (continuous loop)
     debug = os.environ.get("DEBUG", False) and True or False
     reloader = os.environ.get("RELOADER", False) and True or False
-    redis_url = os.getenv("REDISTOGO_URL", None)
     smtp_host = os.environ.get("SMTP_HOST", "localhost")
     smtp_user = os.environ.get("SMTP_USER", None)
     smtp_password = os.environ.get("SMTP_PASSWORD", None)
@@ -1446,7 +1443,6 @@ def run():
     config.SMTP_HOST = smtp_host
     config.SMTP_USER = smtp_user
     config.SMTP_PASSWORD = smtp_password
-    app.session_interface = quorum.session.RedisSessionInterface(url = redis_url)
     app.debug = debug
     app.secret_key = SECRET_KEY
     app.run(
