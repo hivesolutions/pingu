@@ -124,11 +124,14 @@ HEADERS = {
 http client to use """
 
 app = flask.Flask(__name__)
-navbar_h = None
 
-mongo_url = os.getenv("MONGOHQ_URL", MONGO_URL)
-quorum.mongodb.url = mongo_url
-quorum.mongodb.database = MONGO_DATABASE
+quorum.load(
+    app,
+    redis_session = True,
+    mongo_database = MONGO_DATABASE
+)
+
+navbar_h = None
 
 # @TODO: improve this code
 base_path = os.path.dirname(__file__)
@@ -1406,10 +1409,6 @@ def _schedule_task(task):
     )
 
 def load():
-    # runs the loading of the quorum structures, this should
-    # delegate a series of setup operations to quorum
-    quorum.load(app, redis_session = True)
-
     # sets the global wide application settings and
     # configures the application object according to
     # this settings
@@ -1417,7 +1416,6 @@ def load():
     smtp_host = os.environ.get("SMTP_HOST", "localhost")
     smtp_user = os.environ.get("SMTP_USER", None)
     smtp_password = os.environ.get("SMTP_PASSWORD", None)
-    quorum.mongodb.database = MONGO_DATABASE
     config.SMTP_HOST = smtp_host
     config.SMTP_USER = smtp_user
     config.SMTP_PASSWORD = smtp_password
@@ -1425,10 +1423,6 @@ def load():
     app.secret_key = SECRET_KEY
 
 def run():
-    # runs the loading of the quorum structures, this should
-    # delegate a series of setup operations to quorum
-    quorum.load(app, redis_session = True)
-
     # sets the debug control in the application
     # then checks the current environment variable
     # for the target port for execution (external)
@@ -1439,7 +1433,6 @@ def run():
     smtp_user = os.environ.get("SMTP_USER", None)
     smtp_password = os.environ.get("SMTP_PASSWORD", None)
     port = int(os.environ.get("PORT", 5000))
-    quorum.mongodb.database = MONGO_DATABASE
     config.SMTP_HOST = smtp_host
     config.SMTP_USER = smtp_user
     config.SMTP_PASSWORD = smtp_password
