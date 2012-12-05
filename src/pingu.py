@@ -127,8 +127,8 @@ app = flask.Flask(__name__)
 navbar_h = None
 
 mongo_url = os.getenv("MONGOHQ_URL", MONGO_URL)
-quorum.mongo.url = mongo_url
-quorum.mongo.database = MONGO_DATABASE
+quorum.mongodb.url = mongo_url
+quorum.mongodb.database = MONGO_DATABASE
 
 # @TODO: improve this code
 base_path = os.path.dirname(__file__)
@@ -260,10 +260,10 @@ def get_navbar_h():
 
 @app.context_processor
 def utility_processor():
-    return dict(acl = quorum.extras.check_login)
+    return dict(acl = quorum.check_login)
 
 @app.route("/heroku/resources", methods = ("POST",))
-@quorum.extras.ensure_auth(username_h, password_h, json = True)
+@quorum.ensure_auth(username_h, password_h, json = True)
 def provision():
     data = flask.request.data
     object = json.loads(data)
@@ -293,14 +293,14 @@ def provision():
     )
 
 @app.route("/heroku/resources/<id>", methods = ("DELETE",))
-@quorum.extras.ensure_auth(username_h, password_h, json = True)
+@quorum.ensure_auth(username_h, password_h, json = True)
 def deprovision(id):
     _remove_account(id)
 
     return "ok"
 
 @app.route("/heroku/resources/<id>", methods = ("PUT",))
-@quorum.extras.ensure_auth(username_h, password_h, json = True)
+@quorum.ensure_auth(username_h, password_h, json = True)
 def plan_change(id):
     data = flask.request.data
     object = json.loads(data)
@@ -361,7 +361,7 @@ def sso_login():
     flask.session["tokens"] = tokens
     flask.session["instance_id"] = instance_id
     flask.session["nav_data"] = navbar_h
-    flask.session["acl"] = quorum.extras.check_login
+    flask.session["acl"] = quorum.check_login
 
     # makes the current session permanent this will allow
     # the session to persist along multiple browser initialization
@@ -379,7 +379,7 @@ def sso_login():
 
 @app.route("/", methods = ("GET",))
 @app.route("/index", methods = ("GET",))
-@quorum.extras.ensure("index")
+@quorum.ensure("index")
 def index():
     return flask.render_template(
         "index.html.tpl",
@@ -463,7 +463,7 @@ def login():
     flask.session["tokens"] = tokens
     flask.session["instance_id"] = instance_id
     flask.session["nav_data"] = None
-    flask.session["acl"] = quorum.extras.check_login
+    flask.session["acl"] = quorum.check_login
 
     # makes the current session permanent this will allow
     # the session to persist along multiple browser initialization
@@ -485,7 +485,7 @@ def logout():
     )
 
 @app.route("/about", methods = ("GET",))
-@quorum.extras.ensure("about")
+@quorum.ensure("about")
 def about():
     return flask.render_template(
         "about.html.tpl",
@@ -493,7 +493,7 @@ def about():
     )
 
 @app.route("/accounts", methods = ("GET",))
-@quorum.extras.ensure("accounts.list")
+@quorum.ensure("accounts.list")
 def list_accounts():
     accounts = _get_accounts()
     return flask.render_template(
@@ -504,13 +504,13 @@ def list_accounts():
     )
 
 @app.route("/accounts.json", methods = ("GET",))
-@quorum.extras.ensure("accounts.list", json = True)
+@quorum.ensure("accounts.list", json = True)
 def accounts_json():
     start_record = int(flask.request.args.get("start_record", 0))
     number_records = int(flask.request.args.get("number_records", 6))
     accounts = _get_accounts(start = start_record, count = number_records)
     return flask.Response(
-        quorum.mongo.dumps(accounts),
+        quorum.mongodb.dumps(accounts),
         mimetype = "application/json"
     )
 
@@ -592,7 +592,7 @@ def create_account():
     )
 
 @app.route("/accounts/<username>", methods = ("GET",))
-@quorum.extras.ensure("accounts.show")
+@quorum.ensure("accounts.show")
 def show_account(username):
     account = _get_account(username)
     return flask.render_template(
@@ -603,7 +603,7 @@ def show_account(username):
     )
 
 @app.route("/accounts/<username>/edit", methods = ("GET",))
-@quorum.extras.ensure("accounts.edit")
+@quorum.ensure("accounts.edit")
 def edit_account(username):
     account = _get_account(username)
     return flask.render_template(
@@ -615,7 +615,7 @@ def edit_account(username):
     )
 
 @app.route("/accounts/<username>/edit", methods = ("POST",))
-@quorum.extras.ensure("accounts.edit")
+@quorum.ensure("accounts.edit")
 def update_account(username):
     # runs the validation process on the various arguments
     # provided to the account
@@ -659,7 +659,7 @@ def update_account(username):
     )
 
 @app.route("/accounts/<username>/delete", methods = ("GET", "POST"))
-@quorum.extras.ensure("accounts.delete")
+@quorum.ensure("accounts.delete")
 def delete_account(username):
     _delete_account(username)
     return flask.redirect(
@@ -667,7 +667,7 @@ def delete_account(username):
     )
 
 @app.route("/servers", methods = ("GET",))
-@quorum.extras.ensure("servers.list")
+@quorum.ensure("servers.list")
 def list_servers():
     servers = _get_servers()
     return flask.render_template(
@@ -678,7 +678,7 @@ def list_servers():
     )
 
 @app.route("/servers/new", methods = ("GET",))
-@quorum.extras.ensure("servers.new")
+@quorum.ensure("servers.new")
 def new_server():
     return flask.render_template(
         "server_new.html.tpl",
@@ -689,7 +689,7 @@ def new_server():
     )
 
 @app.route("/servers", methods = ("POST",))
-@quorum.extras.ensure("servers.new")
+@quorum.ensure("servers.new")
 def create_server():
     # runs the validation process on the various arguments
     # provided to the server
@@ -735,7 +735,7 @@ def create_server():
     )
 
 @app.route("/servers/<name>", methods = ("GET",))
-@quorum.extras.ensure("servers.show")
+@quorum.ensure("servers.show")
 def show_server(name):
     server = _get_server(name)
     return flask.render_template(
@@ -746,7 +746,7 @@ def show_server(name):
     )
 
 @app.route("/servers/<name>/edit", methods = ("GET",))
-@quorum.extras.ensure("servers.edit")
+@quorum.ensure("servers.edit")
 def edit_server(name):
     server = _get_server(name)
     return flask.render_template(
@@ -758,7 +758,7 @@ def edit_server(name):
     )
 
 @app.route("/servers/<name>/edit", methods = ("POST",))
-@quorum.extras.ensure("servers.edit")
+@quorum.ensure("servers.edit")
 def update_server(name):
     # runs the validation process on the various arguments
     # provided to the server
@@ -794,7 +794,7 @@ def update_server(name):
     )
 
 @app.route("/servers/<name>/delete", methods = ("GET", "POST"))
-@quorum.extras.ensure("servers.delete")
+@quorum.ensure("servers.delete")
 def delete_server(name):
     _delete_server(name)
     return flask.redirect(
@@ -802,7 +802,7 @@ def delete_server(name):
     )
 
 @app.route("/servers/<name>/log", methods = ("GET",))
-@quorum.extras.ensure("log.list")
+@quorum.ensure("log.list")
 def list_log(name):
     server = _get_server(name)
     return flask.render_template(
@@ -813,18 +813,18 @@ def list_log(name):
     )
 
 @app.route("/servers/<name>/log.json", methods = ("GET",))
-@quorum.extras.ensure("log.list", json = True)
+@quorum.ensure("log.list", json = True)
 def list_log_json(name):
     start_record = int(flask.request.args.get("start_record", 0))
     number_records = int(flask.request.args.get("number_records", 6))
     log = _get_log(name, start = start_record, count = number_records)
     return flask.Response(
-        quorum.mongo.dumps(log),
+        quorum.mongodb.dumps(log),
         mimetype = "application/json"
     )
 
 @app.route("/contacts", methods = ("GET",))
-@quorum.extras.ensure("contacts.list")
+@quorum.ensure("contacts.list")
 def list_contacts():
     contacts = _get_contacts()
     return flask.render_template(
@@ -835,7 +835,7 @@ def list_contacts():
     )
 
 @app.route("/contacts/new", methods = ("GET",))
-@quorum.extras.ensure("contacts.new")
+@quorum.ensure("contacts.new")
 def new_contact():
     return flask.render_template(
         "contact_new.html.tpl",
@@ -846,7 +846,7 @@ def new_contact():
     )
 
 @app.route("/contacts", methods = ("POST",))
-@quorum.extras.ensure("contacts.new")
+@quorum.ensure("contacts.new")
 def create_contact():
     # runs the validation process on the various arguments
     # provided to the account
@@ -897,7 +897,7 @@ def create_contact():
     )
 
 @app.route("/contacts/<id>", methods = ("GET",))
-@quorum.extras.ensure("contacts.show")
+@quorum.ensure("contacts.show")
 def show_contact(id):
     contact = _get_contact(id)
     return flask.render_template(
@@ -908,7 +908,7 @@ def show_contact(id):
     )
 
 @app.route("/contacts/<id>/edit", methods = ("GET",))
-@quorum.extras.ensure("contacts.edit")
+@quorum.ensure("contacts.edit")
 def edit_contact(id):
     contact = _get_contact(id)
     return flask.render_template(
@@ -920,7 +920,7 @@ def edit_contact(id):
     )
 
 @app.route("/contacts/<id>/edit", methods = ("POST",))
-@quorum.extras.ensure("contacts.edit")
+@quorum.ensure("contacts.edit")
 def update_contact(id):
     # runs the validation process on the various arguments
     # provided to the server
@@ -956,7 +956,7 @@ def update_contact(id):
     )
 
 @app.route("/contacts/<id>/delete", methods = ("GET", "POST"))
-@quorum.extras.ensure("contacts.delete")
+@quorum.ensure("contacts.delete")
 def delete_contact(id):
     _delete_contact(id)
     return flask.redirect(
@@ -964,8 +964,8 @@ def delete_contact(id):
     )
 
 def _get_accounts(start = 0, count = 6):
-    pymongo = quorum.mongo.pymongo
-    db = quorum.mongo.get_db()
+    pymongo = quorum.mongodb.pymongo
+    db = quorum.mongodb.get_db()
     accounts = db.accounts.find(
         {"enabled" : True},
         skip = start,
@@ -976,7 +976,7 @@ def _get_accounts(start = 0, count = 6):
     return accounts
 
 def _get_account(username, build = True, raise_e = True):
-    db = quorum.mongo.get_db()
+    db = quorum.mongodb.get_db()
     account = db.accounts.find_one({
         "enabled" : True,
         "username" : username
@@ -986,19 +986,19 @@ def _get_account(username, build = True, raise_e = True):
     return account
 
 def _save_account(account):
-    db = quorum.mongo.get_db()
+    db = quorum.mongodb.get_db()
     db.accounts.save(account)
     return account
 
 def _delete_account(username):
-    db = quorum.mongo.get_db()
+    db = quorum.mongodb.get_db()
     account = db.accounts.find_one({"username" : username})
     account["enabled"] = False
     db.accounts.save(account)
     return account
 
 def _remove_account(username):
-    db = quorum.mongo.get_db()
+    db = quorum.mongodb.get_db()
     account = db.accounts.find_one({"username" : username})
     instance_id = account["instance_id"]
     db.contacts.remove({"instance_id" : instance_id})
@@ -1007,7 +1007,7 @@ def _remove_account(username):
     db.accounts.remove({"instance_id" : instance_id})
 
 def _get_servers():
-    db = quorum.mongo.get_db()
+    db = quorum.mongodb.get_db()
     servers = db.servers.find({
         "enabled" : True,
         "instance_id" : flask.session["instance_id"]
@@ -1016,7 +1016,7 @@ def _get_servers():
     return servers
 
 def _get_all_servers():
-    db = quorum.mongo.get_db()
+    db = quorum.mongodb.get_db()
     servers = db.servers.find({
         "enabled" : True
     })
@@ -1024,7 +1024,7 @@ def _get_all_servers():
     return servers
 
 def _get_server(name, build = True, raise_e = True):
-    db = quorum.mongo.get_db()
+    db = quorum.mongodb.get_db()
     server = db.servers.find_one({
         "instance_id" : flask.session["instance_id"],
         "name" : name
@@ -1034,20 +1034,20 @@ def _get_server(name, build = True, raise_e = True):
     return server
 
 def _save_server(server):
-    db = quorum.mongo.get_db()
+    db = quorum.mongodb.get_db()
     db.servers.save(server)
     return server
 
 def _delete_server(name):
-    db = quorum.mongo.get_db()
+    db = quorum.mongodb.get_db()
     server = db.servers.find_one({"name" : name})
     server["enabled"] = False
     db.servers.save(server)
     return server
 
 def _get_log(name, start = 0, count = 6):
-    pymongo = quorum.mongo.pymongo
-    db = quorum.mongo.get_db()
+    pymongo = quorum.mongodb.pymongo
+    db = quorum.mongodb.get_db()
     log = db.log.find(
         {
             "instance_id" : flask.session["instance_id"],
@@ -1061,7 +1061,7 @@ def _get_log(name, start = 0, count = 6):
     return log
 
 def _get_contacts():
-    db = quorum.mongo.get_db()
+    db = quorum.mongodb.get_db()
     contacts = db.contacts.find({
         "enabled" : True,
         "instance_id" : flask.session["instance_id"]
@@ -1070,7 +1070,7 @@ def _get_contacts():
     return contacts
 
 def _get_contact(id, build = True, raise_e = True):
-    db = quorum.mongo.get_db()
+    db = quorum.mongodb.get_db()
     contact = db.contacts.find_one({
         "instance_id" : flask.session["instance_id"],
         "id" : id
@@ -1080,12 +1080,12 @@ def _get_contact(id, build = True, raise_e = True):
     return contact
 
 def _save_contact(contact):
-    db = quorum.mongo.get_db()
+    db = quorum.mongodb.get_db()
     db.contacts.save(contact)
     return contact
 
 def _delete_contact(id):
-    db = quorum.mongo.get_db()
+    db = quorum.mongodb.get_db()
     contact = db.contacts.find_one({"id" : id})
     contact["enabled"] = False
     db.contacts.save(contact)
@@ -1190,7 +1190,7 @@ def _ping(server, timeout = 1.0):
 
     # retrieves the server again to ensure that the data
     # is correct in it
-    db = quorum.mongo.get_db()
+    db = quorum.mongodb.get_db()
     server = db.servers.find_one({"name" : name})
 
     # retrieves the various attribute values from the server
@@ -1319,7 +1319,7 @@ def _render(template_name, **context):
     return flask.templating._render(template, context, app)
 
 def _ensure_db():
-    db = quorum.mongo.get_db()
+    db = quorum.mongodb.get_db()
 
     db.accounts.ensure_index("enabled")
     db.accounts.ensure_index("instance_id")
@@ -1349,7 +1349,7 @@ def _ensure_db():
     db.contacts.ensure_index("phone")
 
 def _setup_db():
-    db = quorum.mongo.get_db()
+    db = quorum.mongodb.get_db()
     root = db.accounts.find_one({
         "username" : "root",
         "type" : ADMIN_TYPE
@@ -1406,25 +1406,31 @@ def _schedule_task(task):
     )
 
 def load():
+    # runs the loading of the quorum structures, this should
+    # delegate a series of setup operations to quorum
+    quorum.load()
+
     # sets the global wide application settings and
     # configures the application object according to
     # this settings
     debug = os.environ.get("DEBUG", False) and True or False
     redis_url = os.getenv("REDISTOGO_URL", None)
-    mongo_url = os.getenv("MONGOHQ_URL", MONGO_URL)
     smtp_host = os.environ.get("SMTP_HOST", "localhost")
     smtp_user = os.environ.get("SMTP_USER", None)
     smtp_password = os.environ.get("SMTP_PASSWORD", None)
-    quorum.mongo.url = mongo_url
-    quorum.mongo.database = MONGO_DATABASE
+    quorum.mongodb.database = MONGO_DATABASE
     config.SMTP_HOST = smtp_host
     config.SMTP_USER = smtp_user
     config.SMTP_PASSWORD = smtp_password
-    app.session_interface = quorum.extras.RedisSessionInterface(url = redis_url)
+    app.session_interface = quorum.session.RedisSessionInterface(url = redis_url)
     app.debug = debug
     app.secret_key = SECRET_KEY
 
 def run():
+    # runs the loading of the quorum structures, this should
+    # delegate a series of setup operations to quorum
+    quorum.load()
+
     # sets the debug control in the application
     # then checks the current environment variable
     # for the target port for execution (external)
@@ -1432,17 +1438,15 @@ def run():
     debug = os.environ.get("DEBUG", False) and True or False
     reloader = os.environ.get("RELOADER", False) and True or False
     redis_url = os.getenv("REDISTOGO_URL", None)
-    mongo_url = os.getenv("MONGOHQ_URL", MONGO_URL)
     smtp_host = os.environ.get("SMTP_HOST", "localhost")
     smtp_user = os.environ.get("SMTP_USER", None)
     smtp_password = os.environ.get("SMTP_PASSWORD", None)
     port = int(os.environ.get("PORT", 5000))
-    quorum.mongo.url = mongo_url
-    quorum.mongo.database = MONGO_DATABASE
+    quorum.mongodb.database = MONGO_DATABASE
     config.SMTP_HOST = smtp_host
     config.SMTP_USER = smtp_user
     config.SMTP_PASSWORD = smtp_password
-    app.session_interface = quorum.extras.RedisSessionInterface(url = redis_url)
+    app.session_interface = quorum.session.RedisSessionInterface(url = redis_url)
     app.debug = debug
     app.secret_key = SECRET_KEY
     app.run(
