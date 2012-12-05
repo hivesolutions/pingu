@@ -965,7 +965,7 @@ def delete_contact(id):
 
 def _get_accounts(start = 0, count = 6):
     pymongo = quorum.mongodb.pymongo
-    db = quorum.mongodb.get_db()
+    db = quorum.get_mongo_db()
     accounts = db.accounts.find(
         {"enabled" : True},
         skip = start,
@@ -976,7 +976,7 @@ def _get_accounts(start = 0, count = 6):
     return accounts
 
 def _get_account(username, build = True, raise_e = True):
-    db = quorum.mongodb.get_db()
+    db = quorum.get_mongo_db()
     account = db.accounts.find_one({
         "enabled" : True,
         "username" : username
@@ -986,19 +986,19 @@ def _get_account(username, build = True, raise_e = True):
     return account
 
 def _save_account(account):
-    db = quorum.mongodb.get_db()
+    db = quorum.get_mongo_db()
     db.accounts.save(account)
     return account
 
 def _delete_account(username):
-    db = quorum.mongodb.get_db()
+    db = quorum.get_mongo_db()
     account = db.accounts.find_one({"username" : username})
     account["enabled"] = False
     db.accounts.save(account)
     return account
 
 def _remove_account(username):
-    db = quorum.mongodb.get_db()
+    db = quorum.get_mongo_db()
     account = db.accounts.find_one({"username" : username})
     instance_id = account["instance_id"]
     db.contacts.remove({"instance_id" : instance_id})
@@ -1007,7 +1007,7 @@ def _remove_account(username):
     db.accounts.remove({"instance_id" : instance_id})
 
 def _get_servers():
-    db = quorum.mongodb.get_db()
+    db = quorum.get_mongo_db()
     servers = db.servers.find({
         "enabled" : True,
         "instance_id" : flask.session["instance_id"]
@@ -1016,7 +1016,7 @@ def _get_servers():
     return servers
 
 def _get_all_servers():
-    db = quorum.mongodb.get_db()
+    db = quorum.get_mongo_db()
     servers = db.servers.find({
         "enabled" : True
     })
@@ -1024,7 +1024,7 @@ def _get_all_servers():
     return servers
 
 def _get_server(name, build = True, raise_e = True):
-    db = quorum.mongodb.get_db()
+    db = quorum.get_mongo_db()
     server = db.servers.find_one({
         "instance_id" : flask.session["instance_id"],
         "name" : name
@@ -1034,12 +1034,12 @@ def _get_server(name, build = True, raise_e = True):
     return server
 
 def _save_server(server):
-    db = quorum.mongodb.get_db()
+    db = quorum.get_mongo_db()
     db.servers.save(server)
     return server
 
 def _delete_server(name):
-    db = quorum.mongodb.get_db()
+    db = quorum.get_mongo_db()
     server = db.servers.find_one({"name" : name})
     server["enabled"] = False
     db.servers.save(server)
@@ -1047,7 +1047,7 @@ def _delete_server(name):
 
 def _get_log(name, start = 0, count = 6):
     pymongo = quorum.mongodb.pymongo
-    db = quorum.mongodb.get_db()
+    db = quorum.get_mongo_db()
     log = db.log.find(
         {
             "instance_id" : flask.session["instance_id"],
@@ -1061,7 +1061,7 @@ def _get_log(name, start = 0, count = 6):
     return log
 
 def _get_contacts():
-    db = quorum.mongodb.get_db()
+    db = quorum.get_mongo_db()
     contacts = db.contacts.find({
         "enabled" : True,
         "instance_id" : flask.session["instance_id"]
@@ -1070,7 +1070,7 @@ def _get_contacts():
     return contacts
 
 def _get_contact(id, build = True, raise_e = True):
-    db = quorum.mongodb.get_db()
+    db = quorum.get_mongo_db()
     contact = db.contacts.find_one({
         "instance_id" : flask.session["instance_id"],
         "id" : id
@@ -1080,12 +1080,12 @@ def _get_contact(id, build = True, raise_e = True):
     return contact
 
 def _save_contact(contact):
-    db = quorum.mongodb.get_db()
+    db = quorum.get_mongo_db()
     db.contacts.save(contact)
     return contact
 
 def _delete_contact(id):
-    db = quorum.mongodb.get_db()
+    db = quorum.get_mongo_db()
     contact = db.contacts.find_one({"id" : id})
     contact["enabled"] = False
     db.contacts.save(contact)
@@ -1190,7 +1190,7 @@ def _ping(server, timeout = 1.0):
 
     # retrieves the server again to ensure that the data
     # is correct in it
-    db = quorum.mongodb.get_db()
+    db = quorum.get_mongo_db()
     server = db.servers.find_one({"name" : name})
 
     # retrieves the various attribute values from the server
@@ -1319,7 +1319,7 @@ def _render(template_name, **context):
     return flask.templating._render(template, context, app)
 
 def _ensure_db():
-    db = quorum.mongodb.get_db()
+    db = quorum.get_mongo_db()
 
     db.accounts.ensure_index("enabled")
     db.accounts.ensure_index("instance_id")
@@ -1349,7 +1349,7 @@ def _ensure_db():
     db.contacts.ensure_index("phone")
 
 def _setup_db():
-    db = quorum.mongodb.get_db()
+    db = quorum.get_mongo_db()
     root = db.accounts.find_one({
         "username" : "root",
         "type" : ADMIN_TYPE
