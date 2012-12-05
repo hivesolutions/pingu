@@ -71,10 +71,6 @@ TASKS = ()
 """ The set of tasks to be executed by ping operations
 this is the standard hardcoded values """
 
-MONGO_URL = "mongodb://localhost:27017"
-""" The default url to be used for the connection with
-the mongo database """
-
 MONGO_DATABASE = "pingu"
 """ The default database to be used for the connection with
 the mongo database """
