@@ -1128,6 +1128,18 @@ def _validate_server():
         quorum.not_empty("description")
     ]
 
+def _validate_contact_new():
+    return [] + _validate_contact()
+
+def _validate_contact():
+    return [
+        quorum.not_null("name"),
+        quorum.not_empty("name"),
+
+        quorum.not_null("email"),
+        quorum.not_empty("email")
+    ]
+
 def _build_account(account):
     enabled = account.get("enabled", False)
     last_login = account.get("last_login", None)
