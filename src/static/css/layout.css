@@ -29,6 +29,10 @@
  __license__   = GNU General Public License (GPL), Version 3
 */
 
+.footer-logo {
+    background-image: url(../images/logo-small.png);
+}
+
 .heroku-nav {
     box-shadow: 0px 0px 8px #2d2d2d;
     -moz-box-shadow: 0px 0px 8px #2d2d2d;
