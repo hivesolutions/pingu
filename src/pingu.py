@@ -1180,6 +1180,8 @@ def _build_log(log):
     return log
 
 def _build_contact(contact):
+    email = contact.get("email", None)
+    contact["email_md5"] = email and hashlib.md5(email).hexdigest()
     return contact
 
 def _send_email(subject = "", sender = "", receivers = [], plain = None, rich = None, context = {}):
