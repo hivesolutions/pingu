@@ -134,7 +134,11 @@ table > tbody > tr:last-child > td {
 }
 
 table td.marked {
-    background: transparent url(../images/site/dot-green-large.png) no-repeat center center;
+    background: transparent url(../images/site/dot-green.png) no-repeat center center;
+}
+
+table td.unmarked {
+    background: transparent url(../images/site/dot-green-circle.png) no-repeat center center;
 }
 
 table > thead th {
