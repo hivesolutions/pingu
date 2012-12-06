@@ -376,6 +376,13 @@ def sso_login():
     response.set_cookie("heroku-nav-data", value = nav_data)
     return response
 
+@app.route("/home", methods = ("GET",))
+def home():
+    return flask.render_template(
+        "site/index.html.tpl",
+        link = "home"
+    )
+
 @app.route("/", methods = ("GET",))
 @app.route("/index", methods = ("GET",))
 @quorum.ensure("index")
