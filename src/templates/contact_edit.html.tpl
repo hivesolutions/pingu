@@ -1,8 +1,8 @@
-{% extends "partials/layout_contact_l.html.tpl" %}
+{% extends "partials/layout_contact.html.tpl" %}
 {% block title %}Contacts{% endblock %}
-{% block name %}New Contact{% endblock %}
+{% block name %}{{ contact.name }} :: edit{% endblock %}
 {% block content %}
-    <form action="{{ url_for('create_contact') }}" method="post" class="form">
+    <form action="{{ url_for('update_contact', id = contact.id) }}" method="post" class="form">
         <div class="label label-left">
             <label>Name</label>
         </div>
@@ -45,10 +45,8 @@
             <input class="text-field" name="facebook" autocomplete="off" value="{{ contact.facebook }}"
                    data-error="{{ errors.facebook }}" />
         </div>
-        <div class="quote">
-            By clicking Create Contact, you agree to our Service Agreement and that you have
-            read and understand our Privacy Policy.
-        </div>
-        <span class="button" data-submit="true">Create Contact</span>
+        <span class="button" data-link="{{ url_for('show_contact', id = contact.username) }}">Cancel</span>
+        //
+        <span class="button" data-submit="true">Update</span>
     </form>
 {% endblock %}

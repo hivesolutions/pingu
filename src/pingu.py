@@ -628,7 +628,7 @@ def update_account(username):
     errors, account = quorum.validate("account")
     if errors:
         return flask.render_template(
-            "server_edit.html.tpl",
+            "account_edit.html.tpl",
             link = "accounts",
             sub_link = "edit",
             account = account,
@@ -785,7 +785,7 @@ def update_server(name):
 
     # populates the structure to be used as the server description
     # using the values provided as parameters
-    server = _get_server(name)
+    server = _get_server(name, build = False)
     server["url"] = url
     server["description"] = description
 
@@ -931,7 +931,7 @@ def update_contact(id):
     # runs the validation process on the various arguments
     # provided to the server
     errors, contact = quorum.validate("contact")
-    if contact:
+    if errors:
         return flask.render_template(
             "contact_edit.html.tpl",
             link = "contacts",
@@ -942,18 +942,26 @@ def update_contact(id):
 
     # retrieves all the parameters from the request to be
     # handled then validated the required ones
-    url = flask.request.form.get("url", None)
-    description = flask.request.form.get("description", None)
+    name = flask.request.form.get("name", None)
+    email = flask.request.form.get("email", None)
+    phone = flask.request.form.get("phone", None)
+    xmpp = flask.request.form.get("xmpp", None)
+    twitter = flask.request.form.get("twitter", None)
+    facebook = flask.request.form.get("facebook", None)
 
-    # populates the structure to be used as the server description
+    # creates the structure to be used as the contact description
     # using the values provided as parameters
-    server = _get_contact(id)
-    server["url"] = url
-    server["description"] = description
+    contact = _get_contact(id, build = False)
+    contact["name"] = name
+    contact["email"] = email
+    contact["phone"] = phone
+    contact["xmpp"] = xmpp
+    contact["twitter"] = twitter
+    contact["facebook"] = facebook
 
-    # saves the server instance, this should ensure coherence
-    # in the internal data structures
-    _save_server(server)
+    # saves the contact instance into the data source, ensures
+    # that the account is ready for processing
+    _save_contact(contact)
 
     # redirects the user to the show page of the contact that
     # was just created
