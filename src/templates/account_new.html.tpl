@@ -1,5 +1,5 @@
 {% extends "partials/layout_simple.html.tpl" %}
-{% block title %}Account{% endblock %}
+{% block title %}Accounts{% endblock %}
 {% block name %}New Account{% endblock %}
 {% block content %}
     <div class="quote">
