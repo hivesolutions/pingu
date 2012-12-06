@@ -1,0 +1,480 @@
+@charset "utf-8";
+
+/*
+ Hive Pingu System
+ Copyright (C) 2008-2012 Hive Solutions Lda.
+
+ This file is part of Hive Pingu System.
+
+ Hive Pingu System is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+
+ Hive Pingu System is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with Hive Pingu System. If not, see <http://www.gnu.org/licenses/>.
+*/
+
+/*
+ __author__    = João Magalhães <joamag@hive.pt>
+ __version__   = 1.0.0
+ __revision__  = $LastChangedRevision$
+ __date__      = $LastChangedDate$
+ __copyright__ = Copyright (c) 2010-2012 Hive Solutions Lda.
+ __license__   = GNU General Public License (GPL), Version 3
+*/
+
+@import url(http://fonts.googleapis.com/css?family=Open+Sans:400,700);
+
+::-webkit-scrollbar {
+    height: 10px;
+    width: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background-color: #dddddd;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: #bbbbbb;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: #aaaaaa;
+}
+
+::-webkit-scrollbar-thumb:window-inactive {
+    background-color: #cccccc;
+}
+
+#overlay {
+    background-color: #000000;
+    display: none;
+    left: 0px;
+    opacity: 0.6;
+    position: absolute;
+    top: 0px;
+}
+
+body {
+    background: transparent url(../images/site/background.png) repeat;
+    color: #4d4d4d;
+    font-family: "Open Sans", arial, verdana;
+    font-size: 13px;
+    margin: 0px auto 0px auto;
+    padding: 0px 0px 48px 0px;
+    text-align: center;
+    width: 960px;
+}
+
+h1 {
+    color: #666666;
+    font-size: 46px;
+    font-weight: bold;
+    line-height: 54px;
+    margin: 26px 0px 52px 0px;
+}
+
+h2 {
+    color: #999999;
+    font-size: 20px;
+    font-weight: normal;
+    line-height: 26px;
+}
+
+h3 {
+    color: #aaaaaa;
+    font-size: 18px;
+    font-weight: bold;
+    line-height: 22px;
+}
+
+h4 {
+    color: #888888;
+    font-size: 13px;
+    font-weight: bold;
+    line-height: 15px;
+}
+
+a {
+    color: #005b9c;
+    padding-bottom: 1px;
+    text-decoration: none;
+}
+
+a:hover {
+    border-bottom: 1px solid #005b9c;
+}
+
+table {
+    border-collapse: collapse;
+    border-spacing: 0px;
+    color: #666666;
+    font-size: 16px;
+    font-weight: bold;
+    margin: 0px auto 0px auto;
+    width: 640px;
+}
+
+table td {
+    padding: 12px 0px 12px 0px;
+}
+
+table > tbody td {
+    border-bottom: 1px solid #e0e0e0;
+}
+
+table > tbody > tr:last-child > td {
+    border-bottom: 1px solid #aaaaaa;
+}
+
+table td.marked {
+    background: transparent url(../images/site/dot-green-large.png) no-repeat center center;
+}
+
+table > thead th {
+    font-size: 22px;
+}
+
+table > tbody td:first-child {
+    font-size: 13px;
+    font-weight: normal;
+    text-align: left;
+}
+
+table > tfoot td:first-child {
+    font-size: 10px;
+    font-weight: normal;
+    text-align: left;
+    vertical-align: bottom;
+}
+
+.clear {
+    clear: both;
+}
+
+.superscript {
+    font-size: 10px;
+}
+
+.lightbox > .screens {
+    display: none;
+}
+
+.section {
+    margin: 140px 0px 0px 0px;
+}
+
+.section.section-title {
+    text-align: left;
+}
+
+.section.section-title h1 {
+    margin-bottom: 20px;
+}
+
+.main-illustration {
+    background: transparent url(../images/site/main-illustration.png) no-repeat;
+    float: left;
+    height: 410px;
+    width: 480px;
+}
+
+.main-text {
+    float: right;
+    padding-top: 80px;
+    width: 480px;
+}
+
+.main-text > .main-logo {
+    background: transparent url(../images/site/main-logo.png) no-repeat;
+    height: 65px;
+    width: 228px;
+}
+
+ul.features {
+    list-style: none;
+    padding: 0px 0px 0px 0px;
+    width: 470px;
+}
+
+ul.features > li {
+    background-color: transparent;
+    background-repeat: no-repeat;
+    margin: 0px 0px 28px 0px;
+    width: 220px;
+}
+
+ul.features.features-left {
+    float: left;
+    padding-left: 178px;
+    text-align: right;
+    width: 292px;
+}
+
+ul.features.features-left > li {
+    background-position: top right;
+    padding-right: 74px;
+}
+
+ul.features.features-right {
+    float: right;
+    text-align: left;
+}
+
+ul.features.features-right > li {
+    background-position: top left;
+    padding-left: 74px;
+}
+
+ul.features h3 {
+    line-height: 18px;
+    margin: 0px 0px 4px 0px;
+}
+
+ul.features p {
+    color: #666666;
+    font-size: 13px;
+    margin: 0px 0px 0px 0px;
+}
+
+ul.features > li.public-profile {
+    background-image: url(../images/site/icon-public_profile.png);
+}
+
+ul.features > li.email-notifications {
+    background-image: url(../images/site/icon-email_notifications.png);
+}
+
+ul.features > li.iphone-android {
+    background-image: url(../images/site/icon-iphone_android.png);
+}
+
+ul.features > li.xmpp {
+    background-image: url(../images/site/icon-xmpp.png);
+}
+
+ul.features > li.web-interface {
+    background-image: url(../images/site/icon-web_interface.png);
+}
+
+ul.features > li.sms-messages {
+    background-image: url(../images/site/icon-sms_messages.png);
+}
+
+ul.features > li.rest-api {
+    background-image: url(../images/site/icon-rest_api.png);
+}
+
+ul.features > li.daily-reports {
+    background-image: url(../images/site/icon-daily_reports.png);
+}
+
+.check-screenshots {
+    background: transparent url(../images/site/button-check_screenshots.png) no-repeat left 0px;
+    height: 54px;
+    margin: 0px auto 0px auto;
+    width: 240px;
+}
+
+.check-screenshots.click {
+    background-position: left -54px;
+}
+
+.check-screenshots:hover {
+    background-position: left -54px;
+}
+
+.trial-included {
+    background: transparent url(../images/site/banner-trial_included.png) no-repeat;
+    height: 54px;
+    margin: 50px auto 0px auto;
+    width: 370px;
+}
+
+.button-submit {
+    background: transparent url(../images/site/button-submit.png) no-repeat left 0px;
+    color: #ffffff;
+    font-size: 24px;
+    font-weight: bold;
+    height: 61px;
+    line-height: 58px;
+    margin: 50px auto 0px auto;
+    text-shadow: 1px 1px 0px #666666;
+    width: 235px;
+}
+
+.button-submit.click {
+    background-position: left -61px;
+}
+
+.price > .value {
+    color: #8dc63f;
+    font-size: 30px;
+    line-height: 30px;
+}
+
+.price > .currency {
+    color: #8dc63f;
+    font-size: 14px;
+    line-height: 14px;
+}
+
+.price > .frequency {
+    color: #999999;
+    font-size: 12px;
+    font-weight: normal;
+}
+
+.available-on {
+    margin: 140px 0px 0px 0px;
+}
+
+.available-on a:hover {
+    border-bottom: none;
+}
+
+.available-on img {
+    margin: 0px 6px 0px 6px;
+}
+
+.window {
+    background: #ffffff;
+    background: transparent url(../images/site/background.png) repeat;
+    border-radius: 12px 12px 12px 12px;
+    -moz-border-radius: 12px 12px 12px 12px;
+    -webkit-border-radius: 12px 12px 12px 12px;
+    padding: 24px 24px 24px 24px;
+    -webkit-transition-duration: 1s;
+    width: 740px;
+    -webkit-transition-property: height, width;
+}
+
+.window .previous-button {
+    background: transparent url(../images/site/buttons-slideshow.png) no-repeat left 0px;
+    height: 30px;
+    width: 30px;
+}
+
+.window .previous-button.click {
+    background-position: left -30px;
+}
+
+.window .next-button {
+    background: transparent url(../images/site/buttons-slideshow.png) no-repeat left -60px;
+    height: 30px;
+    width: 30px;
+}
+
+.window .next-button.click {
+    background-position: left -90px;
+}
+
+.window .close-button {
+    background: transparent url(../images/site/buttons-slideshow.png) no-repeat left -120px;
+    height: 30px;
+    width: 30px;
+}
+
+.window .close-button.click {
+    background-position: left -150px;
+}
+
+.window.window-signup .close-button {
+    position: absolute;
+    right: 12px;
+    top: 12px;
+}
+
+.window.window-signup .terms {
+    font-size: 14px;
+    line-height: 24px;
+    margin: 38px auto 24px auto;
+    text-align: center;
+    width: 420px;
+}
+
+.window.window-signup h1 {
+    margin: 18px 0px 38px 0px;
+}
+
+.window.window-signup .button-submit {
+    margin: 0px auto 14px auto;
+}
+
+.window.window-screenshots {
+    padding: 0px 0px 0px 0px;
+    width: 800px;
+}
+
+.window.window-screenshots img {
+    border-radius: 12px 12px 0px 0px;
+    -moz-border-radius: 12px 0px 0px 0px;
+    -webkit-border-radius: 12px 12px 0px 0px;
+}
+
+.window.window-screenshots .button-bar {
+    font-size: 14px;
+    font-weight: bold;
+    height: 30px;
+    line-height: 30px;
+    padding: 14px 14px 14px 14px;
+}
+
+.window.window-screenshots .previous-button {
+    float: left;
+}
+
+.window.window-screenshots .next-button {
+    float: left;
+    margin-left: 8px;
+}
+
+.window.window-screenshots .close-button {
+    float: right;
+}
+
+.line {
+    margin: 0px auto 12px auto;
+    width: 500px;
+}
+
+.separator {
+    height: 24px;
+}
+
+.line > .label {
+    color: #666666;
+    float: left;
+    font-size: 16px;
+    font-weight: bold;
+    line-height: 36px;
+    text-align: right;
+    width: 180px;
+}
+
+.line > .field {
+    float: left;
+    margin-left: 25px;
+    width: 295px;
+}
+
+.line > .field input {
+    background: #ffffff url(../images/site/textfield-shadow.png) repeat-x;
+    border: 1px solid #bcbcbc;
+    font-family: "Open Sans", arial, verdana;
+    font-size: 16px;
+    height: 34px;
+    outline: none;
+    padding: 0px 6px 0px 6px;
+    width: 100%;
+}
+
+.line > .field input.focus {
+    border-color: #5c99c4;
+}
