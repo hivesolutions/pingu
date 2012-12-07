@@ -1255,18 +1255,25 @@ def _validate_account_new():
     return [
         quorum.not_null("username"),
         quorum.not_empty("username"),
+        quorum.string_gt("username", 4),
+        quorum.string_lt("username", 20),
         quorum.not_duplicate("username", "accounts"),
-
-        quorum.not_null("email"),
-        quorum.not_empty("email"),
-        quorum.not_duplicate("email", "accounts"),
 
         quorum.validation.not_null("password"),
         quorum.validation.not_empty("password"),
 
+        quorum.validation.not_null("password_confirm"),
+        quorum.validation.not_empty("password_confirm"),
+
+        quorum.not_null("email"),
+        quorum.not_empty("email"),
+        quorum.is_email("email"),
+        quorum.not_duplicate("email", "accounts"),
+
         quorum.not_null("email_confirm"),
         quorum.not_empty("email_confirm"),
 
+        quorum.equals("password_confirm", "password"),
         quorum.equals("email_confirm", "email")
     ] + _validate_account()
 
@@ -1284,6 +1291,7 @@ def _validate_server():
     return [
         quorum.not_null("url"),
         quorum.not_empty("url"),
+        quorum.is_url("url"),
 
         quorum.not_null("description"),
         quorum.not_empty("description")
@@ -1298,7 +1306,8 @@ def _validate_contact():
         quorum.not_empty("name"),
 
         quorum.not_null("email"),
-        quorum.not_empty("email")
+        quorum.not_empty("email"),
+        quorum.is_email("email")
     ]
 
 def _build_account(account):

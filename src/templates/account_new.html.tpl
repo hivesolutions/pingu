@@ -21,6 +21,13 @@
                    value="{{ account.password }}" data-error="{{ errors.password }}" />
         </div>
         <div class="label label-left">
+            <label>Confirm Password</label>
+        </div>
+        <div class="input">
+            <input class="text-field" name="password_confirm" type="password" autocomplete="off"
+                   value="{{ account.password_confirm }}" data-error="{{ errors.password_confirm }}" />
+        </div>
+        <div class="label label-left">
             <label>E-mail</label>
         </div>
         <div class="input">
