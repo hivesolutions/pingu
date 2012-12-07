@@ -394,21 +394,24 @@ def index():
         link = "home"
     )
 
-@app.route("/pending", methods = ("GET",))
-def pending():
+@app.route("/pending/<username>", methods = ("GET",))
+def pending(username):
+    account = _get_all_account(username)
     return flask.render_template(
-        "pending.html.tpl"
+        "pending.html.tpl",
+        account = account
     )
 
 @app.route("/resend/<username>", methods = ("GET",))
 def resend(username):
     # starts the confirmation process for the account this should
     # start sending the email to the created account
-    account = _get_account(username)
+    account = _get_all_account(username)
     _confirm_account(account)
 
     return flask.render_template(
-        "pending.html.tpl"
+        "pending.html.tpl",
+        account = account
     )
 
 @app.route("/confirm/<confirmation>", methods = ("GET",))
@@ -623,7 +626,7 @@ def create_account():
     # the account is not yet activated and is pending the email
     # confirmation action
     return flask.redirect(
-        flask.url_for("pending")
+        flask.url_for("pending", username = username)
     )
 
 @app.route("/accounts.json", methods = ("POST",))
@@ -695,10 +698,15 @@ def create_account_json():
     # start sending the email to the created account
     account = _build_account(account)
     _confirm_account(account)
+    
+    # removes the confirmation code from the account to avoid any
+    # security problems with the client side forging confirmation
+    del account["confirmation"]
 
     return flask.Response(
-        json.dumps({
-            "status" : "success"
+        quorum.dumps_mongo({
+            "status" : "success",
+            "account" : account
         }),
         mimetype = "application/json"
     )
@@ -1099,6 +1107,15 @@ def _get_account(username, build = True, raise_e = True):
     db = quorum.get_mongo_db()
     account = db.accounts.find_one({
         "enabled" : True,
+        "username" : username
+    })
+    if not account and raise_e: raise RuntimeError("Account not found")
+    build and _build_account(account)
+    return account
+
+def _get_all_account(username, build = True, raise_e = True):
+    db = quorum.get_mongo_db()
+    account = db.accounts.find_one({
         "username" : username
     })
     if not account and raise_e: raise RuntimeError("Account not found")
