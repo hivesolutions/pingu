@@ -516,7 +516,7 @@ def accounts_json():
     number_records = int(flask.request.args.get("number_records", 6))
     accounts = _get_accounts(start = start_record, count = number_records)
     return flask.Response(
-        quorum.mongodb.dumps(accounts),
+        quorum.dumps(accounts),
         mimetype = "application/json"
     )
 
@@ -595,6 +595,77 @@ def create_account():
     # confirmation action
     return flask.redirect(
         flask.url_for("pending")
+    )
+
+@app.route("/accounts.json", methods = ("POST",))
+def create_account_json():
+    # runs the validation process on the various arguments
+    # provided to the account
+    errors, _account = quorum.validate("account_new")
+    if errors:
+        return flask.Response(
+            json.dumps({
+                "exception" : {
+                    "message" : "Validation of submitted data failed",
+                    "errors" : errors
+                }
+            }),
+            status = 400,
+            mimetype = "application/json"
+        )
+
+    # retrieves all the parameters from the request to be
+    # handled then validated the required ones
+    username = flask.request.form.get("username", None)
+    password = flask.request.form.get("password", None)
+    email = flask.request.form.get("email", None)
+
+    # "encrypts" the password into the target format defined
+    # by the salt and the sha1 hash function and then creates
+    # the api key for the current account
+    password_sha1 = hashlib.sha1(password + PASSWORD_SALT).hexdigest()
+    api_key_sha1 = hashlib.sha1(str(uuid.uuid4())).hexdigest()
+
+    # creates the structure to be used as the account description
+    # using the values provided as parameters
+    account = {
+        "enabled" : False,
+        "instance_id" : str(uuid.uuid4()),
+        "username" : username,
+        "password" : password_sha1,
+        "api_key" : api_key_sha1,
+        "plan" : "basic",
+        "email" : email,
+        "login_count" : 0,
+        "last_login" : None,
+        "type" : USER_TYPE,
+        "tokens" : USER_ACL.get(USER_TYPE, ())
+    }
+
+    # creates the structure to be used as the contact description
+    # using account values just created
+    contact = {
+        "enabled" : True,
+        "instance_id" : account["instance_id"],
+        "id" : str(uuid.uuid4()),
+        "name" : username,
+        "email" : email
+    }
+
+    # saves the account instance into the data source, ensures
+    # that the account is ready for login
+    _save_account(account)
+
+    # saves the contact instance into the data source, ensures
+    # that the account is ready for contact
+    _save_contact(contact)
+
+    return flask.Response(
+        json.dumps({
+            "status" : "success",
+            "account" : quorum.dumps(account)
+        }),
+        mimetype = "application/json"
     )
 
 @app.route("/accounts/<username>", methods = ("GET",))
@@ -825,7 +896,7 @@ def list_log_json(name):
     number_records = int(flask.request.args.get("number_records", 6))
     log = _get_log(name, start = start_record, count = number_records)
     return flask.Response(
-        quorum.mongodb.dumps(log),
+        quorum.dumps(log),
         mimetype = "application/json"
     )
 
