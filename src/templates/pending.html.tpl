@@ -5,7 +5,7 @@
     <div class="quote">
         You should have received an email with information regarding
         <strong>account activation</strong>.<br />
-        If you haven't received the email <a href="{{ url_for('resend') }}">click here</a>
+        If you haven't received the email <a href="{{ url_for('resend', username = account.username) }}">click here</a>
         to re-send the email.
     </div>
 {% endblock %}
