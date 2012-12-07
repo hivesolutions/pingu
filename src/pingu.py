@@ -516,7 +516,7 @@ def accounts_json():
     number_records = int(flask.request.args.get("number_records", 6))
     accounts = _get_accounts(start = start_record, count = number_records)
     return flask.Response(
-        quorum.dumps(accounts),
+        quorum.dumps_mongo(accounts),
         mimetype = "application/json"
     )
 
@@ -663,7 +663,7 @@ def create_account_json():
     return flask.Response(
         json.dumps({
             "status" : "success",
-            "account" : quorum.dumps(account)
+            "account" : quorum.dumps_mongo(account)
         }),
         mimetype = "application/json"
     )
@@ -896,7 +896,7 @@ def list_log_json(name):
     number_records = int(flask.request.args.get("number_records", 6))
     log = _get_log(name, start = start_record, count = number_records)
     return flask.Response(
-        quorum.dumps(log),
+        quorum.dumps_mongo(log),
         mimetype = "application/json"
     )
 
