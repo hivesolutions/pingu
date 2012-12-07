@@ -698,7 +698,7 @@ def create_account_json():
     # start sending the email to the created account
     account = _build_account(account)
     _confirm_account(account)
-    
+
     # removes the confirmation code from the account to avoid any
     # security problems with the client side forging confirmation
     del account["confirmation"]
