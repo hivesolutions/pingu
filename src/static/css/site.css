@@ -166,6 +166,13 @@ table > tfoot td:first-child {
     font-size: 10px;
 }
 
+.error-description {
+    color: #c9273f;
+    font-size: 12px;
+    margin: 0px 0px 0px 0px;
+    text-align: right;
+}
+
 .lightbox > .screens {
     display: none;
 }
@@ -403,6 +410,14 @@ ul.features > li.daily-reports {
     width: 420px;
 }
 
+.window.window-signup .confirmation {
+    font-size: 14px;
+    line-height: 24px;
+    margin: 38px auto 24px auto;
+    text-align: center;
+    width: 520px;
+}
+
 .window.window-signup h1 {
     margin: 18px 0px 38px 0px;
 }
@@ -476,9 +491,14 @@ ul.features > li.daily-reports {
     height: 34px;
     outline: none;
     padding: 0px 6px 0px 6px;
-    width: 100%;
+    width: 283px;
 }
 
 .line > .field input.focus {
     border-color: #5c99c4;
+}
+
+.line > .field input.invalid {
+    border-color: #c9273f;
+    color: #2d2d2d;
 }

@@ -132,6 +132,8 @@ jQuery(document).ready(function() {
                         // rettrieves the signup window and shows it
                         // as a modal window (overlay shown)
                         var windowSignup = jQuery(".window-signup");
+                        var windowSignupForm = jQuery(".window-signup form");
                         windowSignup.uxwindow("show");
+                        windowSignupForm.trigger("reset");
                     });
         });
