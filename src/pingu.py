@@ -155,6 +155,7 @@ def create_heroku(heroku_id, plan = "basic"):
     # the api key for the current account
     password_sha1 = hashlib.sha1(password + PASSWORD_SALT).hexdigest()
     api_key_sha1 = hashlib.sha1(str(uuid.uuid4())).hexdigest()
+    confirmation_sha1 = hashlib.sha1(str(uuid.uuid4())).hexdigest()
 
     # creates the structure to be used as the server description
     # using the values provided as parameters
@@ -164,6 +165,7 @@ def create_heroku(heroku_id, plan = "basic"):
         "username" : heroku_id,
         "password" : password_sha1,
         "api_key" : api_key_sha1,
+        "confirmation" : confirmation_sha1,
         "plan" : plan,
         "login_count" : 0,
         "last_login" : None,
@@ -394,16 +396,36 @@ def index():
 
 @app.route("/pending", methods = ("GET",))
 def pending():
-    #@TODO: must implement this
     return flask.render_template(
         "pending.html.tpl"
     )
 
-@app.route("/resend", methods = ("GET",))
-def resend():
-    #@TODO: must implement this
+@app.route("/resend/<username>", methods = ("GET",))
+def resend(username):
+    # starts the confirmation process for the account this should
+    # start sending the email to the created account
+    account = _get_account(username)
+    _confirm_account(account)
+
     return flask.render_template(
         "pending.html.tpl"
+    )
+
+@app.route("/confirm/<confirmation>", methods = ("GET",))
+def confirm(confirmation):
+    # tries to retrieves the account for the provided confirmation
+    # code and in case it fails produces an error
+    account = _get_account_confirmation(confirmation)
+    if not account: raise RuntimeError("Account not found or invalid confirmation")
+    if account["enabled"]: raise RuntimeError("Account is already active")
+
+    # updates the enabled state of the account and then
+    # saves the "updated" account in the data store
+    account["enabled"] = True
+    _save_account(account)
+
+    return flask.render_template(
+        "confirmed.html.tpl"
     )
 
 @app.route("/signin", methods = ("GET",))
@@ -555,6 +577,7 @@ def create_account():
     # the api key for the current account
     password_sha1 = hashlib.sha1(password + PASSWORD_SALT).hexdigest()
     api_key_sha1 = hashlib.sha1(str(uuid.uuid4())).hexdigest()
+    confirmation_sha1 = hashlib.sha1(str(uuid.uuid4())).hexdigest()
 
     # creates the structure to be used as the account description
     # using the values provided as parameters
@@ -564,6 +587,7 @@ def create_account():
         "username" : username,
         "password" : password_sha1,
         "api_key" : api_key_sha1,
+        "confirmation" : confirmation_sha1,
         "plan" : "basic",
         "email" : email,
         "login_count" : 0,
@@ -589,6 +613,11 @@ def create_account():
     # saves the contact instance into the data source, ensures
     # that the account is ready for contact
     _save_contact(contact)
+
+    # starts the confirmation process for the account this should
+    # start sending the email to the created account
+    account = _build_account(account)
+    _confirm_account(account)
 
     # redirects the user to the pending page, indicating that
     # the account is not yet activated and is pending the email
@@ -625,6 +654,7 @@ def create_account_json():
     # the api key for the current account
     password_sha1 = hashlib.sha1(password + PASSWORD_SALT).hexdigest()
     api_key_sha1 = hashlib.sha1(str(uuid.uuid4())).hexdigest()
+    confirmation_sha1 = hashlib.sha1(str(uuid.uuid4())).hexdigest()
 
     # creates the structure to be used as the account description
     # using the values provided as parameters
@@ -634,6 +664,7 @@ def create_account_json():
         "username" : username,
         "password" : password_sha1,
         "api_key" : api_key_sha1,
+        "confirmation" : confirmation_sha1,
         "plan" : "basic",
         "email" : email,
         "login_count" : 0,
@@ -660,10 +691,14 @@ def create_account_json():
     # that the account is ready for contact
     _save_contact(contact)
 
+    # starts the confirmation process for the account this should
+    # start sending the email to the created account
+    account = _build_account(account)
+    _confirm_account(account)
+
     return flask.Response(
         json.dumps({
-            "status" : "success",
-            "account" : quorum.dumps_mongo(account)
+            "status" : "success"
         }),
         mimetype = "application/json"
     )
@@ -1070,6 +1105,13 @@ def _get_account(username, build = True, raise_e = True):
     build and _build_account(account)
     return account
 
+def _get_account_confirmation(confirmation):
+    db = quorum.get_mongo_db()
+    account = db.accounts.find_one({
+        "confirmation" : confirmation
+    })
+    return account
+
 def _save_account(account):
     db = quorum.get_mongo_db()
     db.accounts.save(account)
@@ -1090,6 +1132,22 @@ def _remove_account(username):
     db.log.remove({"instance_id" : instance_id})
     db.servers.remove({"instance_id" : instance_id})
     db.accounts.remove({"instance_id" : instance_id})
+
+def _confirm_account(account):
+    username = account.get("username", None)
+    email = account.get("email", None)
+
+    parameters = {
+        "subject" : "Welcome to Pingu, please confirm you email",
+        "sender" : "Pingu Mailer <mailer@pinguapp.com>",
+        "receivers" : ["%s <%s>" % (username, email)],
+        "plain" : "email/confirm.txt.tpl",
+        "rich" : "email/confirm.html.tpl",
+        "context" : {
+            "account" : account
+        }
+    }
+    thread.start_new_thread(_send_email, (), parameters)
 
 def _get_servers():
     db = quorum.get_mongo_db()
@@ -1228,10 +1286,12 @@ def _validate_contact():
 
 def _build_account(account):
     enabled = account.get("enabled", False)
+    email = account.get("email", None)
     last_login = account.get("last_login", None)
     last_login_date = last_login and datetime.datetime.utcfromtimestamp(last_login)
     last_login_string = last_login_date and last_login_date.strftime("%d/%m/%Y %H:%M:%S")
     account["enabled_l"] = enabled and "enabled" or "disabled"
+    account["email_s"] = email and email.replace("@", " at ").replace(".", " dot ")
     account["last_login_l"] = last_login_string
     del account["password"]
     return account
@@ -1388,8 +1448,8 @@ def _ping_m(server, timeout = 1.0):
 def _event_down(server):
     name = server.get("name", None)
     parameters = {
-        "subject" : "Your %s server, is currently down" % name,
-        "sender" : "Pingu Mailer <mailer@pingu.com>",
+        "subject" : "Your server %s, is currently down" % name,
+        "sender" : "Pingu Mailer <mailer@pinguapp.com>",
         "receivers" : ["João Magalhães <joamag@hive.pt>"],
         "plain" : "email/down.txt.tpl",
         "rich" : "email/down.html.tpl",
@@ -1402,8 +1462,8 @@ def _event_down(server):
 def _event_up(server):
     name = server.get("name", None)
     parameters = {
-        "subject" : "Your %s server, is back online" % name,
-        "sender" : "Pingu Mailer <mailer@pingu.com>",
+        "subject" : "Your server %s, is back online" % name,
+        "sender" : "Pingu Mailer <mailer@pinguapp.com>",
         "receivers" : ["João Magalhães <joamag@hive.pt>"],
         "plain" : "email/up.txt.tpl",
         "rich" : "email/up.html.tpl",
@@ -1423,6 +1483,8 @@ def _ensure_db():
     db.accounts.ensure_index("enabled")
     db.accounts.ensure_index("instance_id")
     db.accounts.ensure_index("username")
+    db.accounts.ensure_index("api_key")
+    db.accounts.ensure_index("confirmation")
     db.accounts.ensure_index("email")
     db.accounts.ensure_index("twitter")
     db.accounts.ensure_index("facebook")
@@ -1466,6 +1528,7 @@ def _setup_db():
         "instance_id" : str(uuid.uuid4()),
         "username" : "root",
         "password" : password_sha1,
+        "plan" : "full",
         "email" : "root@pinguapp.com",
         "login_count" : 0,
         "last_login" : None,
