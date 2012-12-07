@@ -45,7 +45,7 @@
             <input class="text-field" name="facebook" autocomplete="off" value="{{ contact.facebook }}"
                    data-error="{{ errors.facebook }}" />
         </div>
-        <span class="button" data-link="{{ url_for('show_contact', id = contact.username) }}">Cancel</span>
+        <span class="button" data-link="{{ url_for('show_contact', id = contact.id) }}">Cancel</span>
         //
         <span class="button" data-submit="true">Update</span>
     </form>
