@@ -38,6 +38,7 @@ __license__ = "GNU General Public License (GPL), Version 3"
 """ The license for the module """
 
 import os
+import copy
 import uuid
 import json
 import time
@@ -613,6 +614,7 @@ def create_account():
     username = flask.request.form.get("username", None)
     password = flask.request.form.get("password", None)
     email = flask.request.form.get("email", None)
+    plan = flask.request.form.get("plan", "basic")
 
     # "encrypts" the password into the target format defined
     # by the salt and the sha1 hash function and then creates
@@ -630,7 +632,7 @@ def create_account():
         "password" : password_sha1,
         "api_key" : api_key_sha1,
         "confirmation" : confirmation_sha1,
-        "plan" : "basic",
+        "plan" : plan,
         "email" : email,
         "login_count" : 0,
         "last_login" : None,
@@ -659,7 +661,8 @@ def create_account():
     # starts the confirmation process for the account this should
     # start sending the email to the created account
     account = _build_account(account)
-    _confirm_account(account)
+    account_copy = copy.copy(account)
+    _confirm_account(account_copy)
 
     # redirects the user to the pending page, indicating that
     # the account is not yet activated and is pending the email
@@ -690,6 +693,7 @@ def create_account_json():
     username = flask.request.form.get("username", None)
     password = flask.request.form.get("password", None)
     email = flask.request.form.get("email", None)
+    plan = flask.request.form.get("plan", "basic")
 
     # "encrypts" the password into the target format defined
     # by the salt and the sha1 hash function and then creates
@@ -707,7 +711,7 @@ def create_account_json():
         "password" : password_sha1,
         "api_key" : api_key_sha1,
         "confirmation" : confirmation_sha1,
-        "plan" : "basic",
+        "plan" : plan,
         "email" : email,
         "login_count" : 0,
         "last_login" : None,
@@ -736,7 +740,8 @@ def create_account_json():
     # starts the confirmation process for the account this should
     # start sending the email to the created account
     account = _build_account(account)
-    _confirm_account(account)
+    account_copy = copy.copy(account)
+    _confirm_account(account_copy)
 
     # removes the confirmation code from the account to avoid any
     # security problems with the client side forging confirmation
@@ -1372,6 +1377,10 @@ def _validate_account_new():
 
         quorum.not_null("email_confirm"),
         quorum.not_empty("email_confirm"),
+
+        quorum.not_null("plan"),
+        quorum.not_empty("plan"),
+        quorum.is_in("plan", ("basic", "advanced")),
 
         quorum.equals("password_confirm", "password"),
         quorum.equals("email_confirm", "email")
