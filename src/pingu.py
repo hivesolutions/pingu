@@ -1091,6 +1091,16 @@ def delete_contact(id):
         flask.url_for("list_contacts")
     )
 
+@app.route("/<name>", methods = ("GET",))
+def profile_server(name):
+    server = _get_server(name)
+    return flask.render_template(
+        "site/server_profile.html.tpl",
+        link = "servers",
+        sub_link = "profile",
+        server = server
+    )
+
 def _get_accounts(start = 0, count = 6):
     pymongo = quorum.mongodb.pymongo
     db = quorum.get_mongo_db()
