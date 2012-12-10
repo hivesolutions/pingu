@@ -361,9 +361,7 @@ ul.features > li.daily-reports {
     -moz-border-radius: 12px 12px 12px 12px;
     -webkit-border-radius: 12px 12px 12px 12px;
     padding: 24px 24px 24px 24px;
-    -webkit-transition-duration: 1s;
     width: 740px;
-    -webkit-transition-property: height, width;
 }
 
 .window .previous-button {
@@ -405,7 +403,7 @@ ul.features > li.daily-reports {
 .window.window-signup .terms {
     font-size: 14px;
     line-height: 24px;
-    margin: 38px auto 24px auto;
+    margin: 24px auto 24px auto;
     text-align: center;
     width: 420px;
 }
@@ -419,7 +417,7 @@ ul.features > li.daily-reports {
 }
 
 .window.window-signup h1 {
-    margin: 18px 0px 38px 0px;
+    margin: 12px 0px 38px 0px;
 }
 
 .window.window-signup .button-submit {
@@ -464,7 +462,7 @@ ul.features > li.daily-reports {
 }
 
 .separator {
-    height: 24px;
+    height: 16px;
 }
 
 .line > .label {
@@ -480,6 +478,7 @@ ul.features > li.daily-reports {
 .line > .field {
     float: left;
     margin-left: 25px;
+    text-align: left;
     width: 295px;
 }
 
@@ -501,6 +500,35 @@ ul.features > li.daily-reports {
 .line > .field input.invalid {
     border-color: #c9273f;
     color: #2d2d2d;
+}
+
+.line > .field input[type="radio"] {
+    -webkit-appearance: none;
+    background: transparent url(../images/site/radio-button.png) no-repeat left 0px;
+    border: none;
+    height: 16px;
+    margin: 8px 4px 0px 0px;
+    width: 16px;
+}
+
+.line > .field input[type="radio"]:hover {
+    background-position: left -16px;
+}
+
+.line > .field input[type="radio"]:checked {
+    background-position: left -32px;
+}
+
+.line > .field input[type="radio"]:checked:hover {
+    background-position: left -48px;
+}
+
+.line > .field label {
+    color: #666666;
+    font-size: 16px;
+    font-weight: bold;
+    line-height: 16px;
+    margin-right: 12px;
 }
 
 .content-server {
