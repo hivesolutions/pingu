@@ -52,6 +52,11 @@ import httplib
 import smtplib
 import datetime
 import urlparse
+import cStringIO
+
+import PIL.Image
+import PIL.ImageDraw
+import PIL.ImageFont
 
 import email.mime.multipart
 import email.mime.text
@@ -74,6 +79,14 @@ this is the standard hardcoded values """
 MONGO_DATABASE = "pingu"
 """ The default database to be used for the connection with
 the mongo database """
+
+BADGE_SIZE = 8
+""" The size (in points) of the text to be used in the update
+of the base badge image """
+
+BADGE_FILL = "#666666"
+""" The color to be used in the fill of the text for the update
+operation in the badge """
 
 DEFAULT_TIMEOUT = 60.0
 """ The default timeout value to be used in between "ping"
@@ -142,13 +155,31 @@ username_h = data.get("id", None)
 password_h = api.get("password", None)
 salt_h = api.get("sso_salt", None)
 
-def id_generator(size = 16, chars = string.ascii_uppercase + string.digits):
+def generate_identifier(size = 16, chars = string.ascii_uppercase + string.digits):
+    """
+    Generates a random identifier (may be used as password) with
+    the provided constrains of length and character ranges.
+
+    This function may be used in the generation of random based
+    keys for both passwords and api keys.
+
+    @type size: int
+    @param size: The size (in number of characters) to be used in
+    the generation of the random identifier.
+    @type chars: List
+    @param chars: The list containing the characters to be used
+    in the generation of the random identifier.
+    @rtype: String
+    @return: The randomly generated identifier obeying to the
+    provided constrains.
+    """
+
     return "".join(random.choice(chars) for _index in range(size))
 
 def create_heroku(heroku_id, plan = "basic"):
     # generates a "random" password for the heroku based user
     # to be created in the data source
-    password = id_generator()
+    password = generate_identifier()
 
     # "encrypts" the password into the target format defined
     # by the salt and the sha1 hash function and then creates
@@ -382,6 +413,14 @@ def sso_login():
 def home():
     return flask.render_template(
         "site/index.html.tpl",
+        link = "home"
+    )
+
+@app.route("/docs", methods = ("GET",))
+@app.route("/docs/api", methods = ("GET",))
+def docs_api():
+    return flask.render_template(
+        "site/docs_api.html.tpl",
         link = "home"
     )
 
@@ -1099,6 +1138,57 @@ def profile_server(name):
         link = "servers",
         sub_link = "profile",
         server = server
+    )
+
+@app.route("/<name>/badge", methods = ("GET",))
+def badge_server(name):
+    # @TODO: update this text value with a dynamically
+    # generated value
+    TEXT = "51,36%"
+
+    # creates both the complete file path for the badge
+    # file and the file path to the font file to be used
+    # in the generation of the badge
+    badge_path = os.path.join(base_path, "static/images/site/badge-uptime.png")
+    font_path = os.path.join(base_path, "static/fonts/pixel_arial.ttf")
+
+    # creates the font object to be used in the "writing"
+    # for the file and retrieves the size of the text for
+    # the create font
+    font = PIL.ImageFont.truetype(font_path, BADGE_SIZE)
+    width, height = font.getsize(TEXT)
+
+    # opens the badge image file and retrieves the png based
+    # information tuple and the size of that image
+    image = PIL.Image.open(badge_path, "r")
+    png_info = image.info
+    image_width, image_height = image.size
+
+    # calculates the horizontal and vertical text position based
+    # on the current image and text dimensions
+    x = image_width - width - 3
+    y = (image_height / 2) - (height / 2)
+
+    # creates the draw context for the current image, in order to
+    # be able to "draw" the text in it
+    draw = PIL.ImageDraw.Draw(image)
+    draw.text((x, y), TEXT, font = font, fill = BADGE_FILL)
+
+    # creates the buffer for the writing of the "final" image file,
+    # then writes its contents and reads the complete set of data
+    buffer = cStringIO.StringIO()
+    try:
+        image.save(buffer, "png", **png_info)
+        buffer.seek(0)
+        data = buffer.read()
+    finally:
+        buffer.close()
+
+    # returns the "binary" response as a png based image (the "just
+    # generated badge image)
+    return flask.Response(
+        data,
+        mimetype = "image/png"
     )
 
 def _get_accounts(start = 0, count = 6):
