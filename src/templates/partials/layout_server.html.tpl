@@ -14,6 +14,12 @@
             <a href="{{ url_for('list_log', name = server.name) }}">log</a>
         {% endif %}
         //
+        {% if sub_link == "profile" %}
+            <a href="{{ url_for('profile_server', name = server.name) }}" class="active">profile</a>
+        {% else %}
+            <a href="{{ url_for('profile_server', name = server.name) }}">profile</a>
+        {% endif %}
+        //
         {% if sub_link == "edit" %}
             <a href="{{ url_for('edit_server', name = server.name) }}" class="active">edit</a>
         {% else %}

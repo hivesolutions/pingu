@@ -3,7 +3,7 @@
     {% block head %}
         {% include "site/partials/content_type.html.tpl" %}
         {% include "site/partials/includes.html.tpl" %}
-        <title>Pingu</title>
+        <title>{% block title %}{% endblock %}</title>
     {% endblock %}
 </head>
 <body class="ux wait-load">
