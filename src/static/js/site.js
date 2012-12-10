@@ -30,6 +30,10 @@
         var matchedObject = this;
 
         var init = function() {
+            if (!matchedObject.length) {
+                return;
+            }
+
             var screen = jQuery(".screen", matchedObject);
             var screens = jQuery(".screens > li", matchedObject);
             var nextButton = jQuery(".next-button", matchedObject);
