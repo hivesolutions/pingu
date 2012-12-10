@@ -502,3 +502,69 @@ ul.features > li.daily-reports {
     border-color: #c9273f;
     color: #2d2d2d;
 }
+
+.content-server {
+    margin: 64px auto 0px auto;
+    width: 600px;
+}
+
+.header-server > h1 {
+    margin: 12px 0px 0px 0px;
+}
+
+ul.statistics-server {
+    list-style: none;
+    margin: 32px 0px 32px 0px;
+    overflow: auto;
+    padding: 0px 0px 0px 0px;
+}
+
+ul.statistics-server li {
+    background: transparent url(../images/site/separator-vertical.png) no-repeat right top;
+    float: left;
+    width: 25%;
+}
+
+ul.statistics-server li:last-child {
+    background-image: none;
+}
+
+ul.statistics-server li > h2 {
+    font-size: 11px;
+    text-transform: uppercase;
+}
+
+ul.statistics-server li > p {
+    font-size: 24px;
+    font-weight: bold;
+    margin: 6px 0px 6px 0px;
+    text-transform: uppercase;
+}
+
+ul.statistics-server li > p .subscript {
+    font-size: 40%;
+    font-weight: normal;
+}
+
+ul.statistics-server li > p.up {
+    color: #32951b;
+}
+
+ul.statistics-server li > p.down {
+    color: #c31f30;
+}
+
+.footer-server {
+    margin: 64px 0px 64px 0px;
+}
+
+.footer-logo {
+    background: transparent url(../images/site/logo-footer.png) no-repeat left top;
+    height: 25px;
+    margin: 12px auto 12px auto;
+    width: 25px;
+}
+
+.footer-logo:hover {
+    background-position: left -25px;;
+}
