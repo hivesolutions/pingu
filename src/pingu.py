@@ -134,11 +134,11 @@ HEADERS = {
 http client to use """
 
 app = flask.Flask(__name__)
-
 quorum.load(
     app,
     redis_session = True,
-    mongo_database = MONGO_DATABASE
+    mongo_database = MONGO_DATABASE,
+    name = "pingu.debug"
 )
 
 navbar_h = None
