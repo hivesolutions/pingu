@@ -558,8 +558,12 @@ ul.features > li.daily-reports {
 }
 
 .header-server > h1 {
-    color: #4d4d4d;
+    color: #2d2d2d;
     margin: 12px 0px 0px 0px;
+}
+
+.header-server > h2 {
+    margin: 8px 0px 32px 0px;
 }
 
 ul.statistics-server {
