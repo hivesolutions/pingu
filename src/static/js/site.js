@@ -124,6 +124,8 @@ jQuery(document).ready(function() {
 
             lightbox.ulightbox();
 
+            // registers for the click event on the signup
+            // button to reset the form contained in it
             buttonSignup.click(function() {
                         // retrieves the signup form reference and resets
                         // it so that the values displayed are "erased" and the form
