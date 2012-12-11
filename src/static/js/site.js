@@ -120,24 +120,15 @@
 
 jQuery(document).ready(function() {
             var lightbox = jQuery(".lightbox");
-            var buttonSreenshots = jQuery(".button-screenshots");
             var buttonSignup = jQuery(".button-signup");
 
             lightbox.ulightbox();
 
-            buttonSreenshots.click(function() {
-                        // rettrieves the screenshots window and shows it
-                        // as a modal window (overlay shown)
-                        var windowScreenshots = jQuery(".window-screenshots");
-                        windowScreenshots.uxwindow("show");
-                    });
-
             buttonSignup.click(function() {
-                        // rettrieves the signup window and shows it
-                        // as a modal window (overlay shown)
-                        var windowSignup = jQuery(".window-signup");
+                        // retrieves the signup form reference and resets
+                        // it so that the values displayed are "erased" and the form
+                        // restored to the "original" value
                         var windowSignupForm = jQuery(".window-signup form");
-                        windowSignup.uxwindow("show");
                         windowSignupForm.trigger("reset");
                     });
         });
