@@ -1018,7 +1018,8 @@ def create_contact():
     if errors:
         return flask.render_template(
             "contact_new.html.tpl",
-            link = "new_contact",
+            link = "contacts",
+            sub_link = "create",
             contact = contact,
             errors = errors
         )
