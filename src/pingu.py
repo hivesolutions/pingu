@@ -576,7 +576,7 @@ def list_accounts():
 
 @app.route("/accounts.json", methods = ("GET",))
 @quorum.ensure("accounts.list", json = True)
-def accounts_json():
+def list_accounts_json():
     start_record = int(flask.request.args.get("start_record", 0))
     number_records = int(flask.request.args.get("number_records", 6))
     accounts = _get_accounts(start = start_record, count = number_records)
