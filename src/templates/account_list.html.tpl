@@ -3,7 +3,7 @@
 {% block name %}Accounts{% endblock %}
 {% block content %}
     <ul class="filter" data-no_input="1">
-        <div class="data-source" data-url="/accounts.json" data-type="json" data-timeout="0"></div>
+        <div class="data-source" data-url="{{ url_for('accounts_json') }}" data-type="json" data-timeout="0"></div>
         <li class="template table-row">
             <div class="status text-left" data-width="210">%[username]</div>
             <div class="date text-left" data-width="160">%[last_login_l]</div>

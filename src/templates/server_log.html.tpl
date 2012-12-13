@@ -3,7 +3,7 @@
 {% block name %}{{ server.name }} :: log{% endblock %}
 {% block content %}
     <ul class="filter" data-no_input="1">
-        <div class="data-source" data-url="/servers/{{ server.name }}/log.json" data-type="json" data-timeout="0"></div>
+        <div class="data-source" data-url="{{ url_for('list_log_json', name = server.name) }}" data-type="json" data-timeout="0"></div>
         <li class="template table-row">
             <div class="status text-left %[up_l]" data-width="56">%[up_l]</div>
             <div class="date text-left" data-width="160">%[date_l]</div>
