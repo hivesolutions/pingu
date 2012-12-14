@@ -63,6 +63,7 @@ import email.mime.multipart
 import email.mime.text
 
 import config
+import models
 import quorum
 
 SECRET_KEY = "kyjbqt4828ky8fdl7ifwgawt60erk8wg"
@@ -138,7 +139,8 @@ quorum.load(
     app,
     redis_session = True,
     mongo_database = MONGO_DATABASE,
-    name = "pingu.debug"
+    name = "pingu.debug",
+    models = models
 )
 
 navbar_h = None
@@ -436,7 +438,7 @@ def index():
 
 @app.route("/pending/<username>", methods = ("GET",))
 def pending(username):
-    account = _get_all_account(username)
+    account = models.Account.get(username = username)
     return flask.render_template(
         "pending.html.tpl",
         account = account
@@ -597,78 +599,25 @@ def new_account():
 
 @app.route("/accounts", methods = ("POST",))
 def create_account():
-    # runs the validation process on the various arguments
-    # provided to the account
-    errors, account = quorum.validate("account_new")
-    if errors:
+    # creates the new account, using the provided arguments and
+    # then saves it into the data source, all the validations
+    # should be ran upon the save operation
+    account = models.Account.new()
+    try: account.save()
+    except quorum.ValidationError, error:
         return flask.render_template(
             "account_new.html.tpl",
             link = "accounts",
             sub_link = "create",
-            account = account,
-            errors = errors
+            account = error.model,
+            errors = error.errors
         )
-
-    # retrieves all the parameters from the request to be
-    # handled then validated the required ones
-    username = flask.request.form.get("username", None)
-    password = flask.request.form.get("password", None)
-    email = flask.request.form.get("email", None)
-    plan = flask.request.form.get("plan", "basic")
-
-    # "encrypts" the password into the target format defined
-    # by the salt and the sha1 hash function and then creates
-    # the api key for the current account
-    password_sha1 = hashlib.sha1(password + PASSWORD_SALT).hexdigest()
-    api_key_sha1 = hashlib.sha1(str(uuid.uuid4())).hexdigest()
-    confirmation_sha1 = hashlib.sha1(str(uuid.uuid4())).hexdigest()
-
-    # creates the structure to be used as the account description
-    # using the values provided as parameters
-    account = {
-        "enabled" : False,
-        "instance_id" : str(uuid.uuid4()),
-        "username" : username,
-        "password" : password_sha1,
-        "api_key" : api_key_sha1,
-        "confirmation" : confirmation_sha1,
-        "plan" : plan,
-        "email" : email,
-        "login_count" : 0,
-        "last_login" : None,
-        "type" : USER_TYPE,
-        "tokens" : USER_ACL.get(USER_TYPE, ())
-    }
-
-    # creates the structure to be used as the contact description
-    # using account values just created
-    contact = {
-        "enabled" : True,
-        "instance_id" : account["instance_id"],
-        "id" : str(uuid.uuid4()),
-        "name" : username,
-        "email" : email
-    }
-
-    # saves the account instance into the data source, ensures
-    # that the account is ready for login
-    _save_account(account)
-
-    # saves the contact instance into the data source, ensures
-    # that the account is ready for contact
-    _save_contact(contact)
-
-    # starts the confirmation process for the account this should
-    # start sending the email to the created account
-    account = _build_account(account)
-    account_copy = copy.copy(account)
-    _confirm_account(account_copy)
 
     # redirects the user to the pending page, indicating that
     # the account is not yet activated and is pending the email
     # confirmation action
     return flask.redirect(
-        flask.url_for("pending", username = username)
+        flask.url_for("pending", username = account.username)
     )
 
 @app.route("/accounts.json", methods = ("POST",))
@@ -758,7 +707,7 @@ def create_account_json():
 @app.route("/accounts/<username>", methods = ("GET",))
 @quorum.ensure("accounts.show")
 def show_account(username):
-    account = _get_account(username)
+    account = models.Account.get(username = username)
     return flask.render_template(
         "account_show.html.tpl",
         link = "accounts",
