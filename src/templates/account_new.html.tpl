@@ -6,6 +6,7 @@
         We'll only need a couple of your details to create your Pingu account.
     </div>
     <form action="{{ url_for('create_account') }}" method="post" class="form">
+        <input type="hidden" name="plan" value="basic" />
         <div class="label label-left">
             <label>Username</label>
         </div>
