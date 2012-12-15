@@ -105,6 +105,22 @@ class Account(base.Base):
         index = True
     )
 
+    phone = dict(
+        index = True
+    )
+
+    xmpp = dict(
+        index = True
+    )
+
+    twitter = dict(
+        index = True
+    )
+
+    facebook = dict(
+        index = True
+    )
+
     plan = dict(
         index = True
     )
@@ -139,15 +155,16 @@ class Account(base.Base):
 
         # encodes the provided password into an sha1 hash appending
         # the salt value to it before the encoding
-        password_sha1 = hashlib.sha1("root" + PASSWORD_SALT).hexdigest()
+        password = hashlib.sha1("root" + PASSWORD_SALT).hexdigest()
+        instance_id = hashlib.sha1(str(uuid.uuid4())).hexdigest()
 
         # creates the structure to be used as the server description
         # using the values provided as parameters
         account = {
             "enabled" : True,
-            "instance_id" : str(uuid.uuid4()),
+            "instance_id" : instance_id,
             "username" : "root",
-            "password" : password_sha1,
+            "password" : password,
             "plan" : "full",
             "email" : "root@pinguapp.com",
             "login_count" : 0,
@@ -224,6 +241,13 @@ class Account(base.Base):
         self.last_login = None
         self.type = USER_TYPE
         self.tokens =  USER_ACL.get(USER_TYPE, ())
+
+    def pre_update(self):
+        base.Base.pre_update(self)
+
+        # in case the currently set password is empty it must
+        # be removed (not meant to be updated)
+        if self.password == "": del self.password
 
     def post_create(self):
         base.Base.post_create(self)
