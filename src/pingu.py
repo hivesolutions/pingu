@@ -448,8 +448,8 @@ def pending(username):
 def resend(username):
     # starts the confirmation process for the account this should
     # start sending the email to the created account
-    account = _get_all_account(username)
-    _confirm_account(account)
+    account = models.Account.get(username = username)
+    account.confirm()
 
     return flask.render_template(
         "pending.html.tpl",
