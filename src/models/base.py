@@ -37,6 +37,8 @@ __copyright__ = "Copyright (c) 2008-2012 Hive Solutions Lda."
 __license__ = "GNU General Public License (GPL), Version 3"
 """ The license for the module """
 
+import flask
+
 import quorum
 
 class Base(quorum.Model):
@@ -57,3 +59,11 @@ class Base(quorum.Model):
 
     def pre_save(self):
         self.enabled = True
+
+    def get_i(self, *args, **kwargs):
+        instance_id = flask.session["instance_id"]
+        return self.get(instance_id = instance_id, *args, **kwargs)
+
+    def find_i(self, *args, **kwargs):
+        instance_id = flask.session["instance_id"]
+        return self.find(instance_id = instance_id, *args, **kwargs)
