@@ -3,7 +3,6 @@
 {% block name %}{{ account.username }} :: edit{% endblock %}
 {% block content %}
     <form action="{{ url_for('update_account', username = account.username) }}" method="post" class="form">
-        <input type="hidden" name="_id" value="{{ account._id }}" />
         <div class="label label-left">
             <label>Username</label>
         </div>
