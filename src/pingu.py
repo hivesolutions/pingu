@@ -718,7 +718,7 @@ def show_account(username):
 @app.route("/accounts/<username>/edit", methods = ("GET",))
 @quorum.ensure("accounts.edit")
 def edit_account(username):
-    account = _get_account(username)
+    account = models.Account.get(username = username)
     return flask.render_template(
         "account_edit.html.tpl",
         link = "accounts",
@@ -730,43 +730,23 @@ def edit_account(username):
 @app.route("/accounts/<username>/edit", methods = ("POST",))
 @quorum.ensure("accounts.edit")
 def update_account(username):
-    # runs the validation process on the various arguments
-    # provided to the account
-    errors, account = quorum.validate("account")
-    if errors:
+    # finds the current and account and applies the provided
+    # arguments and then saves it into the data source,
+    # all the validations should be ran upon the save operation
+    account = models.Account.get(username = username)
+    account.apply()
+    try: account.save()
+    except quorum.ValidationError, error:
         return flask.render_template(
             "account_edit.html.tpl",
             link = "accounts",
             sub_link = "edit",
-            account = account,
-            errors = errors
+            account = error.model,
+            errors = error.errors
         )
 
-    # retrieves all the parameters from the request to be
-    # handled then validated the required ones
-    password = flask.request.form.get("password", None)
-    phone = flask.request.form.get("phone", None)
-    twitter = flask.request.form.get("twitter", None)
-    facebook = flask.request.form.get("facebook", None)
-
-    # "encrypts" the password into the target format defined
-    # by the salt and the sha1 hash function
-    password_sha1 = password and hashlib.sha1(password + PASSWORD_SALT).hexdigest()
-
-    # populates the structure to be used as the server description
-    # using the values provided as parameters
-    account = _get_account(username, build = False)
-    if password_sha1: account["password"] = password_sha1
-    account["phone"] = phone
-    account["twitter"] = twitter
-    account["facebook"] = facebook
-
-    # saves the account instance into the data source, ensures
-    # that the account is ready for login
-    _save_account(account)
-
     # redirects the user to the show page of the account that
-    # was just created
+    # was just updated
     return flask.redirect(
         flask.url_for("show_account", username = username)
     )
