@@ -250,7 +250,9 @@ class Account(base.Base):
         account = self.copy(build = True)
         account.confirmation = self.confirmation
 
-        parameters = dict(
+        # sends a mail about the confirmation of the email to the
+        # the email address associated with the current account
+        quorum.send_mail_a(
             subject = "Welcome to Pingu, please confirm you email",
             sender = "Pingu Mailer <mailer@pinguapp.com>",
             receivers = ["%s <%s>" % (self.username, self.email)],
@@ -260,4 +262,3 @@ class Account(base.Base):
                 "account" : account
             }
         )
-        quorum.send_mail_a(**parameters)
