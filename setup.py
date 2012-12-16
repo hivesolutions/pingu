@@ -129,6 +129,7 @@ setuptools.setup(
     url = "http://pingu.com",
     zip_safe = False,
     packages = [
+        "models",
         "quorum"
     ],
     py_modules = [
