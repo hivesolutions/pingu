@@ -60,6 +60,20 @@ class Base(quorum.Model):
     def pre_save(self):
         self.enabled = True
 
+    def enable(self):
+        store = self._get_store()
+        store.update(
+            {"_id" : self._id},
+            {"$set" : {"enabled" : True}}
+        )
+
+    def disable(self):
+        store = self._get_store()
+        store.update(
+            {"_id" : self._id},
+            {"$set" : {"enabled" : False}}
+        )
+
     def get_i(self, *args, **kwargs):
         instance_id = flask.session["instance_id"]
         return self.get(instance_id = instance_id, *args, **kwargs)
