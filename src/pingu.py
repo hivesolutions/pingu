@@ -448,7 +448,7 @@ def pending(username):
 def resend(username):
     # starts the confirmation process for the account this should
     # start sending the email to the created account
-    account = models.Account.get(username = username)
+    account = models.Account.get(username = username, build = False)
     account.confirm()
 
     return flask.render_template(
@@ -621,86 +621,16 @@ def create_account():
     )
 
 @app.route("/accounts.json", methods = ("POST",))
+@quorum.errors_json
 def create_account_json():
-    # runs the validation process on the various arguments
-    # provided to the account
-    errors, _account = quorum.validate("account_new")
-    if errors:
-        return flask.Response(
-            json.dumps({
-                "exception" : {
-                    "message" : "Validation of submitted data failed",
-                    "errors" : errors
-                }
-            }),
-            status = 400,
-            mimetype = "application/json"
-        )
-
-    # retrieves all the parameters from the request to be
-    # handled then validated the required ones
-    username = flask.request.form.get("username", None)
-    password = flask.request.form.get("password", None)
-    email = flask.request.form.get("email", None)
-    plan = flask.request.form.get("plan", "basic")
-
-    # "encrypts" the password into the target format defined
-    # by the salt and the sha1 hash function and then creates
-    # the api key for the current account
-    password_sha1 = hashlib.sha1(password + PASSWORD_SALT).hexdigest()
-    api_key_sha1 = hashlib.sha1(str(uuid.uuid4())).hexdigest()
-    confirmation_sha1 = hashlib.sha1(str(uuid.uuid4())).hexdigest()
-
-    # creates the structure to be used as the account description
-    # using the values provided as parameters
-    account = {
-        "enabled" : False,
-        "instance_id" : str(uuid.uuid4()),
-        "username" : username,
-        "password" : password_sha1,
-        "api_key" : api_key_sha1,
-        "confirmation" : confirmation_sha1,
-        "plan" : plan,
-        "email" : email,
-        "login_count" : 0,
-        "last_login" : None,
-        "type" : USER_TYPE,
-        "tokens" : USER_ACL.get(USER_TYPE, ())
-    }
-
-    # creates the structure to be used as the contact description
-    # using account values just created
-    contact = {
-        "enabled" : True,
-        "instance_id" : account["instance_id"],
-        "id" : str(uuid.uuid4()),
-        "name" : username,
-        "email" : email
-    }
-
-    # saves the account instance into the data source, ensures
-    # that the account is ready for login
-    _save_account(account)
-
-    # saves the contact instance into the data source, ensures
-    # that the account is ready for contact
-    _save_contact(contact)
-
-    # starts the confirmation process for the account this should
-    # start sending the email to the created account
-    account = _build_account(account)
-    account_copy = copy.copy(account)
-    _confirm_account(account_copy)
-
-    # removes the confirmation code from the account to avoid any
-    # security problems with the client side forging confirmation
-    del account["confirmation"]
+    # creates the new account, using the provided arguments and
+    # then saves it into the data source, all the validations
+    # should be ran upon the save operation
+    account = models.Account.new()
+    account.save()
 
     return flask.Response(
-        quorum.dumps_mongo({
-            "status" : "success",
-            "account" : account
-        }),
+        account.dumps(),
         mimetype = "application/json"
     )
 
