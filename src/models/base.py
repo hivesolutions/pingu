@@ -50,6 +50,7 @@ class Base(quorum.Model):
     )
 
     enabled = dict(
+        type = bool,
         index = True
     )
 
