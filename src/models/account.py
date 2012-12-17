@@ -38,6 +38,7 @@ __license__ = "GNU General Public License (GPL), Version 3"
 """ The license for the module """
 
 import uuid
+import time
 import hashlib
 import datetime
 
@@ -184,7 +185,7 @@ class Account(base.Base):
             quorum.not_null("username"),
             quorum.not_empty("username"),
             quorum.string_gt("username", 4),
-            quorum.string_lt("username", 20),
+            quorum.string_lt("username", 64),
             quorum.not_duplicate("username", cls._name()),
 
             quorum.validation.not_null("password"),
@@ -203,11 +204,51 @@ class Account(base.Base):
 
             quorum.not_null("plan"),
             quorum.not_empty("plan"),
-            quorum.is_in("plan", ("basic", "advanced")),
+            quorum.is_in("plan", ("test", "basic", "advanced")),
 
             quorum.equals("password_confirm", "password"),
             quorum.equals("email_confirm", "email")
         ]
+
+    @classmethod
+    def create_heroku(cls, heroku_id, plan = "basic"):
+        # generates a "random" password for the heroku based user
+        # to be created in the data source
+        password = quorum.generate_identifier()
+
+        # creates a new account instance and populates it with the
+        # proper heroku account values, note that some values are
+        # set as mock values (eg: email) for validation pass
+        account = cls.new()
+        account.username = heroku_id
+        account.password = password
+        account.password_confirm = password
+        account.email = heroku_id
+        account.email_confirm = heroku_id
+        account.plan = plan
+        account.save()
+
+        # sets the account as enabled (automatic enable) and the re-saves
+        # it so that it becomes enabled by default
+        account.enabled = True
+        account.save()
+
+        # returns the account instance that has just been created to the
+        # caller method
+        return account
+
+    @classmethod
+    def confirmed(cls, confirmation):
+        # tries to retrieves the account for the provided confirmation
+        # code and in case it fails produces an error
+        account = cls.get(confirmation = confirmation)
+        if not account: raise quorum.OperationalError("Account not found or invalid confirmation")
+        if account.enabled: raise quorum.OperationalError("Account is already active")
+
+        # sets the account model as enabled and then saves it in the
+        # current data source
+        account.enabled = True
+        account.save()
 
     @classmethod
     def _build(cls, model, map):
@@ -247,7 +288,8 @@ class Account(base.Base):
 
         # in case the currently set password is empty it must
         # be removed (not meant to be updated)
-        if self.password == "": del self.password
+        has_password = hasattr(self, "password")
+        if has_password and self.password == "": del self.password
 
     def post_create(self):
         base.Base.post_create(self)
@@ -266,6 +308,50 @@ class Account(base.Base):
         # runs the post operation for the preparation of the confirm
         # of the account (must send appropriate documents: email, etc.)
         self.confirm()
+
+    def login(self):
+        # verifies that both the username and the password are
+        # correctly set in the current instance
+        if not self.val("username") or not self.val("password"):
+            raise quorum.OperationalError(
+                "Both username and password must be provided",
+                code = 400
+            )
+
+        # retrieves the account associated with the provided username
+        # in case none is found raises an operational error indicating
+        # the problem with the account retrieval
+        account = self.get(
+            username = self.username,
+            build = False,
+            raise_e = False
+        )
+        if not account:
+            raise quorum.OperationalError(
+                "No valid account found",
+                code = 403
+            )
+
+        # creates the sha1 hash value for the password and verifies that
+        # the provided password is the expected
+        password_sha1 = hashlib.sha1(self.password + PASSWORD_SALT).hexdigest()
+        _password = account.password
+        if not password_sha1 == _password:
+            raise quorum.OperationalError(
+                "Invalid or mismatch password",
+                code = 403
+            )
+
+        # sets the login count and last login values in the account as the
+        # current time and then saves it in the data store
+        login_count = account.val("login_count") or 0
+        account.login_count = login_count + 1
+        account.last_login = time.time()
+        account.save()
+
+        # returns the account representing the user that has just been logged
+        # in into the system to the caller method
+        return account
 
     def confirm(self):
         # creates a new account in order to obtain the new build

@@ -45,8 +45,6 @@ import flask
 import atexit
 import urllib
 import thread
-import string
-import random
 import hashlib
 import httplib
 import smtplib
@@ -157,61 +155,6 @@ username_h = data.get("id", None)
 password_h = api.get("password", None)
 salt_h = api.get("sso_salt", None)
 
-def generate_identifier(size = 16, chars = string.ascii_uppercase + string.digits):
-    """
-    Generates a random identifier (may be used as password) with
-    the provided constrains of length and character ranges.
-
-    This function may be used in the generation of random based
-    keys for both passwords and api keys.
-
-    @type size: int
-    @param size: The size (in number of characters) to be used in
-    the generation of the random identifier.
-    @type chars: List
-    @param chars: The list containing the characters to be used
-    in the generation of the random identifier.
-    @rtype: String
-    @return: The randomly generated identifier obeying to the
-    provided constrains.
-    """
-
-    return "".join(random.choice(chars) for _index in range(size))
-
-def create_heroku(heroku_id, plan = "basic"):
-    # generates a "random" password for the heroku based user
-    # to be created in the data source
-    password = generate_identifier()
-
-    # "encrypts" the password into the target format defined
-    # by the salt and the sha1 hash function and then creates
-    # the api key for the current account
-    password_sha1 = hashlib.sha1(password + PASSWORD_SALT).hexdigest()
-    api_key_sha1 = hashlib.sha1(str(uuid.uuid4())).hexdigest()
-    confirmation_sha1 = hashlib.sha1(str(uuid.uuid4())).hexdigest()
-
-    # creates the structure to be used as the server description
-    # using the values provided as parameters
-    account = {
-        "enabled" : True,
-        "instance_id" : str(uuid.uuid4()),
-        "username" : heroku_id,
-        "password" : password_sha1,
-        "api_key" : api_key_sha1,
-        "confirmation" : confirmation_sha1,
-        "plan" : plan,
-        "login_count" : 0,
-        "last_login" : None,
-        "type" : USER_TYPE,
-        "tokens" : USER_ACL.get(USER_TYPE, ())
-    }
-
-    # saves the account instance into the data source, ensures
-    # that the account is ready for login and returns it to the
-    # caller method
-    _save_account(account)
-    return account
-
 def create_servers_h(heroku_id, account, sleep_time = 3.0):
     # sleeps for a while so that no collision with the remote
     # server occurs (the application must be registered already)
@@ -304,8 +247,7 @@ def provision():
     heroku_id = object["heroku_id"]
     plan = object["plan"]
 
-    account = create_heroku(heroku_id, plan = plan)
-    api_key = account["api_key"]
+    account = models.Account.create_heroku(heroku_id, plan = plan)
 
     # schedules the execution of the server creation for
     # the current provision, this will be deferred so that
@@ -319,7 +261,7 @@ def provision():
         json.dumps({
             "id" : heroku_id,
             "config" : {
-                "PINGU_API_KEY" : api_key,
+                "PINGU_API_KEY" : account.api_key,
                 "PINGU_APP_ID" : heroku_id
             }
         }),
@@ -457,16 +399,9 @@ def resend(username):
 
 @app.route("/confirm/<confirmation>", methods = ("GET",))
 def confirm(confirmation):
-    # tries to retrieves the account for the provided confirmation
-    # code and in case it fails produces an error
-    account = _get_account_confirmation(confirmation)
-    if not account: raise RuntimeError("Account not found or invalid confirmation")
-    if account["enabled"]: raise RuntimeError("Account is already active")
-
-    # updates the enabled state of the account and then
-    # saves the "updated" account in the data store
-    account["enabled"] = True
-    _save_account(account)
+    # tries to set the account with the provided confirmation
+    # code as enabled (only in case the confirmation code is valid)
+    models.Account.confirmed(confirmation)
 
     return flask.render_template(
         "confirmed.html.tpl"
@@ -480,60 +415,20 @@ def signin():
 
 @app.route("/signin", methods = ("POST",))
 def login():
-    # retrieves both the username and the password from
-    # the flask request form, these are the values that
-    # are going to be used in the username validation
-    username = flask.request.form.get("username", None)
-    password = flask.request.form.get("password", None)
-
-    # in case any of the mandatory arguments is not provided
-    # an error is set in the current page
-    if not username or not password:
+    account = models.Account.new()
+    try: account = account.login()
+    except quorum.OperationalError, error:
         return flask.render_template(
             "signin.html.tpl",
-            username = username,
-            error = "Both username and password must be provided"
+            username = account.val("username"),
+            error = error.message
         )
-
-    # retrieves the structure containing the information
-    # on the currently available users and unpacks the
-    # various attributes from it (defaulting to base values)
-    account = _get_account(username, build = False, raise_e = False) or {}
-    _username = account.get("username", None)
-    _password = account.get("password", None)
-
-    # encodes the provided password into an sha1 hash appending
-    # the salt value to it before the encoding
-    password_sha1 = hashlib.sha1(password + PASSWORD_SALT).hexdigest()
-
-    # checks that both the account structure and the password values
-    # are present and that the password matched, if one of these
-    # values fails the login process fails and the user is redirected
-    # to the signin page with an error string
-    if not account or not _password or not password_sha1 == _password:
-        return flask.render_template(
-            "signin.html.tpl",
-            username = username,
-            error = "Invalid username and/or password"
-        )
-
-    # sets the login count and last login values in the account as the
-    # current time and then saves it in the data store
-    login_count = account.get("login_count", 0)
-    account["login_count"] = login_count + 1
-    account["last_login"] = time.time()
-    _save_account(account)
-
-    # retrieves the tokens and instance id from the user to set
-    # them in the current session
-    tokens = account.get("tokens", ())
-    instance_id = account.get("instance_id", None)
 
     # updates the current user (name) in session with
     # the username that has just be accepted in the login
-    flask.session["username"] = username
-    flask.session["tokens"] = tokens
-    flask.session["instance_id"] = instance_id
+    flask.session["username"] = account.username
+    flask.session["tokens"] = account.tokens
+    flask.session["instance_id"] = account.instance_id
     flask.session["nav_data"] = None
     flask.session["acl"] = quorum.check_login
 
@@ -1575,6 +1470,25 @@ def load():
     app.debug = debug
     app.secret_key = SECRET_KEY
 
+def run_waitress():
+    import waitress
+
+    # sets the debug control in the application
+    # then checks the current environment variable
+    # for the target port for execution (external)
+    # and then start running it (continuous loop)
+    debug = os.environ.get("DEBUG", False) and True or False
+    smtp_host = os.environ.get("SMTP_HOST", "localhost")
+    smtp_user = os.environ.get("SMTP_USER", None)
+    smtp_password = os.environ.get("SMTP_PASSWORD", None)
+    port = int(os.environ.get("PORT", 5000))
+    config.SMTP_HOST = smtp_host
+    config.SMTP_USER = smtp_user
+    config.SMTP_PASSWORD = smtp_password
+    app.debug = debug
+    app.secret_key = SECRET_KEY
+    waitress.serve(app, host = "0.0.0.0", port = port)
+
 def run():
     # sets the debug control in the application
     # then checks the current environment variable
@@ -1620,5 +1534,5 @@ _ensure_db()
 # the system internal structures
 _schedule_tasks()
 
-if __name__ == "__main__": run()
+if __name__ == "__main__": run_waitress()
 else: load()
