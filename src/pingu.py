@@ -935,45 +935,6 @@ def _confirm_account(account):
     }
     thread.start_new_thread(_send_email, (), parameters)
 
-def _get_servers():
-    db = quorum.get_mongo_db()
-    servers = db.servers.find({
-        "enabled" : True,
-        "instance_id" : flask.session["instance_id"]
-    })
-    servers = [_build_server(server) for server in servers]
-    return servers
-
-def _get_all_servers():
-    db = quorum.get_mongo_db()
-    servers = db.servers.find({
-        "enabled" : True
-    })
-    servers = [_build_server(server) for server in servers]
-    return servers
-
-def _get_server(name, build = True, raise_e = True):
-    db = quorum.get_mongo_db()
-    server = db.servers.find_one({
-        "instance_id" : flask.session["instance_id"],
-        "name" : name
-    })
-    if not server and raise_e: raise RuntimeError("Server not found")
-    build and _build_server(server)
-    return server
-
-def _save_server(server):
-    db = quorum.get_mongo_db()
-    db.servers.save(server)
-    return server
-
-def _delete_server(name):
-    db = quorum.get_mongo_db()
-    server = db.servers.find_one({"name" : name})
-    server["enabled"] = False
-    db.servers.save(server)
-    return server
-
 def _get_log(name, start = 0, count = 6):
     pymongo = quorum.mongodb.pymongo
     db = quorum.get_mongo_db()
@@ -988,100 +949,6 @@ def _get_log(name, start = 0, count = 6):
     )
     log = [_build_log(_log) for _log in log]
     return log
-
-def _get_contacts():
-    db = quorum.get_mongo_db()
-    contacts = db.contacts.find({
-        "enabled" : True,
-        "instance_id" : flask.session["instance_id"]
-    })
-    contacts = [_build_contact(contact) for contact in contacts]
-    return contacts
-
-def _get_contact(id, build = True, raise_e = True):
-    db = quorum.get_mongo_db()
-    contact = db.contacts.find_one({
-        "instance_id" : flask.session["instance_id"],
-        "id" : id
-    })
-    if not contact and raise_e: raise RuntimeError("Contact not found")
-    build and _build_contact(contact)
-    return contact
-
-def _save_contact(contact):
-    db = quorum.get_mongo_db()
-    db.contacts.save(contact)
-    return contact
-
-def _delete_contact(id):
-    db = quorum.get_mongo_db()
-    contact = db.contacts.find_one({"id" : id})
-    contact["enabled"] = False
-    db.contacts.save(contact)
-    return contact
-
-def _validate_account_new():
-    return [
-        quorum.not_null("username"),
-        quorum.not_empty("username"),
-        quorum.string_gt("username", 4),
-        quorum.string_lt("username", 20),
-        quorum.not_duplicate("username", "accounts"),
-
-        quorum.validation.not_null("password"),
-        quorum.validation.not_empty("password"),
-
-        quorum.validation.not_null("password_confirm"),
-        quorum.validation.not_empty("password_confirm"),
-
-        quorum.not_null("email"),
-        quorum.not_empty("email"),
-        quorum.is_email("email"),
-        quorum.not_duplicate("email", "accounts"),
-
-        quorum.not_null("email_confirm"),
-        quorum.not_empty("email_confirm"),
-
-        quorum.not_null("plan"),
-        quorum.not_empty("plan"),
-        quorum.is_in("plan", ("basic", "advanced")),
-
-        quorum.equals("password_confirm", "password"),
-        quorum.equals("email_confirm", "email")
-    ] + _validate_account()
-
-def _validate_account():
-    return []
-
-def _validate_server_new():
-    return [
-        quorum.not_null("name"),
-        quorum.not_empty("name"),
-        quorum.not_duplicate("name", "servers"),
-    ] + _validate_server()
-
-def _validate_server():
-    return [
-        quorum.not_null("url"),
-        quorum.not_empty("url"),
-        quorum.is_url("url"),
-
-        quorum.not_null("description"),
-        quorum.not_empty("description")
-    ]
-
-def _validate_contact_new():
-    return [] + _validate_contact()
-
-def _validate_contact():
-    return [
-        quorum.not_null("name"),
-        quorum.not_empty("name"),
-
-        quorum.not_null("email"),
-        quorum.not_empty("email"),
-        quorum.is_email("email")
-    ]
 
 def _build_account(account):
     enabled = account.get("enabled", False)
@@ -1341,7 +1208,7 @@ def _setup_db():
 
 def _get_tasks():
     tasks = []
-    servers = _get_all_servers()
+    servers = models.Server.find(enabled = True)
 
     for server in servers:
         timeout = server.get("timeout", DEFAULT_TIMEOUT)
