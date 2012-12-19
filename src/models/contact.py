@@ -71,8 +71,8 @@ class Contact(base.Base):
         base.Base.__init__(self)
 
     @classmethod
-    def validate_(cls):
-        return base.Base.validate() + [
+    def validate(cls):
+        return super(Contact, cls).validate() + [
             quorum.not_null("name"),
             quorum.not_empty("name"),
 

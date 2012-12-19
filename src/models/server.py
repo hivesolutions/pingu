@@ -37,7 +37,43 @@ __copyright__ = "Copyright (c) 2008-2012 Hive Solutions Lda."
 __license__ = "GNU General Public License (GPL), Version 3"
 """ The license for the module """
 
+import quorum
+
 import base
 
 class Server(base.Base):
-    pass
+
+    name = dict(
+        index = True
+    )
+
+    url = dict(
+        index = True
+    )
+
+    description = dict()
+
+    @classmethod
+    def validate(cls):
+        return super(Server, cls).validate() + [
+            quorum.not_null("url"),
+            quorum.not_empty("url"),
+            quorum.is_url("url"),
+
+            quorum.not_null("description"),
+            quorum.not_empty("description")
+        ]
+
+    @classmethod
+    def validate_new(cls):
+        return super(Server, cls).validate_new() + [
+            quorum.not_null("name"),
+            quorum.not_empty("name"),
+            quorum.not_duplicate("name", "servers")
+        ]
+
+    @classmethod
+    def _build(cls, model, map):
+        base.Base._build(model, map)
+        up = model.get("up", None)
+        model["up_l"] = up == True and "up" or up == False and "down" or "unknwon"

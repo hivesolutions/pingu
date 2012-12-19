@@ -181,7 +181,7 @@ class Account(base.Base):
 
     @classmethod
     def validate_new(cls):
-        return base.Base.validate_new() + [
+        return super(Account, cls).validate_new() + [
             quorum.not_null("username"),
             quorum.not_empty("username"),
             quorum.string_gt("username", 4),
@@ -252,7 +252,7 @@ class Account(base.Base):
 
     @classmethod
     def _build(cls, model, map):
-        quorum.Model._build(model, map)
+        base.Base._build(model, map)
         enabled = model.get("enabled", False)
         email = model.get("email", None)
         last_login = model.get("last_login", None)
@@ -262,7 +262,6 @@ class Account(base.Base):
         model["email_s"] = email and email.replace("@", " at ").replace(".", " dot ")
         model["last_login_l"] = last_login_string
         model["email_md5"] = email and hashlib.md5(email).hexdigest()
-        return model
 
     def pre_create(self):
         base.Base.pre_create(self)
@@ -309,10 +308,50 @@ class Account(base.Base):
         # of the account (must send appropriate documents: email, etc.)
         self.confirm()
 
-    def login(self):
+
+    @classmethod
+    def sso_login(cls, id, timestamp, token, nav_data):
+        # retrieves the various configuration properties
+        # to be used for this operation
+        salt_h = quorum.conf("salt_h", None)
+
+        # re-creates the token from the provided id and timestamp
+        # and the "secret" salt value
+        _token = id + ":" + salt_h + ":" + timestamp
+        _token_s = hashlib.sha1(_token).hexdigest()
+
+        # retrieves the current time to be used in the timestamp
+        # validation process
+        current_time = time.time()
+
+        # validation the token and then checks if the provided timestamp
+        # is not defined in the past
+        if not _token_s == token:
+            raise quorum.OperationalError("Invalid token", code = 403)
+        if not current_time < timestamp:
+            return quorum.OperationalError("Invalid timestamp (in the past)", code = 403)
+
+        # tries to retrieve the account associated with the provided
+        # id value in case none is found returns in error
+        account = Account.get(username = id, build = False, raise_e = False)
+        if not account: return quorum.OperationalError("No user found", code = 403)
+
+        # sets the login count and last login values in the account as the
+        # current time and then saves it in the data store
+        login_count = account.val("login_count", 0)
+        account.login_count = login_count + 1
+        account.last_login = time.time()
+        account.save(account)
+
+        # returns the account representing the user that has just been logged
+        # in into the system to the caller method
+        return account
+
+    @classmethod
+    def login(self, username, password):
         # verifies that both the username and the password are
         # correctly set in the current instance
-        if not self.val("username") or not self.val("password"):
+        if not username or not password:
             raise quorum.OperationalError(
                 "Both username and password must be provided",
                 code = 400
@@ -322,7 +361,7 @@ class Account(base.Base):
         # in case none is found raises an operational error indicating
         # the problem with the account retrieval
         account = self.get(
-            username = self.username,
+            username = username,
             build = False,
             raise_e = False
         )
@@ -334,7 +373,7 @@ class Account(base.Base):
 
         # creates the sha1 hash value for the password and verifies that
         # the provided password is the expected
-        password_sha1 = hashlib.sha1(self.password + PASSWORD_SALT).hexdigest()
+        password_sha1 = hashlib.sha1(password + PASSWORD_SALT).hexdigest()
         _password = account.password
         if not password_sha1 == _password:
             raise quorum.OperationalError(
@@ -344,7 +383,7 @@ class Account(base.Base):
 
         # sets the login count and last login values in the account as the
         # current time and then saves it in the data store
-        login_count = account.val("login_count") or 0
+        login_count = account.val("login_count", 0)
         account.login_count = login_count + 1
         account.last_login = time.time()
         account.save()
@@ -372,3 +411,11 @@ class Account(base.Base):
                 "account" : account
             }
         )
+
+    def _delete(self):
+        base.Base._delete(self)
+
+        store = self._get_store()
+        store.contact.remove({"instance_id" : self.instance_id})
+        store.log.remove({"instance_id" : self.instance_id})
+        store.server.remove({"instance_id" : self.instance_id})

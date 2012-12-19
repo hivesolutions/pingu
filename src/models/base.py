@@ -58,8 +58,21 @@ class Base(quorum.Model):
         index = True
     )
 
-    def pre_save(self):
+    @classmethod
+    def get_i(cls, *args, **kwargs):
+        instance_id = flask.session["instance_id"]
+        return cls.get(instance_id = instance_id, *args, **kwargs)
+
+    @classmethod
+    def find_i(cls, *args, **kwargs):
+        instance_id = flask.session["instance_id"]
+        return cls.find(instance_id = instance_id, *args, **kwargs)
+
+    def pre_create(self):
         self.enabled = True
+
+        if not self.val("instance_id"):
+            self.instance_id = flask.session.get("instance_id", None)
 
     def enable(self):
         store = self._get_store()
@@ -74,11 +87,3 @@ class Base(quorum.Model):
             {"_id" : self._id},
             {"$set" : {"enabled" : False}}
         )
-
-    def get_i(self, *args, **kwargs):
-        instance_id = flask.session["instance_id"]
-        return self.get(instance_id = instance_id, *args, **kwargs)
-
-    def find_i(self, *args, **kwargs):
-        instance_id = flask.session["instance_id"]
-        return self.find(instance_id = instance_id, *args, **kwargs)
