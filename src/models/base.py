@@ -61,12 +61,22 @@ class Base(quorum.Model):
     @classmethod
     def get_i(cls, *args, **kwargs):
         instance_id = flask.session["instance_id"]
-        return cls.get(instance_id = instance_id, *args, **kwargs)
+        return cls.get(
+            enabled = True,
+            instance_id = instance_id,
+            *args,
+            **kwargs
+        )
 
     @classmethod
     def find_i(cls, *args, **kwargs):
         instance_id = flask.session["instance_id"]
-        return cls.find(instance_id = instance_id, *args, **kwargs)
+        return cls.find(
+            enabled = True,
+            instance_id = instance_id,
+            *args,
+            **kwargs
+        )
 
     def pre_create(self):
         self.enabled = True
