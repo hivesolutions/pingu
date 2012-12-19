@@ -701,7 +701,7 @@ def list_log_json(name):
 @app.route("/contacts", methods = ("GET",))
 @quorum.ensure("contacts.list")
 def list_contacts():
-    contacts = _get_contacts()
+    contacts = models.Contact.find_i()
     return flask.render_template(
         "contact_list.html.tpl",
         link = "contacts",
@@ -723,59 +723,30 @@ def new_contact():
 @app.route("/contacts", methods = ("POST",))
 @quorum.ensure("contacts.new")
 def create_contact():
-    # runs the validation process on the various arguments
-    # provided to the account
-    errors, contact = quorum.validate("contact_new")
-    if errors:
+    # creates the new contact, using the provided arguments and
+    # then saves it into the data source, all the validations
+    # should be ran upon the save operation
+    contact = models.Contact.new()
+    try: contact.save()
+    except quorum.ValidationError, error:
         return flask.render_template(
             "contact_new.html.tpl",
             link = "contacts",
             sub_link = "create",
-            contact = contact,
-            errors = errors
+            server = error.model,
+            errors = error.errors
         )
-
-    # retrieves all the parameters from the request to be
-    # handled then validated the required ones
-    name = flask.request.form.get("name", None)
-    email = flask.request.form.get("email", None)
-    phone = flask.request.form.get("phone", None)
-    xmpp = flask.request.form.get("xmpp", None)
-    twitter = flask.request.form.get("twitter", None)
-    facebook = flask.request.form.get("facebook", None)
-
-    # generates a new identifier for the contact to be created
-    # this will be used to access the contact
-    id = str(uuid.uuid4())
-
-    # creates the structure to be used as the server description
-    # using the values provided as parameters
-    contact = {
-        "enabled" : True,
-        "instance_id" : flask.session["instance_id"],
-        "id" : id,
-        "name" : name,
-        "email" : email,
-        "phone" : phone,
-        "xmpp" : xmpp,
-        "twitter" : twitter,
-        "facebook" : facebook
-    }
-
-    # saves the contact instance into the data source, ensures
-    # that the account is ready for processing
-    _save_contact(contact)
 
     # redirects the user to the show page of the contact that
     # was just created
     return flask.redirect(
-        flask.url_for("show_contact", id = id)
+        flask.url_for("show_contact", id = contact.id)
     )
 
-@app.route("/contacts/<id>", methods = ("GET",))
+@app.route("/contacts/<int:id>", methods = ("GET",))
 @quorum.ensure("contacts.show")
 def show_contact(id):
-    contact = _get_contact(id)
+    contact = models.Contact.get_i(id = id)
     return flask.render_template(
         "contact_show.html.tpl",
         link = "contacts",
@@ -783,10 +754,10 @@ def show_contact(id):
         contact = contact
     )
 
-@app.route("/contacts/<id>/edit", methods = ("GET",))
+@app.route("/contacts/<int:id>/edit", methods = ("GET",))
 @quorum.ensure("contacts.edit")
 def edit_contact(id):
-    contact = _get_contact(id)
+    contact = models.Contact.get_i(id = id)
     return flask.render_template(
         "contact_edit.html.tpl",
         link = "contacts",
@@ -795,54 +766,35 @@ def edit_contact(id):
         errors = {}
     )
 
-@app.route("/contacts/<id>/edit", methods = ("POST",))
+@app.route("/contacts/<int:id>/edit", methods = ("POST",))
 @quorum.ensure("contacts.edit")
 def update_contact(id):
-    # runs the validation process on the various arguments
-    # provided to the server
-    errors, contact = quorum.validate("contact")
-    if errors:
+    # finds the current contact and applies the provided
+    # arguments and then saves it into the data source,
+    # all the validations should be ran upon the save operation
+    contact = models.Contact.get_i(id = id)
+    contact.apply()
+    try: contact.save()
+    except quorum.ValidationError, error:
         return flask.render_template(
             "contact_edit.html.tpl",
             link = "contacts",
             sub_link = "edit",
-            contact = contact,
-            errors = errors
+            server = error.model,
+            errors = error.errors
         )
 
-    # retrieves all the parameters from the request to be
-    # handled then validated the required ones
-    name = flask.request.form.get("name", None)
-    email = flask.request.form.get("email", None)
-    phone = flask.request.form.get("phone", None)
-    xmpp = flask.request.form.get("xmpp", None)
-    twitter = flask.request.form.get("twitter", None)
-    facebook = flask.request.form.get("facebook", None)
-
-    # creates the structure to be used as the contact description
-    # using the values provided as parameters
-    contact = _get_contact(id, build = False)
-    contact["name"] = name
-    contact["email"] = email
-    contact["phone"] = phone
-    contact["xmpp"] = xmpp
-    contact["twitter"] = twitter
-    contact["facebook"] = facebook
-
-    # saves the contact instance into the data source, ensures
-    # that the account is ready for processing
-    _save_contact(contact)
-
     # redirects the user to the show page of the contact that
-    # was just created
+    # was just updated
     return flask.redirect(
         flask.url_for("show_contact", id = id)
     )
 
-@app.route("/contacts/<id>/delete", methods = ("GET", "POST"))
+@app.route("/contacts/<int:id>/delete", methods = ("GET", "POST"))
 @quorum.ensure("contacts.delete")
 def delete_contact(id):
-    _delete_contact(id)
+    contact = models.Contact.get_i(id = id)
+    contact.delete()
     return flask.redirect(
         flask.url_for("list_contacts")
     )
