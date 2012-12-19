@@ -37,6 +37,8 @@ __copyright__ = "Copyright (c) 2008-2012 Hive Solutions Lda."
 __license__ = "GNU General Public License (GPL), Version 3"
 """ The license for the module """
 
+import hashlib
+
 import quorum
 
 import base
@@ -80,3 +82,10 @@ class Contact(base.Base):
             quorum.not_empty("email"),
             quorum.is_email("email")
         ]
+
+    @classmethod
+    def _build(cls, model, map):
+        base.Base._build(model, map)
+        email = model.get("email", None)
+        model["email_md5"] = email and hashlib.md5(email).hexdigest()
+        
