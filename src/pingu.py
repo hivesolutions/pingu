@@ -183,7 +183,7 @@ def create_servers_h(heroku_id, account, sleep_time = 3.0):
     # loads the json structure from the data and obtains the
     # owner email and the various domains contained in it
     object = json.loads(data)
-    owner_email = object.get("owner_email", "")
+    owner_email = object.get("owner_email", "notset@heroku.com")
     domains = object.get("domains", [])
 
     # sets the owner email of the instance as the email in the
@@ -540,7 +540,7 @@ def edit_account(username):
 @app.route("/accounts/<username>/edit", methods = ("POST",))
 @quorum.ensure("accounts.edit")
 def update_account(username):
-    # finds the current and account and applies the provided
+    # finds the current account and applies the provided
     # arguments and then saves it into the data source,
     # all the validations should be ran upon the save operation
     account = models.Account.get(username = username)
@@ -627,7 +627,7 @@ def create_server():
 @app.route("/servers/<name>", methods = ("GET",))
 @quorum.ensure("servers.show")
 def show_server(name):
-    server = models.Server.get(name = name)
+    server = models.Server.get_i(name = name)
     return flask.render_template(
         "server_show.html.tpl",
         link = "servers",
@@ -638,7 +638,7 @@ def show_server(name):
 @app.route("/servers/<name>/edit", methods = ("GET",))
 @quorum.ensure("servers.edit")
 def edit_server(name):
-    server = _get_server(name)
+    server = models.Server.get_i(name = name)
     return flask.render_template(
         "server_edit.html.tpl",
         link = "servers",
@@ -650,35 +650,23 @@ def edit_server(name):
 @app.route("/servers/<name>/edit", methods = ("POST",))
 @quorum.ensure("servers.edit")
 def update_server(name):
-    # runs the validation process on the various arguments
-    # provided to the server
-    errors, server = quorum.validate("server")
-    if errors:
+    # finds the current server and applies the provided
+    # arguments and then saves it into the data source,
+    # all the validations should be ran upon the save operation
+    server = models.Server.get_i(name = name)
+    server.apply()
+    try: server.save()
+    except quorum.ValidationError, error:
         return flask.render_template(
             "server_edit.html.tpl",
             link = "servers",
             sub_link = "edit",
-            server = server,
-            errors = errors
+            server = error.model,
+            errors = error.errors
         )
 
-    # retrieves all the parameters from the request to be
-    # handled then validated the required ones
-    url = flask.request.form.get("url", None)
-    description = flask.request.form.get("description", None)
-
-    # populates the structure to be used as the server description
-    # using the values provided as parameters
-    server = _get_server(name, build = False)
-    server["url"] = url
-    server["description"] = description
-
-    # saves the server instance, this should ensure coherence
-    # in the internal data structures
-    _save_server(server)
-
     # redirects the user to the show page of the server that
-    # was just created
+    # was just updated
     return flask.redirect(
         flask.url_for("show_server", name = name)
     )
@@ -686,7 +674,7 @@ def update_server(name):
 @app.route("/servers/<name>/delete", methods = ("GET", "POST"))
 @quorum.ensure("servers.delete")
 def delete_server(name):
-    server = models.Server.get(name = name)
+    server = models.Server.get_i(name = name)
     server.delete()
     return flask.redirect(
         flask.url_for("list_servers")
@@ -695,7 +683,7 @@ def delete_server(name):
 @app.route("/servers/<name>/log", methods = ("GET",))
 @quorum.ensure("log.list")
 def list_log(name):
-    server = models.Server.get(name = name)
+    server = models.Server.get_i(name = name)
     return flask.render_template(
         "server_log.html.tpl",
         link = "servers",
@@ -707,7 +695,7 @@ def list_log(name):
 @quorum.ensure("log.list", json = True)
 def list_log_json(name):
     object = quorum.get_object(alias = True, find = True)
-    log = models.Log.find(map = True, name = name, **object)
+    log = models.Log.find_i(map = True, name = name, **object)
     return flask.Response(
         quorum.dumps_mongo(log),
         mimetype = "application/json"
