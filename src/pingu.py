@@ -448,20 +448,17 @@ def about():
 @app.route("/accounts", methods = ("GET",))
 @quorum.ensure("accounts.list")
 def list_accounts():
-    accounts = _get_accounts()
     return flask.render_template(
         "account_list.html.tpl",
         link = "accounts",
-        sub_link = "list",
-        accounts = accounts
+        sub_link = "list"
     )
 
 @app.route("/accounts.json", methods = ("GET",))
 @quorum.ensure("accounts.list", json = True)
 def list_accounts_json():
-    start_record = int(flask.request.args.get("start_record", 0))
-    number_records = int(flask.request.args.get("number_records", 6))
-    accounts = _get_accounts(start = start_record, count = number_records)
+    object = quorum.get_object(alias = True, find = True)
+    accounts = models.Account.find(map = True, **object)
     return flask.Response(
         quorum.dumps_mongo(accounts),
         mimetype = "application/json"
