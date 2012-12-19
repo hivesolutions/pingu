@@ -37,6 +37,8 @@ __copyright__ = "Copyright (c) 2008-2012 Hive Solutions Lda."
 __license__ = "GNU General Public License (GPL), Version 3"
 """ The license for the module """
 
+import datetime
+
 import quorum
 
 import base
@@ -71,3 +73,13 @@ class Log(base.Base):
             quorum.not_empty("name"),
             quorum.not_duplicate("name", "servers")
         ]
+
+    @classmethod
+    def _build(cls, model, map):
+        base.Base._build(model, map)
+        up = model.get("up", None)
+        timestamp = model.get("timestamp", None)
+        date = datetime.datetime.utcfromtimestamp(timestamp)
+        date_string = date.strftime("%d/%m/%Y %H:%M:%S")
+        model["up_l"] = up == True and "up" or up == False and "down" or "unknwon"
+        model["date_l"] = date_string
