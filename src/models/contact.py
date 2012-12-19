@@ -88,4 +88,3 @@ class Contact(base.Base):
         base.Base._build(model, map)
         email = model.get("email", None)
         model["email_md5"] = email and hashlib.md5(email).hexdigest()
-        
