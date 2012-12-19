@@ -3,7 +3,6 @@
 {% block name %}{{ server.name }} :: edit{% endblock %}
 {% block content %}
     <form action="{{ url_for('update_server', name = server.name) }}" method="post" class="form">
-        <input type="hidden" name="_id" value="{{ server._id }}" />
         <div class="label">
             <label>Server Name</label>
         </div>
