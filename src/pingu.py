@@ -149,11 +149,14 @@ file = open(heroku_conf, "rb")
 try: data = json.load(file)
 finally: file.close()
 
-# @TODO: improve this code
+# @TODO: improve this code, put this into
+# a different place
 api = data.get("api", {})
 username_h = data.get("id", None)
 password_h = api.get("password", None)
 salt_h = api.get("sso_salt", None)
+
+quorum.config_g["salt_h"] = salt_h
 
 def create_servers_h(heroku_id, account, sleep_time = 3.0):
     # sleeps for a while so that no collision with the remote
@@ -163,7 +166,7 @@ def create_servers_h(heroku_id, account, sleep_time = 3.0):
     # retrieves the current instance id to be used
     # from the account structure provided, then encodes
     # the provided heroku id into url encode
-    instance_id = account["instance_id"]
+    instance_id = account.instance_id
     heroku_id_e = urllib.quote(heroku_id)
 
     # creates the complete url string from the username,
@@ -185,8 +188,8 @@ def create_servers_h(heroku_id, account, sleep_time = 3.0):
 
     # sets the owner email of the instance as the email in the
     # account and the saves the account
-    account["email"] = owner_email
-    _save_account(account)
+    account.email = owner_email
+    account.save()
 
     # creates the list that will be used to store the various
     # servers to be created from the domains
@@ -200,14 +203,17 @@ def create_servers_h(heroku_id, account, sleep_time = 3.0):
         url = "http://" + domain + "/"
 
         # creates the structure to be used as the server description
-        # using the values provided as parameters
-        server = {
-            "enabled" : True,
-            "instance_id" : instance_id,
-            "name" : domain,
-            "url" : url,
-            "description" : domain
-        }
+        # using the values provided as parameters and then saves it
+        # into the data source
+        server = dict(
+            enabled = True,
+            instance_id = instance_id,
+            name = domain,
+            url = url,
+            description = domain
+        )
+        server = models.Server.new(model = server)
+        server.save()
 
         # creates a task for the server that has just been created
         # this tuple is going to be used by the scheduling thread
@@ -215,7 +221,6 @@ def create_servers_h(heroku_id, account, sleep_time = 3.0):
 
         # saves the server instance and schedules the task, this
         # should ensure coherence in the internal data structures
-        _save_server(server)
         _schedule_task(task)
 
         # adds the servers structure to the list of servers that
@@ -242,17 +247,20 @@ def utility_processor():
 @app.route("/heroku/resources", methods = ("POST",))
 @quorum.ensure_auth(username_h, password_h, json = True)
 def provision():
-    data = flask.request.data
-    object = json.loads(data)
+    # retrieves the complete set of data from the request
+    # and then unpacks it into the expected attributes
+    object = quorum.get_object()
     heroku_id = object["heroku_id"]
     plan = object["plan"]
 
+    # creates the heroku account with the unpacked values from the
+    # provided message
     account = models.Account.create_heroku(heroku_id, plan = plan)
 
     # schedules the execution of the server creation for
     # the current provision, this will be deferred so that
     # the call is only made after provision is complete
-    thread.start_new_thread(
+    quorum.run_background(
         create_servers_h,
         (heroku_id, account)
     )
@@ -271,20 +279,20 @@ def provision():
 @app.route("/heroku/resources/<id>", methods = ("DELETE",))
 @quorum.ensure_auth(username_h, password_h, json = True)
 def deprovision(id):
-    _remove_account(id)
+    account = models.Account.get(username = id)
+    account.delete()
 
     return "ok"
 
 @app.route("/heroku/resources/<id>", methods = ("PUT",))
 @quorum.ensure_auth(username_h, password_h, json = True)
 def plan_change(id):
-    data = flask.request.data
-    object = json.loads(data)
+    object = quorum.get_object()
     plan = object["plan"]
 
-    account = _get_account(id, build = False)
-    account["plan"] = plan
-    _save_account(account)
+    account = models.Account.get(username = id)
+    account.plan = plan
+    account.save()
 
     return "ok"
 
@@ -293,49 +301,25 @@ def sso_login():
     # retrieves the various parameters provided by the
     # caller post operation to be used in the construction
     # of the response and security validations
-    id = flask.request.form.get("id", None)
-    timestamp = flask.request.form.get("timestamp", None)
-    token = flask.request.form.get("token", None)
-    nav_data = flask.request.form.get("nav-data", None)
+    object = quorum.get_object()
+    id = object.get("id", None)
+    timestamp = object.get("timestamp", None)
+    token = object.get("token", None)
+    nav_data = object.get("nav-data", None)
 
-    # re-creates the token from the provided id and timestamp
-    # and the "secret" salt value
-    _token = id + ":" + salt_h + ":" + timestamp
-    _token_s = hashlib.sha1(_token).hexdigest()
+    # runs the sso login for the provided arguments and retrieves
+    # the account that has just been logged in
+    account = models.Account.sso_login(id, timestamp, token, nav_data)
 
-    # retrieves the current time to be used in the timestamp
-    # validation process
-    current_time = time.time()
-
-    # validation the token and then checks if the provided timestamp
-    # is not defined in the past
-    if not _token_s == token: return "invalid token", 403
-    if not current_time < timestamp: return "invalid timestamp (in the past)", 403
-
-    # tries to retrieve the account associated with the provided
-    # id value in case none is found returns in error
-    account = _get_account(id, build = False, raise_e = False)
-    if not account: return "no user found", 403
-
-    # sets the login count and last login values in the account as the
-    # current time and then saves it in the data store
-    login_count = account.get("login_count", 0)
-    account["login_count"] = login_count + 1
-    account["last_login"] = time.time()
-    _save_account(account)
-
-    # retrieves the various account information values and retrieves
-    # the navigation bar contents
-    username = account["username"]
-    tokens = account["tokens"]
-    instance_id = account["instance_id"]
+    # retrieves the contents to be use in the navigation bar for the
+    # heroku session
     navbar_h = get_navbar_h()
 
     # updates the current user (name) in session with
     # the username that has just be accepted in the login
-    flask.session["username"] = username
-    flask.session["tokens"] = tokens
-    flask.session["instance_id"] = instance_id
+    flask.session["username"] = account.username
+    flask.session["tokens"] = account.tokens
+    flask.session["instance_id"] = account.instance_id
     flask.session["nav_data"] = navbar_h
     flask.session["acl"] = quorum.check_login
 
@@ -415,12 +399,14 @@ def signin():
 
 @app.route("/signin", methods = ("POST",))
 def login():
-    account = models.Account.new()
-    try: account = account.login()
+    object = quorum.get_object()
+    username = object.get("username", None)
+    password = object.get("password", None)
+    try: account = models.Account.login(username, password)
     except quorum.OperationalError, error:
         return flask.render_template(
             "signin.html.tpl",
-            username = account.val("username"),
+            username = username,
             error = error.message
         )
 
@@ -586,7 +572,7 @@ def delete_account(username):
 @app.route("/servers", methods = ("GET",))
 @quorum.ensure("servers.list")
 def list_servers():
-    servers = _get_servers()
+    servers = models.Server.find_i()
     return flask.render_template(
         "server_list.html.tpl",
         link = "servers",
@@ -608,53 +594,40 @@ def new_server():
 @app.route("/servers", methods = ("POST",))
 @quorum.ensure("servers.new")
 def create_server():
-    # runs the validation process on the various arguments
-    # provided to the server
-    errors, server = quorum.validate("server_new")
-    if errors:
+    # creates the new server, using the provided arguments and
+    # then saves it into the data source, all the validations
+    # should be ran upon the save operation
+    server = models.Server.new()
+    try: server.save()
+    except quorum.ValidationError, error:
         return flask.render_template(
             "server_new.html.tpl",
-            link = "new_server",
+            link = "servers",
             sub_link = "create",
-            server = server,
-            errors = errors
+            server = error.model,
+            errors = error.errors
         )
-
-    # retrieves all the parameters from the request to be
-    # handled then validated the required ones
-    name = flask.request.form.get("name", None)
-    url = flask.request.form.get("url", None)
-    description = flask.request.form.get("description", None)
-
-    # creates the structure to be used as the server description
-    # using the values provided as parameters
-    server = {
-        "enabled" : True,
-        "instance_id" : flask.session["instance_id"],
-        "name" : name,
-        "url" : url,
-        "description" : description
-    }
 
     # creates a task for the server that has just been created
     # this tuple is going to be used by the scheduling thread
+    # @TODO: PUT THIS INTO DE POST_SAVE method
     task = (server, DEFAULT_TIMEOUT)
 
     # saves the server instance and schedules the task, this
     # should ensure coherence in the internal data structures
-    _save_server(server)
+    # @TODO: put this as a static method under task model
     _schedule_task(task)
 
     # redirects the user to the show page of the server that
     # was just created
     return flask.redirect(
-        flask.url_for("show_server", name = name)
+        flask.url_for("show_server", name = server.name)
     )
 
 @app.route("/servers/<name>", methods = ("GET",))
 @quorum.ensure("servers.show")
 def show_server(name):
-    server = _get_server(name)
+    server = models.Server.get(name = name)
     return flask.render_template(
         "server_show.html.tpl",
         link = "servers",
@@ -713,7 +686,8 @@ def update_server(name):
 @app.route("/servers/<name>/delete", methods = ("GET", "POST"))
 @quorum.ensure("servers.delete")
 def delete_server(name):
-    _delete_server(name)
+    server = models.Server.get(name = name)
+    server.delete()
     return flask.redirect(
         flask.url_for("list_servers")
     )
@@ -721,7 +695,7 @@ def delete_server(name):
 @app.route("/servers/<name>/log", methods = ("GET",))
 @quorum.ensure("log.list")
 def list_log(name):
-    server = _get_server(name)
+    server = models.Server.get(name = name)
     return flask.render_template(
         "server_log.html.tpl",
         link = "servers",
@@ -732,9 +706,8 @@ def list_log(name):
 @app.route("/servers/<name>/log.json", methods = ("GET",))
 @quorum.ensure("log.list", json = True)
 def list_log_json(name):
-    start_record = int(flask.request.args.get("start_record", 0))
-    number_records = int(flask.request.args.get("number_records", 6))
-    log = _get_log(name, start = start_record, count = number_records)
+    object = quorum.get_object(alias = True, find = True)
+    log = models.Log.find(map = True, name = name, **object)
     return flask.Response(
         quorum.dumps_mongo(log),
         mimetype = "application/json"
@@ -891,7 +864,7 @@ def delete_contact(id):
 
 @app.route("/<name>", methods = ("GET",))
 def profile_server(name):
-    server = _get_server(name)
+    server = models.Server.get(name = name)
     return flask.render_template(
         "site/server_profile.html.tpl",
         link = "servers",
@@ -1534,5 +1507,5 @@ _ensure_db()
 # the system internal structures
 _schedule_tasks()
 
-if __name__ == "__main__": run_waitress()
+if __name__ == "__main__": run()
 else: load()
