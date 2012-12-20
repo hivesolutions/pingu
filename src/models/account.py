@@ -214,6 +214,89 @@ class Account(base.Base):
         ]
 
     @classmethod
+    def login(cls, username, password):
+        # verifies that both the username and the password are
+        # correctly set in the current instance
+        if not username or not password:
+            raise quorum.OperationalError(
+                "Both username and password must be provided",
+                code = 400
+            )
+
+        # retrieves the account associated with the provided username
+        # in case none is found raises an operational error indicating
+        # the problem with the account retrieval
+        account = cls.get(
+            username = username,
+            build = False,
+            raise_e = False
+        )
+        if not account:
+            raise quorum.OperationalError(
+                "No valid account found",
+                code = 403
+            )
+
+        # creates the sha1 hash value for the password and verifies that
+        # the provided password is the expected
+        password_sha1 = hashlib.sha1(password + PASSWORD_SALT).hexdigest()
+        _password = account.password
+        if not password_sha1 == _password:
+            raise quorum.OperationalError(
+                "Invalid or mismatch password",
+                code = 403
+            )
+
+        # sets the login count and last login values in the account as the
+        # current time and then saves it in the data store
+        login_count = account.val("login_count", 0)
+        account.login_count = login_count + 1
+        account.last_login = time.time()
+        account.save()
+
+        # returns the account representing the user that has just been logged
+        # in into the system to the caller method
+        return account
+
+    @classmethod
+    def sso_login(cls, id, timestamp, token, nav_data):
+        # retrieves the various configuration properties
+        # to be used for this operation
+        salt_h = quorum.conf("salt_h", None)
+
+        # re-creates the token from the provided id and timestamp
+        # and the "secret" salt value
+        _token = id + ":" + salt_h + ":" + timestamp
+        _token_s = hashlib.sha1(_token).hexdigest()
+
+        # retrieves the current time to be used in the timestamp
+        # validation process
+        current_time = time.time()
+
+        # validation the token and then checks if the provided timestamp
+        # is not defined in the past
+        if not _token_s == token:
+            raise quorum.OperationalError("Invalid token", code = 403)
+        if not current_time < timestamp:
+            return quorum.OperationalError("Invalid timestamp (in the past)", code = 403)
+
+        # tries to retrieve the account associated with the provided
+        # id value in case none is found returns in error
+        account = Account.get(username = id, build = False, raise_e = False)
+        if not account: return quorum.OperationalError("No user found", code = 403)
+
+        # sets the login count and last login values in the account as the
+        # current time and then saves it in the data store
+        login_count = account.val("login_count", 0)
+        account.login_count = login_count + 1
+        account.last_login = time.time()
+        account.save(account)
+
+        # returns the account representing the user that has just been logged
+        # in into the system to the caller method
+        return account
+
+    @classmethod
     def create_heroku(cls, heroku_id, plan = "basic"):
         # generates a "random" password for the heroku based user
         # to be created in the data source
@@ -310,90 +393,6 @@ class Account(base.Base):
         # runs the post operation for the preparation of the confirm
         # of the account (must send appropriate documents: email, etc.)
         self.confirm()
-
-
-    @classmethod
-    def sso_login(cls, id, timestamp, token, nav_data):
-        # retrieves the various configuration properties
-        # to be used for this operation
-        salt_h = quorum.conf("salt_h", None)
-
-        # re-creates the token from the provided id and timestamp
-        # and the "secret" salt value
-        _token = id + ":" + salt_h + ":" + timestamp
-        _token_s = hashlib.sha1(_token).hexdigest()
-
-        # retrieves the current time to be used in the timestamp
-        # validation process
-        current_time = time.time()
-
-        # validation the token and then checks if the provided timestamp
-        # is not defined in the past
-        if not _token_s == token:
-            raise quorum.OperationalError("Invalid token", code = 403)
-        if not current_time < timestamp:
-            return quorum.OperationalError("Invalid timestamp (in the past)", code = 403)
-
-        # tries to retrieve the account associated with the provided
-        # id value in case none is found returns in error
-        account = Account.get(username = id, build = False, raise_e = False)
-        if not account: return quorum.OperationalError("No user found", code = 403)
-
-        # sets the login count and last login values in the account as the
-        # current time and then saves it in the data store
-        login_count = account.val("login_count", 0)
-        account.login_count = login_count + 1
-        account.last_login = time.time()
-        account.save(account)
-
-        # returns the account representing the user that has just been logged
-        # in into the system to the caller method
-        return account
-
-    @classmethod
-    def login(self, username, password):
-        # verifies that both the username and the password are
-        # correctly set in the current instance
-        if not username or not password:
-            raise quorum.OperationalError(
-                "Both username and password must be provided",
-                code = 400
-            )
-
-        # retrieves the account associated with the provided username
-        # in case none is found raises an operational error indicating
-        # the problem with the account retrieval
-        account = self.get(
-            username = username,
-            build = False,
-            raise_e = False
-        )
-        if not account:
-            raise quorum.OperationalError(
-                "No valid account found",
-                code = 403
-            )
-
-        # creates the sha1 hash value for the password and verifies that
-        # the provided password is the expected
-        password_sha1 = hashlib.sha1(password + PASSWORD_SALT).hexdigest()
-        _password = account.password
-        if not password_sha1 == _password:
-            raise quorum.OperationalError(
-                "Invalid or mismatch password",
-                code = 403
-            )
-
-        # sets the login count and last login values in the account as the
-        # current time and then saves it in the data store
-        login_count = account.val("login_count", 0)
-        account.login_count = login_count + 1
-        account.last_login = time.time()
-        account.save()
-
-        # returns the account representing the user that has just been logged
-        # in into the system to the caller method
-        return account
 
     def confirm(self):
         # creates a new account in order to obtain the new build
