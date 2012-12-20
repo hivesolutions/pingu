@@ -38,17 +38,14 @@ __license__ = "GNU General Public License (GPL), Version 3"
 """ The license for the module """
 
 import os
-import uuid
 import json
 import time
 import flask
 import atexit
 import urllib
 import thread
-import hashlib
 import httplib
 import smtplib
-import datetime
 import urlparse
 import cStringIO
 
@@ -561,9 +558,10 @@ def update_account(username):
 @app.route("/accounts/<username>/delete", methods = ("GET", "POST"))
 @quorum.ensure("accounts.delete")
 def delete_account(username):
-    _delete_account(username)
+    account = models.Account.get_i(username = username)
+    account.delete()
     return flask.redirect(
-        flask.url_for("list_accounts")
+        flask.url_for("logout")
     )
 
 @app.route("/servers", methods = ("GET",))
@@ -860,127 +858,6 @@ def badge_server(name):
         mimetype = "image/png"
     )
 
-def _get_accounts(start = 0, count = 6):
-    pymongo = quorum.mongodb.pymongo
-    db = quorum.get_mongo_db()
-    accounts = db.accounts.find(
-        {"enabled" : True},
-        skip = start,
-        limit = count,
-        sort = [("last_login", pymongo.DESCENDING)]
-    )
-    accounts = [_build_account(account) for account in accounts]
-    return accounts
-
-def _get_account(username, build = True, raise_e = True):
-    db = quorum.get_mongo_db()
-    account = db.accounts.find_one({
-        "enabled" : True,
-        "username" : username
-    })
-    if not account and raise_e: raise RuntimeError("Account not found")
-    build and _build_account(account)
-    return account
-
-def _get_all_account(username, build = True, raise_e = True):
-    db = quorum.get_mongo_db()
-    account = db.accounts.find_one({
-        "username" : username
-    })
-    if not account and raise_e: raise RuntimeError("Account not found")
-    build and _build_account(account)
-    return account
-
-def _get_account_confirmation(confirmation):
-    db = quorum.get_mongo_db()
-    account = db.accounts.find_one({
-        "confirmation" : confirmation
-    })
-    return account
-
-def _save_account(account):
-    db = quorum.get_mongo_db()
-    db.accounts.save(account)
-    return account
-
-def _delete_account(username):
-    db = quorum.get_mongo_db()
-    account = db.accounts.find_one({"username" : username})
-    account["enabled"] = False
-    db.accounts.save(account)
-    return account
-
-def _remove_account(username):
-    db = quorum.get_mongo_db()
-    account = db.accounts.find_one({"username" : username})
-    instance_id = account["instance_id"]
-    db.contacts.remove({"instance_id" : instance_id})
-    db.log.remove({"instance_id" : instance_id})
-    db.servers.remove({"instance_id" : instance_id})
-    db.accounts.remove({"instance_id" : instance_id})
-
-def _confirm_account(account):
-    username = account.get("username", None)
-    email = account.get("email", None)
-
-    parameters = {
-        "subject" : "Welcome to Pingu, please confirm you email",
-        "sender" : "Pingu Mailer <mailer@pinguapp.com>",
-        "receivers" : ["%s <%s>" % (username, email)],
-        "plain" : "email/confirm.txt.tpl",
-        "rich" : "email/confirm.html.tpl",
-        "context" : {
-            "account" : account
-        }
-    }
-    thread.start_new_thread(_send_email, (), parameters)
-
-def _get_log(name, start = 0, count = 6):
-    pymongo = quorum.mongodb.pymongo
-    db = quorum.get_mongo_db()
-    log = db.log.find(
-        {
-            "instance_id" : flask.session["instance_id"],
-            "name" : name
-        },
-        skip = start,
-        limit = count,
-        sort = [("timestamp", pymongo.DESCENDING)]
-    )
-    log = [_build_log(_log) for _log in log]
-    return log
-
-def _build_account(account):
-    enabled = account.get("enabled", False)
-    email = account.get("email", None)
-    last_login = account.get("last_login", None)
-    last_login_date = last_login and datetime.datetime.utcfromtimestamp(last_login)
-    last_login_string = last_login_date and last_login_date.strftime("%d/%m/%Y %H:%M:%S")
-    account["enabled_l"] = enabled and "enabled" or "disabled"
-    account["email_s"] = email and email.replace("@", " at ").replace(".", " dot ")
-    account["last_login_l"] = last_login_string
-    del account["password"]
-    return account
-
-def _build_server(server):
-    up = server.get("up", None)
-    server["up_l"] = up == True and "up" or up == False and "down" or "unknwon"
-    return server
-
-def _build_log(log):
-    up = log.get("up", None)
-    timestamp = log.get("timestamp", None)
-    date = datetime.datetime.utcfromtimestamp(timestamp)
-    date_string = date.strftime("%d/%m/%Y %H:%M:%S")
-    log["up_l"] = up == True and "up" or up == False and "down" or "unknwon"
-    log["date_l"] = date_string
-    return log
-
-def _build_contact(contact):
-    email = contact.get("email", None)
-    contact["email_md5"] = email and hashlib.md5(email).hexdigest()
-    return contact
-
 def _send_email(subject = "", sender = "", receivers = [], plain = None, rich = None, context = {}):
     plain_data = plain and _render(plain, **context)
     html_data = rich and _render(rich, **context)
@@ -1143,69 +1020,6 @@ def _render(template_name, **context):
     template = app.jinja_env.get_or_select_template(template_name)
     return flask.templating._render(template, context, app)
 
-def _ensure_db():
-    db = quorum.get_mongo_db()
-
-    db.accounts.ensure_index("enabled")
-    db.accounts.ensure_index("instance_id")
-    db.accounts.ensure_index("username")
-    db.accounts.ensure_index("api_key")
-    db.accounts.ensure_index("confirmation")
-    db.accounts.ensure_index("email")
-    db.accounts.ensure_index("twitter")
-    db.accounts.ensure_index("facebook")
-    db.accounts.ensure_index("last_login")
-
-    db.servers.ensure_index("enabled")
-    db.servers.ensure_index("instance_id")
-    db.servers.ensure_index("name")
-    db.servers.ensure_index("url")
-    db.servers.ensure_index("up")
-    db.servers.ensure_index("latency")
-    db.servers.ensure_index("timestamp")
-
-    db.log.ensure_index("instance_id")
-    db.log.ensure_index("name")
-    db.log.ensure_index("up")
-    db.log.ensure_index("timestamp")
-
-    db.contacts.ensure_index("enabled")
-    db.contacts.ensure_index("instance_id")
-    db.contacts.ensure_index("name")
-    db.contacts.ensure_index("email")
-    db.contacts.ensure_index("phone")
-
-def _setup_db():
-    db = quorum.get_mongo_db()
-    root = db.accounts.find_one({
-        "username" : "root",
-        "type" : ADMIN_TYPE
-    })
-    if root: return
-
-    # encodes the provided password into an sha1 hash appending
-    # the salt value to it before the encoding
-    password_sha1 = hashlib.sha1("root" + PASSWORD_SALT).hexdigest()
-
-    # creates the structure to be used as the server description
-    # using the values provided as parameters
-    account = {
-        "enabled" : True,
-        "instance_id" : str(uuid.uuid4()),
-        "username" : "root",
-        "password" : password_sha1,
-        "plan" : "full",
-        "email" : "root@pinguapp.com",
-        "login_count" : 0,
-        "last_login" : None,
-        "type" : ADMIN_TYPE,
-        "tokens" : USER_ACL.get(ADMIN_TYPE, ())
-    }
-
-    # saves the account instance into the data source, ensures
-    # that the account is ready for login
-    _save_account(account)
-
 def _get_tasks():
     tasks = []
     servers = models.Server.find(enabled = True)
@@ -1301,11 +1115,6 @@ def stop_thread():
 # it, providing the mechanism for execution
 execution_thread = quorum.execution.ExecutionThread()
 execution_thread.start()
-
-# ensures the various requirements for the database
-# so that it becomes ready for usage
-_setup_db()
-_ensure_db()
 
 # schedules the various tasks currently registered in
 # the system internal structures
