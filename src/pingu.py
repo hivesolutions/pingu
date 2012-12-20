@@ -246,9 +246,8 @@ def utility_processor():
 def provision():
     # retrieves the complete set of data from the request
     # and then unpacks it into the expected attributes
-    object = quorum.get_object()
-    heroku_id = object["heroku_id"]
-    plan = object["plan"]
+    heroku_id = quorum.get_field("heroku_id")
+    plan = quorum.get_field("plan")
 
     # creates the heroku account with the unpacked values from the
     # provided message
@@ -284,8 +283,7 @@ def deprovision(id):
 @app.route("/heroku/resources/<id>", methods = ("PUT",))
 @quorum.ensure_auth(username_h, password_h, json = True)
 def plan_change(id):
-    object = quorum.get_object()
-    plan = object["plan"]
+    plan = quorum.get_field("plan")
 
     account = models.Account.get(username = id)
     account.plan = plan
@@ -298,11 +296,10 @@ def sso_login():
     # retrieves the various parameters provided by the
     # caller post operation to be used in the construction
     # of the response and security validations
-    object = quorum.get_object()
-    id = object.get("id", None)
-    timestamp = object.get("timestamp", None)
-    token = object.get("token", None)
-    nav_data = object.get("nav-data", None)
+    id = quorum.get_field("id")
+    timestamp = quorum.get_field("timestamp")
+    token = quorum.get_field("token")
+    nav_data = quorum.get_field("nav-data")
 
     # runs the sso login for the provided arguments and retrieves
     # the account that has just been logged in
@@ -396,9 +393,8 @@ def signin():
 
 @app.route("/signin", methods = ("POST",))
 def login():
-    object = quorum.get_object()
-    username = object.get("username", None)
-    password = object.get("password", None)
+    username = quorum.get_field("username")
+    password = quorum.get_field("password")
     try: account = models.Account.login(username, password)
     except quorum.OperationalError, error:
         return flask.render_template(
