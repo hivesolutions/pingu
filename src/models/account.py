@@ -44,7 +44,9 @@ import datetime
 
 import quorum
 
+import log
 import base
+import server
 import contact
 
 PASSWORD_SALT = "pingu"
@@ -75,7 +77,8 @@ USER_ACL = {
         "contacts.edit",
         "contacts.delete",
         "accounts.show",
-        "accounts.edit"
+        "accounts.edit",
+        "accounts.delete"
     ),
     ADMIN_TYPE : (
         "*",
@@ -415,7 +418,6 @@ class Account(base.Base):
     def _delete(self):
         base.Base._delete(self)
 
-        store = self._get_store()
-        store.contact.remove({"instance_id" : self.instance_id})
-        store.log.remove({"instance_id" : self.instance_id})
-        store.server.remove({"instance_id" : self.instance_id})
+        contact.Contact.delete_c(instance_id = self.instance_id)
+        log.Log.delete_c(instance_id = self.instance_id)
+        server.Server.delete_c(instance_id = self.instance_id)
