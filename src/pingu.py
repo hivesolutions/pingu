@@ -41,20 +41,12 @@ import os
 import json
 import time
 import flask
-import atexit
 import urllib
-import thread
-import httplib
-import smtplib
-import urlparse
 import cStringIO
 
 import PIL.Image
 import PIL.ImageDraw
 import PIL.ImageFont
-
-import email.mime.multipart
-import email.mime.text
 
 import config
 import models
@@ -67,10 +59,6 @@ processes handled by flask (eg: sessions) """
 PASSWORD_SALT = "pingu"
 """ The salt suffix to be used during the encoding
 of the password into an hash value """
-
-TASKS = ()
-""" The set of tasks to be executed by ping operations
-this is the standard hardcoded values """
 
 MONGO_DATABASE = "pingu"
 """ The default database to be used for the connection with
@@ -120,13 +108,6 @@ USER_ACL = {
 }
 """ The map associating the user type with the corresponding
 list (sequence) of access control tokens """
-
-HEADERS = {
-    "User-Agent" : "pingu/0.1.0",
-    "X-Powered-By" : "hive-server/0.1.0"
-}
-""" The map of headers to be used as base for the pingu
-http client to use """
 
 app = flask.Flask(__name__)
 quorum.load(
@@ -214,11 +195,11 @@ def create_servers_h(heroku_id, account, sleep_time = 3.0):
 
         # creates a task for the server that has just been created
         # this tuple is going to be used by the scheduling thread
-        task = (server, DEFAULT_TIMEOUT)
+        task = models.Task(server, DEFAULT_TIMEOUT)
 
         # saves the server instance and schedules the task, this
         # should ensure coherence in the internal data structures
-        _schedule_task(task)
+        task.schedule()
 
         # adds the servers structure to the list of servers that
         # have been created
@@ -599,16 +580,6 @@ def create_server():
             errors = error.errors
         )
 
-    # creates a task for the server that has just been created
-    # this tuple is going to be used by the scheduling thread
-    # @TODO: PUT THIS INTO DE POST_SAVE method
-    task = (server, DEFAULT_TIMEOUT)
-
-    # saves the server instance and schedules the task, this
-    # should ensure coherence in the internal data structures
-    # @TODO: put this as a static method under task model
-    _schedule_task(task)
-
     # redirects the user to the show page of the server that
     # was just created
     return flask.redirect(
@@ -854,195 +825,6 @@ def badge_server(name):
         mimetype = "image/png"
     )
 
-def _send_email(subject = "", sender = "", receivers = [], plain = None, rich = None, context = {}):
-    plain_data = plain and _render(plain, **context)
-    html_data = rich and _render(rich, **context)
-
-    message = email.mime.multipart.MIMEMultipart("alternative")
-    message["Subject"] = subject
-    message["From"] = sender
-    message["To"] = ", ".join(receivers)
-
-    # creates both the plain text and the rich text (html) objects
-    # from the provided data and then attached them to the message
-    # (multipart alternative) that is the base structure
-    plain = plain_data and email.mime.text.MIMEText(plain_data, "plain")
-    html = html_data and email.mime.text.MIMEText(html_data, "html")
-    plain and message.attach(plain)
-    html and message.attach(html)
-
-    # creates the connection with the smtp server and starts the tls
-    # connection to send the created email message
-    server = smtplib.SMTP(config.SMTP_HOST)
-    try:
-        server.starttls()
-        server.login(config.SMTP_USER, config.SMTP_PASSWORD)
-        server.sendmail(sender, receivers, message.as_string())
-    finally:
-        server.quit()
-
-def _ping(server, timeout = 1.0):
-    # retrieves the name of the server that is goin to be
-    # targeted by the "ping" operation
-    name = server["name"]
-
-    # retrieves the server again to ensure that the data
-    # is correct in it
-    db = quorum.get_mongo_db()
-    server = db.servers.find_one({"name" : name})
-
-    # retrieves the various attribute values from the server
-    # that are going to be used in the method
-    instance_id = server["instance_id"]
-    name = server["name"]
-    url = server["url"]
-    method = server.get("method", "GET")
-
-    # parses the provided url values, retrieving the various
-    # components of it to be used in the ping operation
-    url_s = urlparse.urlparse(url)
-    scheme = url_s.scheme
-    hostname = url_s.hostname
-    port = url_s.port
-    path = url_s.path
-
-    # retrieves the connection class to be used according
-    # to the scheme defined in the url
-    connection_c = scheme == "https" and httplib.HTTPSConnection or httplib.HTTPConnection
-
-    # retrieves the timestamp for the start of the connection
-    # to the remote host and then creates a new connection to
-    # the remote host to proceed with the "ping" operation
-    start_time = time.time()
-    connection = connection_c(hostname, port)
-    try:
-        connection.request(method, path, headers = HEADERS)
-        response = connection.getresponse()
-    except:
-        response = None
-    finally:
-        connection.close()
-    end_time = time.time()
-    latency = int((end_time - start_time) * 1000.0)
-
-    # retrieves both the status and the reason values
-    # defaulting to "down" values in case the response
-    # is not available
-    status = response and response.status or 0
-    reason = response and response.reason or "Down"
-
-    # checks if the current status code is in the
-    # correct range these are considered the "valid"
-    # status codes for an up server
-    up = (status / 100) in (2, 3)
-
-    # prints a debug message about the ping operation
-    # with the complete diagnostics information
-    print "%s :: %s %s / %dms" % (url, status, reason, latency)
-
-    # inserts the log document into the database so that
-    # the information is registered
-    db.log.insert({
-        "enabled" : True,
-        "instance_id" : instance_id,
-        "name" : name,
-        "url" : url,
-        "up" : up,
-        "status" : status,
-        "reason" : reason,
-        "latency" : latency,
-        "timestamp" : start_time
-    })
-
-    change_down = not server.get("up", True) == up and not up
-    change_up = not server.get("up", True) == up and up
-    server["up"] = up
-    server["latency"] = latency
-    server["timestamp"] = start_time
-    db.servers.save(server)
-
-    # in case there's a change from server state up to down, or
-    # down to up (reversed) must trigger the proper event so
-    # that the user is notified about the change
-    if change_down: _event_down(server)
-    if change_up: _event_up(server)
-
-    # retrieves the value for the enabled flag of the server
-    # in case the values is not enable no re-scheduling is done
-    enabled = server.get("enabled", False)
-
-    # retrieves the current time and uses that value to
-    # re-insert a new task into the execution thread, this
-    # is considered the re-schedule operation
-    current_time = time.time()
-    enabled and execution_thread.insert_work(
-        current_time + timeout,
-        _ping_m(server, timeout = timeout)
-    )
-
-def _ping_m(server, timeout = 1.0):
-    def _pingu(): _ping(server, timeout = timeout)
-    return _pingu
-
-def _event_down(server):
-    name = server.get("name", None)
-    parameters = {
-        "subject" : "Your server %s, is currently down" % name,
-        "sender" : "Pingu Mailer <mailer@pinguapp.com>",
-        "receivers" : ["João Magalhães <joamag@hive.pt>"],
-        "plain" : "email/down.txt.tpl",
-        "rich" : "email/down.html.tpl",
-        "context" : {
-            "server" : server
-        }
-    }
-    thread.start_new_thread(_send_email, (), parameters)
-
-def _event_up(server):
-    name = server.get("name", None)
-    parameters = {
-        "subject" : "Your server %s, is back online" % name,
-        "sender" : "Pingu Mailer <mailer@pinguapp.com>",
-        "receivers" : ["João Magalhães <joamag@hive.pt>"],
-        "plain" : "email/up.txt.tpl",
-        "rich" : "email/up.html.tpl",
-        "context" : {
-            "server" : server
-        }
-    }
-    thread.start_new_thread(_send_email, (), parameters)
-
-def _render(template_name, **context):
-    template = app.jinja_env.get_or_select_template(template_name)
-    return flask.templating._render(template, context, app)
-
-def _get_tasks():
-    tasks = []
-    servers = models.Server.find(enabled = True)
-
-    for server in servers:
-        timeout = server.get("timeout", DEFAULT_TIMEOUT)
-        tasks.append((
-            server,
-            timeout
-        ))
-
-    return tasks + list(TASKS)
-
-def _schedule_tasks():
-    # retrieves the current time and then iterates over
-    # all the tasks to insert them into the execution thread
-    tasks = _get_tasks()
-    for task in tasks: _schedule_task(task)
-
-def _schedule_task(task):
-    current_time = time.time()
-    server, timeout = task
-    execution_thread.insert_work(
-        current_time,
-        _ping_m(server, timeout = timeout)
-    )
-
 def load():
     # sets the global wide application settings and
     # configures the application object according to
@@ -1100,21 +882,9 @@ def run():
         port = port
     )
 
-@atexit.register
-def stop_thread():
-    # stop the execution thread so that it's possible to
-    # the process to return the calling
-    execution_thread.stop()
-
-# creates the thread that it's going to be used to
-# execute the various background tasks and starts
-# it, providing the mechanism for execution
-execution_thread = quorum.execution.ExecutionThread()
-execution_thread.start()
-
 # schedules the various tasks currently registered in
 # the system internal structures
-_schedule_tasks()
+models.Task.schedule_all()
 
-if __name__ == "__main__": run()
+if __name__ == "__main__": run_waitress()
 else: load()
