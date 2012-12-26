@@ -42,11 +42,6 @@ import json
 import time
 import flask
 import urllib
-import cStringIO
-
-import PIL.Image
-import PIL.ImageDraw
-import PIL.ImageFont
 
 import config
 import models
@@ -56,58 +51,13 @@ SECRET_KEY = "kyjbqt4828ky8fdl7ifwgawt60erk8wg"
 """ The "secret" key to be at the internal encryption
 processes handled by flask (eg: sessions) """
 
-PASSWORD_SALT = "pingu"
-""" The salt suffix to be used during the encoding
-of the password into an hash value """
-
 MONGO_DATABASE = "pingu"
 """ The default database to be used for the connection with
 the mongo database """
 
-BADGE_SIZE = 8
-""" The size (in points) of the text to be used in the update
-of the base badge image """
-
-BADGE_FILL = "#666666"
-""" The color to be used in the fill of the text for the update
-operation in the badge """
-
 DEFAULT_TIMEOUT = 60.0
 """ The default timeout value to be used in between "ping"
 requests, this values is only used as a fallback """
-
-USER_TYPE = 1
-""" The identifier (integer) to be used to represent an user
-of type (normal) user """
-
-ADMIN_TYPE = 2
-""" The identifier (integer) to be used to represent an user
-of type admin (administrator) """
-
-USER_ACL = {
-    USER_TYPE : (
-        "index",
-        "about",
-        "servers.list",
-        "servers.new",
-        "servers.show",
-        "servers.edit",
-        "servers.delete",
-        "log.list",
-        "contacts.list",
-        "contacts.new",
-        "contacts.show",
-        "contacts.edit",
-        "contacts.delete",
-        "accounts.show",
-        "accounts.edit"
-    ),
-    ADMIN_TYPE : (
-        "*",
-    )
-}
-""" The map associating the user type with the corresponding
-list (sequence) of access control tokens """
 
 app = flask.Flask(__name__)
 quorum.load(
@@ -121,8 +71,7 @@ quorum.load(
 navbar_h = None
 
 # @TODO: improve this code
-base_path = os.path.dirname(__file__)
-heroku_conf = os.path.join(base_path, "heroku", "addon-manifest.json")
+heroku_conf = quorum.base_path("heroku", "addon-manifest.json")
 file = open(heroku_conf, "rb")
 try: data = json.load(file)
 finally: file.close()
@@ -776,47 +725,8 @@ def profile_server(name):
 
 @app.route("/<name>/badge", methods = ("GET",))
 def badge_server(name):
-    # @TODO: update this text value with a dynamically
-    # generated value
-    TEXT = "51,36%"
-
-    # creates both the complete file path for the badge
-    # file and the file path to the font file to be used
-    # in the generation of the badge
-    badge_path = os.path.join(base_path, "static/images/site/badge-uptime.png")
-    font_path = os.path.join(base_path, "static/fonts/pixel_arial.ttf")
-
-    # creates the font object to be used in the "writing"
-    # for the file and retrieves the size of the text for
-    # the create font
-    font = PIL.ImageFont.truetype(font_path, BADGE_SIZE)
-    width, height = font.getsize(TEXT)
-
-    # opens the badge image file and retrieves the png based
-    # information tuple and the size of that image
-    image = PIL.Image.open(badge_path, "r")
-    png_info = image.info
-    image_width, image_height = image.size
-
-    # calculates the horizontal and vertical text position based
-    # on the current image and text dimensions
-    x = image_width - width - 3
-    y = (image_height / 2) - (height / 2)
-
-    # creates the draw context for the current image, in order to
-    # be able to "draw" the text in it
-    draw = PIL.ImageDraw.Draw(image)
-    draw.text((x, y), TEXT, font = font, fill = BADGE_FILL)
-
-    # creates the buffer for the writing of the "final" image file,
-    # then writes its contents and reads the complete set of data
-    buffer = cStringIO.StringIO()
-    try:
-        image.save(buffer, "png", **png_info)
-        buffer.seek(0)
-        data = buffer.read()
-    finally:
-        buffer.close()
+    server = models.Server.get(name = name)
+    data = server.badge()
 
     # returns the "binary" response as a png based image (the "just
     # generated badge image)
