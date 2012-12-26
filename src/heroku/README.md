@@ -18,7 +18,6 @@ This can be confirmed using the `heroku config:get` command.
 
 After installing Pingu, the application should be configured to fully integrate with the add-on.
 
-
 ## Troubleshooting
 
 If for some truly unexpected reason, Pingu doesn't seem to be doing its job properly, please contact 
