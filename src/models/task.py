@@ -241,8 +241,8 @@ class Task(base.Base):
                 subject = "Your server %s, is back online" % self.server.name,
                 sender = "Pingu Mailer <mailer@pinguapp.com>",
                 receivers = ["%s <%s>" % (_contact.name, _contact.email)],
-                plain = "email/down.txt.tpl",
-                rich = "email/down.html.tpl",
+                plain = "email/up.txt.tpl",
+                rich = "email/up.html.tpl",
                 context = {
                     "server" : server
                 }
