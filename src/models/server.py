@@ -40,6 +40,11 @@ __license__ = "GNU General Public License (GPL), Version 3"
 import quorum
 
 import base
+import task
+
+DEFAULT_TIMEOUT = 60.0
+""" The default timeout value to be used in between "ping"
+requests, this values is only used as a fallback """
 
 class Server(base.Base):
 
@@ -52,6 +57,19 @@ class Server(base.Base):
     )
 
     description = dict()
+
+    up = dict(
+        type = bool,
+        index = True
+    )
+
+    latency = dict(
+        type = int
+    )
+
+    timestamp = dict(
+        type = float
+    )
 
     @classmethod
     def validate(cls):
@@ -77,3 +95,14 @@ class Server(base.Base):
         base.Base._build(model, map)
         up = model.get("up", None)
         model["up_l"] = up == True and "up" or up == False and "down" or "unknwon"
+
+    def post_create(self):
+        base.Base.post_create(self)
+
+        # creates a task for the server that has just been created
+        # this tuple is going to be used by the scheduling thread
+        _task = task.Task(self, DEFAULT_TIMEOUT)
+
+        # saves the server instance and schedules the task, this
+        # should ensure coherence in the internal data structures
+        _task.schedule()
