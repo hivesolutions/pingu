@@ -68,20 +68,12 @@ quorum.load(
     models = models
 )
 
-navbar_h = None
-
-# @TODO: improve this code
-heroku_conf = quorum.base_path("heroku", "addon-manifest.json")
-file = open(heroku_conf, "rb")
-try: data = json.load(file)
-finally: file.close()
-
-# @TODO: improve this code, put this into
-# a different place
-api = data.get("api", {})
-username_h = data.get("id", None)
+heroku_conf = quorum.load_json("heroku", "addon-manifest.json")
+api = heroku_conf.get("api", {})
+username_h = heroku_conf.get("id", None)
 password_h = api.get("password", None)
 salt_h = api.get("sso_salt", None)
+navbar_h = api.get("navbar", None)
 
 quorum.config_g["salt_h"] = salt_h
 
