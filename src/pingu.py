@@ -604,107 +604,6 @@ def list_log_json(name):
         mimetype = "application/json"
     )
 
-@app.route("/contacts", methods = ("GET",))
-@quorum.ensure("contacts.list")
-def list_contacts():
-    contacts = models.Contact.find_i()
-    return flask.render_template(
-        "contact_list.html.tpl",
-        link = "contacts",
-        sub_link = "list",
-        contacts = contacts
-    )
-
-@app.route("/contacts/new", methods = ("GET",))
-@quorum.ensure("contacts.new")
-def new_contact():
-    return flask.render_template(
-        "contact_new.html.tpl",
-        link = "contacts",
-        sub_link = "create",
-        contact = {},
-        errors = {}
-    )
-
-@app.route("/contacts", methods = ("POST",))
-@quorum.ensure("contacts.new")
-def create_contact():
-    # creates the new contact, using the provided arguments and
-    # then saves it into the data source, all the validations
-    # should be ran upon the save operation
-    contact = models.Contact.new()
-    try: contact.save()
-    except quorum.ValidationError, error:
-        return flask.render_template(
-            "contact_new.html.tpl",
-            link = "contacts",
-            sub_link = "create",
-            server = error.model,
-            errors = error.errors
-        )
-
-    # redirects the user to the show page of the contact that
-    # was just created
-    return flask.redirect(
-        flask.url_for("show_contact", id = contact.id)
-    )
-
-@app.route("/contacts/<int:id>", methods = ("GET",))
-@quorum.ensure("contacts.show")
-def show_contact(id):
-    contact = models.Contact.get_i(id = id)
-    return flask.render_template(
-        "contact_show.html.tpl",
-        link = "contacts",
-        sub_link = "info",
-        contact = contact
-    )
-
-@app.route("/contacts/<int:id>/edit", methods = ("GET",))
-@quorum.ensure("contacts.edit")
-def edit_contact(id):
-    contact = models.Contact.get_i(id = id)
-    return flask.render_template(
-        "contact_edit.html.tpl",
-        link = "contacts",
-        sub_link = "edit",
-        contact = contact,
-        errors = {}
-    )
-
-@app.route("/contacts/<int:id>/edit", methods = ("POST",))
-@quorum.ensure("contacts.edit")
-def update_contact(id):
-    # finds the current contact and applies the provided
-    # arguments and then saves it into the data source,
-    # all the validations should be ran upon the save operation
-    contact = models.Contact.get_i(id = id)
-    contact.apply()
-    try: contact.save()
-    except quorum.ValidationError, error:
-        return flask.render_template(
-            "contact_edit.html.tpl",
-            link = "contacts",
-            sub_link = "edit",
-            server = error.model,
-            errors = error.errors
-        )
-
-    # redirects the user to the show page of the contact that
-    # was just updated
-    return flask.redirect(
-        flask.url_for("show_contact", id = id)
-    )
-
-@app.route("/contacts/<int:id>/delete", methods = ("GET", "POST"))
-@quorum.ensure("contacts.delete")
-def delete_contact(id):
-    contact = models.Contact.get_i(id = id)
-    contact.delete()
-    return flask.redirect(
-        flask.url_for("list_contacts")
-    )
-
 @app.route("/<name>", methods = ("GET",))
 def profile_server(name):
     server = models.Server.get(name = name)
@@ -726,6 +625,8 @@ def badge_server(name):
         data,
         mimetype = "image/png"
     )
+
+from views import * #@UnusedWildImport
 
 def load():
     # sets the global wide application settings and
