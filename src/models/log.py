@@ -53,7 +53,24 @@ class Log(base.Base):
         index = True
     )
 
-    description = dict()
+    up = dict(
+        type = bool,
+        index = True
+    )
+
+    status = dict(
+        index = True
+    )
+
+    reason = dict()
+
+    latency = dict(
+        type = int
+    )
+
+    timestamp = dict(
+        type = float
+    )
 
     @classmethod
     def validate(cls):
@@ -62,8 +79,7 @@ class Log(base.Base):
             quorum.not_empty("url"),
             quorum.is_url("url"),
 
-            quorum.not_null("description"),
-            quorum.not_empty("description")
+            quorum.not_null("up")
         ]
 
     @classmethod
