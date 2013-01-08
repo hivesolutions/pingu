@@ -119,18 +119,25 @@
 })(jQuery);
 
 jQuery(document).ready(function() {
+            // retrieves the reference to the various elements for which an
+            // action will be enable at the start
             var lightbox = jQuery(".lightbox");
-            var buttonSignup = jQuery(".button-signup");
+            var windowSignup = jQuery(".window-signup");
 
+            // starts the lightbox element with the proper plugin
+            // element call (component initialization)
             lightbox.ulightbox();
 
-            // registers for the click event on the signup
-            // button to reset the form contained in it
-            buttonSignup.click(function() {
-                        // retrieves the signup form reference and resets
-                        // it so that the values displayed are "erased" and the form
-                        // restored to the "original" value
-                        var windowSignupForm = jQuery(".window-signup form");
-                        windowSignupForm.trigger("reset");
+            // registers for the show event in the signup window
+            // so that the form contained in it is reset
+            windowSignup.bind("show", function() {
+                        // retrieves the refence to the current element
+                        // and the associated form value
+                        var element = jQuery(this);
+                        var form = jQuery("form", element)
+
+                        // resets the current form so that new data may
+                        // be set in the various fields of the form
+                        form.trigger("reset");
                     });
         });
