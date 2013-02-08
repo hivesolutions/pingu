@@ -75,7 +75,7 @@ password_h = api.get("password", None)
 salt_h = api.get("sso_salt", None)
 navbar_h = api.get("navbar", None)
 
-quorum.config_g["salt_h"] = salt_h
+quorum.confs("salt_h", salt_h)
 
 def create_servers_h(heroku_id, account, sleep_time = 3.0):
     # sleeps for a while so that no collision with the remote
