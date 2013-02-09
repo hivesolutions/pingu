@@ -37,7 +37,6 @@ __copyright__ = "Copyright (c) 2008-2012 Hive Solutions Lda."
 __license__ = "GNU General Public License (GPL), Version 3"
 """ The license for the module """
 
-import os
 import json
 import time
 import flask
@@ -632,10 +631,10 @@ def load():
     # sets the global wide application settings and
     # configures the application object according to
     # this settings
-    debug = os.environ.get("DEBUG", False) and True or False
-    smtp_host = os.environ.get("SMTP_HOST", "localhost")
-    smtp_user = os.environ.get("SMTP_USER", None)
-    smtp_password = os.environ.get("SMTP_PASSWORD", None)
+    debug = quorum.conf("DEBUG", False) and True or False
+    smtp_host = quorum.conf("SMTP_HOST", "localhost")
+    smtp_user = quorum.conf("SMTP_USER", None)
+    smtp_password = quorum.conf("SMTP_PASSWORD", None)
     config.SMTP_HOST = smtp_host
     config.SMTP_USER = smtp_user
     config.SMTP_PASSWORD = smtp_password
@@ -649,11 +648,11 @@ def run_waitress():
     # then checks the current environment variable
     # for the target port for execution (external)
     # and then start running it (continuous loop)
-    debug = os.environ.get("DEBUG", False) and True or False
-    smtp_host = os.environ.get("SMTP_HOST", "localhost")
-    smtp_user = os.environ.get("SMTP_USER", None)
-    smtp_password = os.environ.get("SMTP_PASSWORD", None)
-    port = int(os.environ.get("PORT", 5000))
+    debug = quorum.conf("DEBUG", False) and True or False
+    smtp_host = quorum.conf("SMTP_HOST", "localhost")
+    smtp_user = quorum.conf("SMTP_USER", None)
+    smtp_password = quorum.conf("SMTP_PASSWORD", None)
+    port = int(quorum.conf("PORT", 5000))
     config.SMTP_HOST = smtp_host
     config.SMTP_USER = smtp_user
     config.SMTP_PASSWORD = smtp_password
@@ -666,12 +665,12 @@ def run():
     # then checks the current environment variable
     # for the target port for execution (external)
     # and then start running it (continuous loop)
-    debug = os.environ.get("DEBUG", False) and True or False
-    reloader = os.environ.get("RELOADER", False) and True or False
-    smtp_host = os.environ.get("SMTP_HOST", "localhost")
-    smtp_user = os.environ.get("SMTP_USER", None)
-    smtp_password = os.environ.get("SMTP_PASSWORD", None)
-    port = int(os.environ.get("PORT", 5000))
+    debug = quorum.conf("DEBUG", False) and True or False
+    reloader = quorum.conf("RELOADER", False) and True or False
+    smtp_host = quorum.conf("SMTP_HOST", "localhost")
+    smtp_user = quorum.conf("SMTP_USER", None)
+    smtp_password = quorum.conf("SMTP_PASSWORD", None)
+    port = int(quorum.conf("PORT", 5000))
     config.SMTP_HOST = smtp_host
     config.SMTP_USER = smtp_user
     config.SMTP_PASSWORD = smtp_password
