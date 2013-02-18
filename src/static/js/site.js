@@ -23,7 +23,7 @@
 // __copyright__ = Copyright (c) 2010-2012 Hive Solutions Lda.
 // __license__   = GNU General Public License (GPL), Version 3
 
-(function($) {
+(function(jQuery) {
     jQuery.fn.ulightbox = function(method) {
         // retrieves both the reference to the currently
         // matched object and the body object
