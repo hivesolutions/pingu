@@ -12,10 +12,11 @@
             <div class="table-clear"></div>
         </li>
         <div class="filter-no-results quote">
-            no results found
+            No results found
         </div>
-        <div class="filter-more">
-            <span class="button">more</span>
-        </div>
+	    <div class="filter-more">
+	        <span class="button more">Load more</span>
+	        <span class="button load">Loading</span>
+	    </div>
     </ul>
 {% endblock %}
