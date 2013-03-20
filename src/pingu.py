@@ -42,7 +42,6 @@ import time
 import flask
 import urllib
 
-import config
 import models
 import quorum
 
@@ -627,54 +626,9 @@ def badge_server(name):
 
 from views import * #@UnusedWildImport
 
-def load():
-    # sets the global wide application settings and
-    # configures the application object according to
-    # this settings
-    debug = quorum.conf("DEBUG", False) and True or False
-    smtp_host = quorum.conf("SMTP_HOST", "localhost")
-    smtp_user = quorum.conf("SMTP_USER", None)
-    smtp_password = quorum.conf("SMTP_PASSWORD", None)
-    config.SMTP_HOST = smtp_host
-    config.SMTP_USER = smtp_user
-    config.SMTP_PASSWORD = smtp_password
-    app.debug = debug
-    app.secret_key = SECRET_KEY
-
-def run_waitress():
-    import waitress
-
-    # sets the debug control in the application
-    # then checks the current environment variable
-    # for the target port for execution (external)
-    # and then start running it (continuous loop)
-    debug = quorum.conf("DEBUG", False) and True or False
-    port = int(quorum.conf("PORT", 5000))
-    app.debug = debug
-    app.secret_key = SECRET_KEY
-    waitress.serve(app, host = "0.0.0.0", port = port)
-
-def run():
-    # sets the debug control in the application
-    # then checks the current environment variable
-    # for the target port for execution (external)
-    # and then start running it (continuous loop)
-    debug = quorum.conf("DEBUG", False) and True or False
-    reloader = quorum.conf("RELOADER", False) and True or False
-    port = int(quorum.conf("PORT", 5000))
-    app.debug = debug
-    app.secret_key = SECRET_KEY
-    app.run(
-        use_debugger = debug,
-        debug = debug,
-        use_reloader = reloader,
-        host = "0.0.0.0",
-        port = port
-    )
-
 # schedules the various tasks currently registered in
 # the system internal structures
 models.Task.schedule_all()
 
-if __name__ == "__main__": run_waitress()
-else: load()
+if __name__ == "__main__":
+    quorum.run_waitress(secret_key = SECRET_KEY)
