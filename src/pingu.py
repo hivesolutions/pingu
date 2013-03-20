@@ -632,4 +632,4 @@ from views import * #@UnusedWildImport
 models.Task.schedule_all()
 
 if __name__ == "__main__":
-    quorum.run_waitress()
+    quorum.run(server = "waitress")
