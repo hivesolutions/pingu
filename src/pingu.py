@@ -60,6 +60,7 @@ requests, this values is only used as a fallback """
 app = flask.Flask(__name__)
 quorum.load(
     app,
+    secret_key = SECRET_KEY,
     redis_session = True,
     mongo_database = MONGO_DATABASE,
     name = "pingu.debug",
@@ -631,4 +632,4 @@ from views import * #@UnusedWildImport
 models.Task.schedule_all()
 
 if __name__ == "__main__":
-    quorum.run_waitress(secret_key = SECRET_KEY)
+    quorum.run_waitress()
