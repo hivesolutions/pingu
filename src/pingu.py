@@ -649,13 +649,7 @@ def run_waitress():
     # for the target port for execution (external)
     # and then start running it (continuous loop)
     debug = quorum.conf("DEBUG", False) and True or False
-    smtp_host = quorum.conf("SMTP_HOST", "localhost")
-    smtp_user = quorum.conf("SMTP_USER", None)
-    smtp_password = quorum.conf("SMTP_PASSWORD", None)
     port = int(quorum.conf("PORT", 5000))
-    config.SMTP_HOST = smtp_host
-    config.SMTP_USER = smtp_user
-    config.SMTP_PASSWORD = smtp_password
     app.debug = debug
     app.secret_key = SECRET_KEY
     waitress.serve(app, host = "0.0.0.0", port = port)
@@ -667,13 +661,7 @@ def run():
     # and then start running it (continuous loop)
     debug = quorum.conf("DEBUG", False) and True or False
     reloader = quorum.conf("RELOADER", False) and True or False
-    smtp_host = quorum.conf("SMTP_HOST", "localhost")
-    smtp_user = quorum.conf("SMTP_USER", None)
-    smtp_password = quorum.conf("SMTP_PASSWORD", None)
     port = int(quorum.conf("PORT", 5000))
-    config.SMTP_HOST = smtp_host
-    config.SMTP_USER = smtp_user
-    config.SMTP_PASSWORD = smtp_password
     app.debug = debug
     app.secret_key = SECRET_KEY
     app.run(
