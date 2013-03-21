@@ -67,6 +67,9 @@ quorum.load(
     models = models
 )
 
+# loads the manifest information json and retrieves
+# the various partial values from it to be used
+# for authentication and configuration of the app
 heroku_conf = quorum.load_json("heroku", "addon-manifest.json")
 api = heroku_conf.get("api", {})
 username_h = heroku_conf.get("id", None)
