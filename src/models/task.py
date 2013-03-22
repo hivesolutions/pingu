@@ -167,7 +167,7 @@ class Task(base.Base):
 
         # prints a debug message about the ping operation
         # with the complete diagnostics information
-        print "%s :: %s %s / %dms" % (url, status, reason, latency)
+        quorum.debug("%s :: %s %s / %dms" % (url, status, reason, latency))
 
         # inserts the log document into the data source so that
         # the information is registered in the proper place
