@@ -57,13 +57,12 @@ DEFAULT_TIMEOUT = 60.0
 """ The default timeout value to be used in between "ping"
 requests, this values is only used as a fallback """
 
-app = flask.Flask(__name__)
-quorum.load(
-    app,
+app = quorum.load(
+    name = __name__,
     secret_key = SECRET_KEY,
     redis_session = True,
     mongo_database = MONGO_DATABASE,
-    name = "pingu.debug",
+    logger = "pingu.debug",
     models = models
 )
 
