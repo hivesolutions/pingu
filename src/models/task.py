@@ -109,11 +109,7 @@ class Task(base.Base):
         for task in tasks: task.schedule()
 
     def schedule(self):
-        current_time = time.time()
-        quorum.insert_work(
-            current_time,
-            self.ping
-        )
+        quorum.run_back(self.ping)
 
     def ping(self):
         # retrieves the server again to ensure that the data
@@ -207,9 +203,9 @@ class Task(base.Base):
         # re-insert a new task into the execution thread, this
         # is considered the re-schedule operation
         current_time = time.time()
-        self.server.enabled and quorum.insert_work(
-            current_time + self.timeout,
-            self.ping
+        self.server.enabled and quorum.run_back(
+            self.ping,
+            current_time + self.timeout
         )
 
     def on_down(self):
