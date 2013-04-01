@@ -36,3 +36,153 @@ __copyright__ = "Copyright (c) 2008-2012 Hive Solutions Lda."
 
 __license__ = "GNU General Public License (GPL), Version 3"
 """ The license for the module """
+
+import models
+
+from pingu import app
+from pingu import flask
+from pingu import quorum
+
+@app.route("/servers", methods = ("GET",))
+@quorum.ensure("servers.list")
+def list_servers():
+    servers = models.Server.find_i()
+    return flask.render_template(
+        "server_list.html.tpl",
+        link = "servers",
+        sub_link = "list",
+        servers = servers
+    )
+
+@app.route("/servers/new", methods = ("GET",))
+@quorum.ensure("servers.new")
+def new_server():
+    return flask.render_template(
+        "server_new.html.tpl",
+        link = "servers",
+        sub_link = "create",
+        server = {},
+        errors = {}
+    )
+
+@app.route("/servers", methods = ("POST",))
+@quorum.ensure("servers.new")
+def create_server():
+    # creates the new server, using the provided arguments and
+    # then saves it into the data source, all the validations
+    # should be ran upon the save operation
+    server = models.Server.new()
+    try: server.save()
+    except quorum.ValidationError, error:
+        return flask.render_template(
+            "server_new.html.tpl",
+            link = "servers",
+            sub_link = "create",
+            server = error.model,
+            errors = error.errors
+        )
+
+    # redirects the user to the show page of the server that
+    # was just created
+    return flask.redirect(
+        flask.url_for("show_server", name = server.name)
+    )
+
+@app.route("/servers/<name>", methods = ("GET",))
+@quorum.ensure("servers.show")
+def show_server(name):
+    server = models.Server.get_i(name = name)
+    return flask.render_template(
+        "server_show.html.tpl",
+        link = "servers",
+        sub_link = "info",
+        server = server
+    )
+
+@app.route("/servers/<name>/edit", methods = ("GET",))
+@quorum.ensure("servers.edit")
+def edit_server(name):
+    server = models.Server.get_i(name = name)
+    return flask.render_template(
+        "server_edit.html.tpl",
+        link = "servers",
+        sub_link = "edit",
+        server = server,
+        errors = {}
+    )
+
+@app.route("/servers/<name>/edit", methods = ("POST",))
+@quorum.ensure("servers.edit")
+def update_server(name):
+    # finds the current server and applies the provided
+    # arguments and then saves it into the data source,
+    # all the validations should be ran upon the save operation
+    server = models.Server.get_i(name = name)
+    server.apply()
+    try: server.save()
+    except quorum.ValidationError, error:
+        return flask.render_template(
+            "server_edit.html.tpl",
+            link = "servers",
+            sub_link = "edit",
+            server = error.model,
+            errors = error.errors
+        )
+
+    # redirects the user to the show page of the server that
+    # was just updated
+    return flask.redirect(
+        flask.url_for("show_server", name = name)
+    )
+
+@app.route("/servers/<name>/delete", methods = ("GET", "POST"))
+@quorum.ensure("servers.delete")
+def delete_server(name):
+    server = models.Server.get_i(name = name)
+    server.delete()
+    return flask.redirect(
+        flask.url_for("list_servers")
+    )
+
+@app.route("/servers/<name>/log", methods = ("GET",))
+@quorum.ensure("log.list")
+def list_log(name):
+    server = models.Server.get_i(name = name)
+    return flask.render_template(
+        "server_log.html.tpl",
+        link = "servers",
+        sub_link = "log",
+        server = server
+    )
+
+@app.route("/servers/<name>/log.json", methods = ("GET",))
+@quorum.ensure("log.list", json = True)
+def list_log_json(name):
+    object = quorum.get_object(alias = True, find = True)
+    log = models.Log.find_i(map = True, name = name, **object)
+    return flask.Response(
+        quorum.dumps_mongo(log),
+        mimetype = "application/json"
+    )
+
+@app.route("/<name>", methods = ("GET",))
+def profile_server(name):
+    server = models.Server.get(name = name)
+    return flask.render_template(
+        "site/server_profile.html.tpl",
+        link = "servers",
+        sub_link = "profile",
+        server = server
+    )
+
+@app.route("/<name>/badge", methods = ("GET",))
+def badge_server(name):
+    server = models.Server.get(name = name)
+    data = server.badge()
+
+    # returns the "binary" response as a png based image (the "just
+    # generated badge image)
+    return flask.Response(
+        data,
+        mimetype = "image/png"
+    )
