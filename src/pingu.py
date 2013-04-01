@@ -59,8 +59,8 @@ app = quorum.load(
     models = models
 )
 
-@quorum.onload
-def onload():
+@quorum.onrun
+def onrun():
     # schedules the various tasks currently registered in
     # the system internal structures
     models.Task.schedule_all()
