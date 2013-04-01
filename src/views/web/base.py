@@ -67,6 +67,14 @@ def index():
         link = "home"
     )
 
+@app.route("/about", methods = ("GET",))
+@quorum.ensure("about")
+def about():
+    return flask.render_template(
+        "about.html.tpl",
+        link = "about"
+    )
+
 @app.route("/pending/<username>", methods = ("GET",))
 def pending(username):
     account = models.Account.get(username = username)
@@ -140,12 +148,4 @@ def logout():
 
     return flask.redirect(
         flask.url_for("signin")
-    )
-
-@app.route("/about", methods = ("GET",))
-@quorum.ensure("about")
-def about():
-    return flask.render_template(
-        "about.html.tpl",
-        link = "about"
     )
