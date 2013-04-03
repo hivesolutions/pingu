@@ -158,9 +158,9 @@ def provision():
     # schedules the execution of the server creation for
     # the current provision, this will be deferred so that
     # the call is only made after provision is complete
-    quorum.run_background(
+    quorum.run_back(
         create_servers_h,
-        (heroku_id, account)
+        args = (heroku_id, account)
     )
 
     return flask.Response(
