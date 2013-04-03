@@ -205,7 +205,7 @@ class Task(base.Base):
         current_time = time.time()
         self.server.enabled and quorum.run_back(
             self.ping,
-            current_time + self.timeout
+            target_time = current_time + self.timeout
         )
 
     def on_down(self):
