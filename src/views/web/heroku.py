@@ -139,10 +139,6 @@ def get_navbar_h():
     navbar_h = data
     return navbar_h
 
-@app.context_processor
-def utility_processor():
-    return dict(acl = quorum.check_login)
-
 @app.route("/heroku/resources", methods = ("POST",))
 @quorum.ensure_auth(username_h, password_h, json = True)
 def provision():

@@ -43,6 +43,10 @@ from pingu import app
 from pingu import flask
 from pingu import quorum
 
+@app.context_processor
+def utility_processor():
+    return dict(acl = quorum.check_login)
+
 @app.route("/home", methods = ("GET",))
 def home():
     return flask.render_template(
