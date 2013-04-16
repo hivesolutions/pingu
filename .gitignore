@@ -1,3 +1,5 @@
 *.pyc
 *.debug
 *.shelve
+
+/src/pingu.egg-info/
