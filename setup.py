@@ -130,7 +130,8 @@ setuptools.setup(
     zip_safe = False,
     packages = [
         "models",
-        "quorum"
+        "quorum",
+        "views"
     ],
     py_modules = [
         "pingu"
