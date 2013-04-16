@@ -106,9 +106,10 @@ def find_data_files(source_path, target_path, patterns):
 # included in the package (this is required for non python
 # files by the setuptools)
 base_data_files = find_data_files("src", "", ["pingu.wsgi"])
+heroku_data_files = find_data_files("src/heroku", "heroku", ["*"])
 static_data_files = find_data_files("src/static", "static", ["css/*", "images/*", "js/*", "libs/*"])
 templates_data_files = find_data_files("src/templates", "templates", ["*", "partials/*"])
-data_files = base_data_files + projects_data_files + static_data_files + templates_data_files
+data_files = base_data_files + heroku_data_files + static_data_files + templates_data_files
 
 # retrieves the current root directory (from the
 # currently executing file) and in case its not
@@ -142,7 +143,8 @@ setuptools.setup(
     data_files = data_files,
     install_requires = [
         "flask",
-        "pymongo"
+        "pymongo",
+        "redis"
     ],
     classifiers = [
         "Development Status :: 3 - Alpha",

@@ -1,3 +1,4 @@
 include src/pingu.wsgi
+recursive-include src/heroku *
 recursive-include src/static *
 recursive-include src/templates *
