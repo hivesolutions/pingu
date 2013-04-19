@@ -631,19 +631,19 @@ ul.statistics-server li > p.down {
 
 .content-docs h1 {
     color: #4d4d4d;
-    font-size: 32px;    ;
+    font-size: 32px;
     margin: 12px 0px 0px 0px;
 }
 
 .content-docs h2 {
     color: #4d4d4d;
-    font-size: 20px;    ;
+    font-size: 20px;
     margin: 20px 0px 8px 0px;
 }
 
 .content-docs h3 {
     color: #4d4d4d;
-    font-size: 14px;    ;
+    font-size: 14px;
     font-weight: bold;
     margin: 16px 0px 2px 0px;
 }
@@ -672,7 +672,7 @@ ul.statistics-server li > p.down {
 .content-docs pre {
     background-color: #ffffff;
     border: 1px solid #cccccc;
-    font-size: 12px;    ;
+    font-size: 12px;
     padding: 8px 8px 8px 8px;
 }
 
