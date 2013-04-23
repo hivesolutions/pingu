@@ -8,7 +8,7 @@
 </head>
 <body class="ux wait-load">
     {% include "partials/nav_data.html.tpl" %}
-    <div id="overlay"></div>
+    <div id="overlay" class="overlay"></div>
     <div id="header">
         {% block header %}
             <h1>{% block name %}{% endblock %}</h1>
