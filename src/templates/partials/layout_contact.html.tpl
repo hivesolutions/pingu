@@ -15,9 +15,11 @@
         {% endif %}
         //
         {% if sub_link == "delete" %}
-            <a href="{{ url_for('delete_contact', id = contact.id) }}" class="active">delete</a>
+            <a href="{{ url_for('delete_contact', id = contact.id) }}" class="active warning link-confirm"
+               data-message="Do you really want to delete ?">delete</a>
         {% else %}
-            <a href="{{ url_for('delete_contact', id = contact.id) }}">delete</a>
+            <a href="{{ url_for('delete_contact', id = contact.id) }}" class="warning link-confirm"
+               data-message="Do you really want to delete ?">delete</a>
         {% endif %}
     </div>
 {% endblock %}
