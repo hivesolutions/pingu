@@ -78,7 +78,7 @@ def create_contact():
             "contact_new.html.tpl",
             link = "contacts",
             sub_link = "create",
-            server = error.model,
+            contact = error.model,
             errors = error.errors
         )
 
