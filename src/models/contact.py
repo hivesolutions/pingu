@@ -69,9 +69,6 @@ class Contact(base.Base):
         index = True
     )
 
-    def __init__(self):
-        base.Base.__init__(self)
-
     @classmethod
     def validate(cls):
         return super(Contact, cls).validate() + [

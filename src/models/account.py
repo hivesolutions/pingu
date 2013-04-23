@@ -145,9 +145,6 @@ class Account(base.Base):
         type = list
     )
 
-    def __init__(self):
-        base.Base.__init__(self)
-
     @classmethod
     def setup(cls):
         super(Account, cls).setup()
