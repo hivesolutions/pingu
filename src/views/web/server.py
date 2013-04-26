@@ -155,15 +155,12 @@ def list_log(name):
         server = server
     )
 
-@app.route("/servers/<name>/log.json", methods = ("GET",))
+@app.route("/servers/<name>/log.json", methods = ("GET",), json = True)
 @quorum.ensure("log.list", json = True)
 def list_log_json(name):
     object = quorum.get_object(alias = True, find = True)
     log = models.Log.find_i(map = True, name = name, **object)
-    return flask.Response(
-        quorum.dumps_mongo(log),
-        mimetype = "application/json"
-    )
+    return log
 
 @app.route("/<name>", methods = ("GET",))
 def profile_server(name):
