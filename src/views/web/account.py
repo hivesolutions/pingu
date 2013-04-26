@@ -52,15 +52,12 @@ def list_accounts():
         sub_link = "list"
     )
 
-@app.route("/accounts.json", methods = ("GET",))
+@app.route("/accounts.json", methods = ("GET",), json = True)
 @quorum.ensure("accounts.list", json = True)
 def list_accounts_json():
     object = quorum.get_object(alias = True, find = True)
     accounts = models.Account.find(map = True, **object)
-    return flask.Response(
-        quorum.dumps_mongo(accounts),
-        mimetype = "application/json"
-    )
+    return accounts
 
 @app.route("/accounts/new", methods = ("GET",))
 def new_account():
@@ -95,7 +92,7 @@ def create_account():
         flask.url_for("pending", username = account.username)
     )
 
-@app.route("/accounts.json", methods = ("POST",))
+@app.route("/accounts.json", methods = ("POST",), json = True)
 @quorum.errors_json
 def create_account_json():
     # creates the new account, using the provided arguments and
@@ -103,11 +100,7 @@ def create_account_json():
     # should be ran upon the save operation
     account = models.Account.new()
     account.save()
-
-    return flask.Response(
-        account.dumps(),
-        mimetype = "application/json"
-    )
+    return account
 
 @app.route("/accounts/<username>", methods = ("GET",))
 @quorum.ensure("accounts.show")
