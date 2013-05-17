@@ -1,1 +1,1 @@
-web: cd src && gunicorn pingu:app -b 0.0.0.0:$PORT -w 3
+web: cd src && gunicorn pingu:app -b 0.0.0.0:$PORT -w 4 -k gevent
