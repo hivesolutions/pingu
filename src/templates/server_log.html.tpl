@@ -8,7 +8,7 @@
             <div class="status text-left %[up_l]" data-width="56">%[up_l]</div>
             <div class="date text-left" data-width="160">%[date_l]</div>
             <div class="latency text-left" data-width="80">%[latency] ms</div>
-            <div class="latency text-right" data-width="284">New York, United States</div>
+            <div class="location text-right" data-width="284">New York, United States</div>
             <div class="table-clear"></div>
         </li>
         <div class="filter-no-results quote">
