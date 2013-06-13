@@ -50,6 +50,12 @@ MONGO_DATABASE = "pingu"
 """ The default database to be used for the connection with
 the mongo database """
 
+@quorum.onrun
+def onrun():
+    # schedules the various tasks currently registered in
+    # the system internal structures
+    models.Task.schedule_all()
+
 app = quorum.load(
     name = __name__,
     secret_key = SECRET_KEY,
@@ -58,12 +64,6 @@ app = quorum.load(
     logger = "pingu.debug",
     models = models
 )
-
-@quorum.onrun
-def onrun():
-    # schedules the various tasks currently registered in
-    # the system internal structures
-    models.Task.schedule_all()
 
 from views import * #@UnusedWildImport
 
