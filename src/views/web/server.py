@@ -48,7 +48,7 @@ from pingu import quorum
 def list_servers():
     servers = models.Server.find_i()
     return flask.render_template(
-        "server_list.html.tpl",
+        "server/list.html.tpl",
         link = "servers",
         sub_link = "list",
         servers = servers
@@ -58,7 +58,7 @@ def list_servers():
 @quorum.ensure("servers.new")
 def new_server():
     return flask.render_template(
-        "server_new.html.tpl",
+        "server/new.html.tpl",
         link = "servers",
         sub_link = "create",
         server = {},
@@ -75,7 +75,7 @@ def create_server():
     try: server.save()
     except quorum.ValidationError, error:
         return flask.render_template(
-            "server_new.html.tpl",
+            "server/new.html.tpl",
             link = "servers",
             sub_link = "create",
             server = error.model,
@@ -93,7 +93,7 @@ def create_server():
 def show_server(name):
     server = models.Server.get_i(name = name)
     return flask.render_template(
-        "server_show.html.tpl",
+        "server/show.html.tpl",
         link = "servers",
         sub_link = "info",
         server = server
@@ -104,7 +104,7 @@ def show_server(name):
 def edit_server(name):
     server = models.Server.get_i(name = name)
     return flask.render_template(
-        "server_edit.html.tpl",
+        "server/edit.html.tpl",
         link = "servers",
         sub_link = "edit",
         server = server,
@@ -122,7 +122,7 @@ def update_server(name):
     try: server.save()
     except quorum.ValidationError, error:
         return flask.render_template(
-            "server_edit.html.tpl",
+            "server/edit.html.tpl",
             link = "servers",
             sub_link = "edit",
             server = error.model,
@@ -149,7 +149,7 @@ def delete_server(name):
 def list_log(name):
     server = models.Server.get_i(name = name)
     return flask.render_template(
-        "server_log.html.tpl",
+        "server/log.html.tpl",
         link = "servers",
         sub_link = "log",
         server = server

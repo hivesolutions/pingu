@@ -48,7 +48,7 @@ from pingu import quorum
 def list_contacts():
     contacts = models.Contact.find_i()
     return flask.render_template(
-        "contact_list.html.tpl",
+        "contact/list.html.tpl",
         link = "contacts",
         sub_link = "list",
         contacts = contacts
@@ -58,7 +58,7 @@ def list_contacts():
 @quorum.ensure("contacts.new")
 def new_contact():
     return flask.render_template(
-        "contact_new.html.tpl",
+        "contact/new.html.tpl",
         link = "contacts",
         sub_link = "create",
         contact = {},
@@ -75,7 +75,7 @@ def create_contact():
     try: contact.save()
     except quorum.ValidationError, error:
         return flask.render_template(
-            "contact_new.html.tpl",
+            "contact/new.html.tpl",
             link = "contacts",
             sub_link = "create",
             contact = error.model,
@@ -93,7 +93,7 @@ def create_contact():
 def show_contact(id):
     contact = models.Contact.get_i(id = id)
     return flask.render_template(
-        "contact_show.html.tpl",
+        "contact/show.html.tpl",
         link = "contacts",
         sub_link = "info",
         contact = contact
@@ -104,7 +104,7 @@ def show_contact(id):
 def edit_contact(id):
     contact = models.Contact.get_i(id = id)
     return flask.render_template(
-        "contact_edit.html.tpl",
+        "contact/edit.html.tpl",
         link = "contacts",
         sub_link = "edit",
         contact = contact,
@@ -122,7 +122,7 @@ def update_contact(id):
     try: contact.save()
     except quorum.ValidationError, error:
         return flask.render_template(
-            "contact_edit.html.tpl",
+            "contact/edit.html.tpl",
             link = "contacts",
             sub_link = "edit",
             server = error.model,

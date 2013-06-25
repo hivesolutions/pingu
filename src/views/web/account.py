@@ -47,7 +47,7 @@ from pingu import quorum
 @quorum.ensure("accounts.list")
 def list_accounts():
     return flask.render_template(
-        "account_list.html.tpl",
+        "account/list.html.tpl",
         link = "accounts",
         sub_link = "list"
     )
@@ -62,7 +62,7 @@ def list_accounts_json():
 @app.route("/accounts/new", methods = ("GET",))
 def new_account():
     return flask.render_template(
-        "account_new.html.tpl",
+        "account/new.html.tpl",
         link = "accounts",
         sub_link = "create",
         account = {},
@@ -78,7 +78,7 @@ def create_account():
     try: account.save()
     except quorum.ValidationError, error:
         return flask.render_template(
-            "account_new.html.tpl",
+            "account/new.html.tpl",
             link = "accounts",
             sub_link = "create",
             account = error.model,
@@ -107,7 +107,7 @@ def create_account_json():
 def show_account(username):
     account = models.Account.get(username = username)
     return flask.render_template(
-        "account_show.html.tpl",
+        "account/show.html.tpl",
         link = "accounts",
         sub_link = "info",
         account = account
@@ -118,7 +118,7 @@ def show_account(username):
 def edit_account(username):
     account = models.Account.get(username = username)
     return flask.render_template(
-        "account_edit.html.tpl",
+        "account/edit.html.tpl",
         link = "accounts",
         sub_link = "edit",
         account = account,
@@ -136,7 +136,7 @@ def update_account(username):
     try: account.save()
     except quorum.ValidationError, error:
         return flask.render_template(
-            "account_edit.html.tpl",
+            "account/edit.html.tpl",
             link = "accounts",
             sub_link = "edit",
             account = error.model,
