@@ -213,7 +213,6 @@ def sso_login():
     flask.session["tokens"] = account.tokens
     flask.session["instance_id"] = account.instance_id
     flask.session["nav_data"] = navbar_h
-    flask.session["acl"] = quorum.check_login
 
     # makes the current session permanent this will allow
     # the session to persist along multiple browser initialization
