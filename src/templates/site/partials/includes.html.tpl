@@ -1,6 +1,6 @@
 <!-- css inclusion -->
 <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename = 'libs/uxf/css/ux-min.css') }}" />
-<link rel="stylesheet" href="{{ url_for('static', filename = 'css/site.css') }}" />
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename = 'css/site.css') }}" />
 
 <!-- favicon inclusion -->
 <link rel="shortcut icon" href="{{ url_for('static', filename = 'images/favicon.ico') }}" />
