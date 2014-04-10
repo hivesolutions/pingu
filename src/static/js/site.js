@@ -118,26 +118,38 @@
     };
 })(jQuery);
 
+(function(jQuery) {
+    jQuery.fn.uapply = function(options) {
+        // sets the jquery matched object
+        var matchedObject = this;
+
+        // retrieves the reference to the various elements for which an
+        // action will be enable at the start
+        var lightbox = jQuery(".lightbox", matchedObject);
+        var windowSignup = jQuery(".window-signup", matchedObject);
+
+        // starts the lightbox element with the proper plugin
+        // element call (component initialization)
+        lightbox.ulightbox();
+
+        // registers for the show event in the signup window
+        // so that the form contained in it is reset
+        windowSignup.bind("show", function() {
+                    // retrieves the refence to the current element
+                    // and the associated form value
+                    var element = jQuery(this);
+                    var form = jQuery("form", element)
+
+                    // resets the current form so that new data may
+                    // be set in the various fields of the form
+                    form.trigger("reset");
+                });
+    };
+})(jQuery);
+
 jQuery(document).ready(function() {
-            // retrieves the reference to the various elements for which an
-            // action will be enable at the start
-            var lightbox = jQuery(".lightbox");
-            var windowSignup = jQuery(".window-signup");
-
-            // starts the lightbox element with the proper plugin
-            // element call (component initialization)
-            lightbox.ulightbox();
-
-            // registers for the show event in the signup window
-            // so that the form contained in it is reset
-            windowSignup.bind("show", function() {
-                        // retrieves the refence to the current element
-                        // and the associated form value
-                        var element = jQuery(this);
-                        var form = jQuery("form", element)
-
-                        // resets the current form so that new data may
-                        // be set in the various fields of the form
-                        form.trigger("reset");
+            var _body = jQuery("body");
+            _body.bind("applied", function(event, base) {
+                        base.uapply();
                     });
         });

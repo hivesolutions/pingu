@@ -49,9 +49,21 @@
     };
 })(jQuery);
 
+(function(jQuery) {
+    jQuery.fn.uapply = function(options) {
+        // sets the jquery matched object
+        var matchedObject = this;
+
+        // tries to retrieves the heroku navigation bar
+        // and runs the jeroku extension on it
+        var herokuNav = jQuery(".heroku-nav", matchedObject);
+        herokuNav.uheroku();
+    };
+})(jQuery);
+
 jQuery(document).ready(function() {
-            // tries to retrieves the heroku navigation bar
-            // and runs the jeroku extension on it
-            var herokuNav = jQuery(".heroku-nav");
-            herokuNav.uheroku();
+            var _body = jQuery("body");
+            _body.bind("applied", function(event, base) {
+                        base.uapply();
+                    });
         });
