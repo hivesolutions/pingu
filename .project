@@ -3,6 +3,7 @@
 	<name>pingu</name>
 	<comment></comment>
 	<projects>
+		<project>quorum</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

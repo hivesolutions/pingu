@@ -131,7 +131,6 @@ setuptools.setup(
     zip_safe = False,
     packages = [
         "models",
-        "quorum",
         "views"
     ],
     py_modules = [
@@ -143,6 +142,7 @@ setuptools.setup(
     data_files = data_files,
     install_requires = [
         "flask",
+        "quorum",
         "pymongo",
         "redis"
     ],
