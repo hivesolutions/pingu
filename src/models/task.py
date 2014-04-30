@@ -221,9 +221,9 @@ class Task(base.Base):
                 receivers = ["%s <%s>" % (_contact.name, _contact.email)],
                 plain = "email/down.txt.tpl",
                 rich = "email/down.html.tpl",
-                context = {
-                    "server" : server
-                }
+                context = dict(
+                    server = server
+                )
             )
 
     def on_up(self):
@@ -239,7 +239,7 @@ class Task(base.Base):
                 receivers = ["%s <%s>" % (_contact.name, _contact.email)],
                 plain = "email/up.txt.tpl",
                 rich = "email/up.html.tpl",
-                context = {
-                    "server" : server
-                }
+                context = dict(
+                    server = server
+                )
             )
