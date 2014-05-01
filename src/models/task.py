@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # Hive Pingu System
-# Copyright (C) 2008-2012 Hive Solutions Lda.
+# Copyright (C) 2008-2014 Hive Solutions Lda.
 #
 # This file is part of Hive Pingu System.
 #
@@ -31,7 +31,7 @@ __revision__ = "$LastChangedRevision$"
 __date__ = "$LastChangedDate$"
 """ The last change date of the module """
 
-__copyright__ = "Copyright (c) 2008-2012 Hive Solutions Lda."
+__copyright__ = "Copyright (c) 2008-2014 Hive Solutions Lda."
 """ The copyright for the module """
 
 __license__ = "GNU General Public License (GPL), Version 3"
@@ -221,9 +221,9 @@ class Task(base.Base):
                 receivers = ["%s <%s>" % (_contact.name, _contact.email)],
                 plain = "email/down.txt.tpl",
                 rich = "email/down.html.tpl",
-                context = {
-                    "server" : server
-                }
+                context = dict(
+                    server = server
+                )
             )
 
     def on_up(self):
@@ -239,7 +239,7 @@ class Task(base.Base):
                 receivers = ["%s <%s>" % (_contact.name, _contact.email)],
                 plain = "email/up.txt.tpl",
                 rich = "email/up.html.tpl",
-                context = {
-                    "server" : server
-                }
+                context = dict(
+                    server = server
+                )
             )
