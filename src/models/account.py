@@ -172,6 +172,8 @@ class Account(base.Base):
             type = ADMIN_TYPE
         )
         account.save(validate = False)
+        account.enabled = True
+        account.save()
 
     @classmethod
     def validate_new(cls):
