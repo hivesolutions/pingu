@@ -39,8 +39,9 @@ __license__ = "GNU General Public License (GPL), Version 3"
 
 import flask #@UnusedImport
 
-import models
 import quorum
+
+import pingu.models
 
 SECRET_KEY = "kyjbqt4828ky8fdl7ifwgawt60erk8wg"
 """ The "secret" key to be at the internal encryption
@@ -54,7 +55,7 @@ the mongo database """
 def onrun():
     # schedules the various tasks currently registered in
     # the system internal structures
-    models.Task.schedule_all()
+    pingu.models.Task.schedule_all()
 
 app = quorum.load(
     name = __name__,
@@ -62,10 +63,10 @@ app = quorum.load(
     redis_session = True,
     mongo_database = MONGO_DATABASE,
     logger = "pingu.debug",
-    models = models
+    models = pingu.models
 )
 
-from views import * #@UnusedWildImport
+import pingu.views #@UnusedImport
 
 if __name__ == "__main__":
     quorum.run(server = "netius")
