@@ -37,11 +37,11 @@ __copyright__ = "Copyright (c) 2008-2014 Hive Solutions Lda."
 __license__ = "GNU General Public License (GPL), Version 3"
 """ The license for the module """
 
-import models
+from pingu import models
 
-from pingu import app
-from pingu import flask
-from pingu import quorum
+from pingu.main import app
+from pingu.main import flask
+from pingu.main import quorum
 
 @app.route("/home", methods = ("GET",))
 def home():

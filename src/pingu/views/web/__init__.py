@@ -34,14 +34,14 @@ __copyright__ = "Copyright (c) 2008-2014 Hive Solutions Lda."
 __license__ = "GNU General Public License (GPL), Version 3"
 """ The license for the module """
 
-import account
-import base
-import contact
-import heroku
-import server
+from . import account
+from . import base
+from . import contact
+from . import heroku
+from . import server
 
-from account import *
-from base import *
-from contact import *
-from heroku import *
-from server import *
+from .account import *
+from .base import *
+from .contact import *
+from .heroku import *
+from .server import *

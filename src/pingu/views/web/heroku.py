@@ -39,13 +39,12 @@ __license__ = "GNU General Public License (GPL), Version 3"
 
 import json
 import time
-import urllib
 
-import models
+from pingu import models
 
-from pingu import app
-from pingu import flask
-from pingu import quorum
+from pingu.main import app
+from pingu.main import flask
+from pingu.main import quorum
 
 # loads the manifest information json and retrieves
 # the various partial values from it to be used
@@ -68,14 +67,14 @@ def create_servers_h(heroku_id, account, sleep_time = 3.0):
     # from the account structure provided, then encodes
     # the provided heroku id into url encode
     instance_id = account.instance_id
-    heroku_id_e = urllib.quote(heroku_id)
+    heroku_id_e = quorum.legacy.quote(heroku_id)
 
     # creates the complete url string from the username,
     # password and heroku id to be used and the opens the
     # url reading its data
     url = "https://%s:%s@api.heroku.com/vendor/apps/%s" % (username_h, password_h, heroku_id_e)
     try:
-        remote = urllib.urlopen(url)
+        remote = quorum.legacy.urlopen(url)
         try: data = remote.read()
         finally: remote.close()
     except:
@@ -133,7 +132,7 @@ def create_servers_h(heroku_id, account, sleep_time = 3.0):
 def get_navbar_h():
     global navbar_h
     if navbar_h: return navbar_h
-    server = urllib.urlopen("http://nav.heroku.com/v1/providers/header")
+    server = quorum.legacy.urlopen("http://nav.heroku.com/v1/providers/header")
     try: data = server.read()
     finally: server.close()
     navbar_h = data
