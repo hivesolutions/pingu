@@ -43,10 +43,10 @@ import urlparse
 
 import quorum
 
-import log
-import base
-import server
-import contact
+from pingu.models import log
+from pingu.models import base
+from pingu.models import server
+from pingu.models import contact
 
 DEFAULT_TIMEOUT = 60.0
 """ The default timeout value to be used in between "ping"

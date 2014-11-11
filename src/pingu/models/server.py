@@ -37,16 +37,14 @@ __copyright__ = "Copyright (c) 2008-2014 Hive Solutions Lda."
 __license__ = "GNU General Public License (GPL), Version 3"
 """ The license for the module """
 
-import cStringIO
-
 import PIL.Image
 import PIL.ImageDraw
 import PIL.ImageFont
 
 import quorum
 
-import base
-import task
+from pingu.models import base
+from pingu.models import task
 
 DEFAULT_TIMEOUT = 60.0
 """ The default timeout value to be used in between "ping"
@@ -156,7 +154,7 @@ class Server(base.Base):
 
         # creates the buffer for the writing of the "final" image file,
         # then writes its contents and reads the complete set of data
-        buffer = cStringIO.StringIO()
+        buffer = quorum.legacy.BytesIO()
         try:
             image.save(buffer, "png", **png_info)
             buffer.seek(0)

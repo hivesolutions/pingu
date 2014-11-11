@@ -44,10 +44,10 @@ import datetime
 
 import quorum
 
-import log
-import base
-import server
-import contact
+from pingu.models import log
+from pingu.models import base
+from pingu.models import server
+from pingu.models import contact
 
 PASSWORD_SALT = "pingu"
 """ The salt suffix to be used during the encoding

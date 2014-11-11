@@ -41,9 +41,9 @@ from . import log
 from . import server
 from . import task
 
-from .account import *
-from .base import *
-from .contact import *
-from .log import *
-from .server import *
-from .task import *
+from .account import Account
+from .base import Base
+from .contact import Contact
+from .log import Log
+from .server import Server
+from .task import Task
