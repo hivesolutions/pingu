@@ -38,7 +38,6 @@ __license__ = "GNU General Public License (GPL), Version 3"
 """ The license for the module """
 
 import time
-import httplib
 
 import quorum
 
@@ -132,7 +131,8 @@ class Task(base.Base):
 
         # retrieves the connection class to be used according
         # to the scheme defined in the url
-        connection_c = httplib.HTTPSConnection if scheme == "https" else httplib.HTTPConnection
+        connection_c = quorum.legacy.HTTPSConnection if\
+            scheme == "https" else quorum.legacy.HTTPConnection
 
         # retrieves the timestamp for the start of the connection
         # to the remote host and then creates a new connection to
