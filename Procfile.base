@@ -1,1 +1,1 @@
-web: python src/pingu.py
+web: python src/pingu/main.py

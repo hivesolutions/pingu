@@ -1,1 +1,1 @@
-web: cd src && python pingu.py
+web: cd src && python pingu/main.py
