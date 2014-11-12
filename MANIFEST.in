@@ -1,4 +1,15 @@
-include src/pingu.wsgi
+include src/pingu/pingu.wsgi
 recursive-include src/heroku *
-recursive-include src/static *
-recursive-include src/templates *
+recursive-include src/static/css *
+recursive-include src/static/fonts *
+recursive-include src/static/images *.png
+recursive-include src/static/images *.ico
+recursive-include src/static/images/site *.png
+recursive-include src/static/js *
+recursive-include src/templates *.tpl
+recursive-include src/templates/account *.tpl
+recursive-include src/templates/contact *.tpl
+recursive-include src/templates/email *.tpl
+recursive-include src/templates/partials *.tpl
+recursive-include src/templates/server *.tpl
+recursive-include src/templates/site *.tpl
