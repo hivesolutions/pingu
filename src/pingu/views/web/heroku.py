@@ -223,6 +223,6 @@ def sso_login():
     redirect = flask.redirect(
         flask.url_for("list_servers")
     )
-    response = app.make_response(redirect)
+    response = flask.make_response(redirect)
     response.set_cookie("heroku-nav-data", value = nav_data)
     return response
