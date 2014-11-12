@@ -1,6 +1,7 @@
 *.pyc
 *.debug
-*.shelve
+
+*.shelve*
 
 /dist/
 /src/pingu.egg-info/
