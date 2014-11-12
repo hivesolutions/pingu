@@ -73,7 +73,7 @@ def create_server():
     # should be ran upon the save operation
     server = models.Server.new()
     try: server.save()
-    except quorum.ValidationError, error:
+    except quorum.ValidationError as error:
         return flask.render_template(
             "server/new.html.tpl",
             link = "servers",
@@ -120,7 +120,7 @@ def update_server(name):
     server = models.Server.get_i(name = name)
     server.apply()
     try: server.save()
-    except quorum.ValidationError, error:
+    except quorum.ValidationError as error:
         return flask.render_template(
             "server/edit.html.tpl",
             link = "servers",

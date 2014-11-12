@@ -116,7 +116,7 @@ def login():
     username = quorum.get_field("username")
     password = quorum.get_field("password")
     try: account = models.Account.login(username, password)
-    except quorum.OperationalError, error:
+    except quorum.OperationalError as error:
         return flask.render_template(
             "signin.html.tpl",
             username = username,

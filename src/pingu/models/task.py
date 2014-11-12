@@ -43,7 +43,6 @@ import quorum
 
 from pingu.models import log
 from pingu.models import base
-from pingu.models import server
 from pingu.models import contact
 
 DEFAULT_TIMEOUT = 60.0
@@ -89,6 +88,8 @@ class Task(base.Base):
         @return: The list containing the complete set of task
         tuples in the data source.
         """
+
+        from pingu.models import server
 
         tasks = []
         servers = server.Server.find(enabled = True)
@@ -190,7 +191,7 @@ class Task(base.Base):
         self.server.up = up
         self.server.latency = latency
         self.server.timestamp = start_time
-        self.server.save(server)
+        self.server.save()
 
         # in case there's a change from server state up to down, or
         # down to up (reversed) must trigger the proper event so
@@ -221,7 +222,7 @@ class Task(base.Base):
                 plain = "email/down.txt.tpl",
                 rich = "email/down.html.tpl",
                 context = dict(
-                    server = server
+                    server = self.server
                 )
             )
 
@@ -239,6 +240,6 @@ class Task(base.Base):
                 plain = "email/up.txt.tpl",
                 rich = "email/up.html.tpl",
                 context = dict(
-                    server = server
+                    server = self.server
                 )
             )

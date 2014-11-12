@@ -73,7 +73,7 @@ def create_contact():
     # should be ran upon the save operation
     contact = models.Contact.new()
     try: contact.save()
-    except quorum.ValidationError, error:
+    except quorum.ValidationError as error:
         return flask.render_template(
             "contact/new.html.tpl",
             link = "contacts",
@@ -120,7 +120,7 @@ def update_contact(id):
     contact = models.Contact.get_i(id = id)
     contact.apply()
     try: contact.save()
-    except quorum.ValidationError, error:
+    except quorum.ValidationError as error:
         return flask.render_template(
             "contact/edit.html.tpl",
             link = "contacts",

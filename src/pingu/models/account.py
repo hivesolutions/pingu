@@ -46,7 +46,6 @@ import quorum
 
 from pingu.models import log
 from pingu.models import base
-from pingu.models import server
 from pingu.models import contact
 
 PASSWORD_SALT = "pingu"
@@ -341,7 +340,7 @@ class Account(base.Base):
         model["enabled_l"] = enabled and "enabled" or "disabled"
         model["email_s"] = email and email.replace("@", " at ").replace(".", " dot ")
         model["last_login_l"] = last_login_string
-        model["email_md5"] = email and hashlib.md5(email).hexdigest()
+        model["email_md5"] = email and hashlib.md5(quorum.legacy.bytes(email)).hexdigest()
 
     def pre_create(self):
         base.Base.pre_create(self)
@@ -410,6 +409,8 @@ class Account(base.Base):
 
     def _delete(self):
         base.Base._delete(self)
+
+        from pingu.models import server
 
         contact.Contact.delete_c(instance_id = self.instance_id)
         log.Log.delete_c(instance_id = self.instance_id)

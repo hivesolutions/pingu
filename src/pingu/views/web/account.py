@@ -76,7 +76,7 @@ def create_account():
     # should be ran upon the save operation
     account = models.Account.new()
     try: account.save()
-    except quorum.ValidationError, error:
+    except quorum.ValidationError as error:
         return flask.render_template(
             "account/new.html.tpl",
             link = "accounts",
@@ -134,7 +134,7 @@ def update_account(username):
     account = models.Account.get(username = username)
     account.apply()
     try: account.save()
-    except quorum.ValidationError, error:
+    except quorum.ValidationError as error:
         return flask.render_template(
             "account/edit.html.tpl",
             link = "accounts",
