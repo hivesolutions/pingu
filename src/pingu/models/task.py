@@ -41,9 +41,9 @@ import time
 
 import quorum
 
-from pingu.models import log
-from pingu.models import base
-from pingu.models import contact
+from . import log
+from . import base
+from . import contact
 
 DEFAULT_TIMEOUT = 60.0
 """ The default timeout value to be used in between "ping"
@@ -89,7 +89,7 @@ class Task(base.Base):
         tuples in the data source.
         """
 
-        from pingu.models import server
+        from . import server
 
         tasks = []
         servers = server.Server.find(enabled = True)

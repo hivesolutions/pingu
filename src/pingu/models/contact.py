@@ -41,7 +41,7 @@ import hashlib
 
 import quorum
 
-from pingu.models import base
+from . import base
 
 class Contact(base.Base):
 

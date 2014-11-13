@@ -44,9 +44,9 @@ import datetime
 
 import quorum
 
-from pingu.models import log
-from pingu.models import base
-from pingu.models import contact
+from . import log
+from . import base
+from . import contact
 
 PASSWORD_SALT = "pingu"
 """ The salt suffix to be used during the encoding
@@ -411,7 +411,7 @@ class Account(base.Base):
     def _delete(self):
         base.Base._delete(self)
 
-        from pingu.models import server
+        from . import server
 
         contact.Contact.delete_c(instance_id = self.instance_id)
         log.Log.delete_c(instance_id = self.instance_id)

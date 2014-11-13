@@ -43,8 +43,8 @@ import PIL.ImageFont
 
 import quorum
 
-from pingu.models import base
-from pingu.models import task
+from . import base
+from . import task
 
 DEFAULT_TIMEOUT = 60.0
 """ The default timeout value to be used in between "ping"

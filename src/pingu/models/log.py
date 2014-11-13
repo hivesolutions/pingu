@@ -41,7 +41,7 @@ import datetime
 
 import quorum
 
-from pingu.models import base
+from . import base
 
 class Log(base.Base):
 
