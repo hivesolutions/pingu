@@ -20,7 +20,7 @@ After installing Pingu, the application should be configured to fully integrate 
 
 ## Troubleshooting
 
-If for some truly unexpected reason, Pingu doesn't seem to be doing its job properly, please contact 
+If for some truly unexpected reason, Pingu doesn't seem to be doing its job properly, please contact
 us at support@pinguapp.com, and we'll do our very best to solve your issue.
 
 ## Migrating between plans
