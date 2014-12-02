@@ -3,5 +3,5 @@
 
 *.shelve*
 
-/dist/
-/src/pingu.egg-info/
+/dist
+/src/pingu.egg-info
