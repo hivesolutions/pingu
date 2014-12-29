@@ -6,7 +6,7 @@
         <title>Pingu / {% block title %}{% endblock %}</title>
     {% endblock %}
 </head>
-<body class="ux wait-load">
+<body class="ux romantic wait-load">
     {% include "partials/nav_data.html.tpl" %}
     <div id="overlay" class="overlay"></div>
     <div id="header">
