@@ -360,7 +360,7 @@ class Account(base.Base):
         self.login_count = 0
         self.last_login = None
         if not hasattr(self, "type") or not self.type: self.type = USER_TYPE
-        self.tokens =  USER_ACL.get(self.type, ())
+        self.tokens = USER_ACL.get(self.type, ())
 
     def pre_update(self):
         base.Base.pre_update(self)
