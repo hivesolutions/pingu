@@ -92,7 +92,7 @@ class Log(base.Base):
 
     @classmethod
     def _build(cls, model, map):
-        base.Base._build(model, map)
+        super(Log, cls)._build(model, map)
         up = model.get("up", None)
         timestamp = model.get("timestamp", None)
         date = datetime.datetime.utcfromtimestamp(timestamp)

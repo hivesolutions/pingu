@@ -82,6 +82,6 @@ class Contact(base.Base):
 
     @classmethod
     def _build(cls, model, map):
-        base.Base._build(model, map)
+        super(Contact, cls)._build(model, map)
         email = model.get("email", None)
         model["email_md5"] = email and hashlib.md5(quorum.legacy.bytes(email)).hexdigest()

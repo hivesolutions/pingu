@@ -332,7 +332,7 @@ class Account(base.Base):
 
     @classmethod
     def _build(cls, model, map):
-        base.Base._build(model, map)
+        super(Account, cls)._build(model, map)
         enabled = model.get("enabled", False)
         email = model.get("email", None)
         last_login = model.get("last_login", None)

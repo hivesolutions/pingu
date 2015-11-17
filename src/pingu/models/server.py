@@ -104,7 +104,7 @@ class Server(base.Base):
 
     @classmethod
     def _build(cls, model, map):
-        base.Base._build(model, map)
+        super(Server, cls)._build(model, map)
         up = model.get("up", None)
         model["up_l"] = up == True and "up" or up == False and "down" or "unknwon"
 
