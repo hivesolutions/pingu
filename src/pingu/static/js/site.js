@@ -42,10 +42,10 @@
             var _screens = [];
 
             screens.each(function(index, element) {
-                        var _element = jQuery(this);
-                        var url = _element.html();
-                        _screens.push(url);
-                    });
+                var _element = jQuery(this);
+                var url = _element.html();
+                _screens.push(url);
+            });
 
             matchedObject.data("index", 0);
             matchedObject.data("screens", _screens);
@@ -53,12 +53,12 @@
             reset(matchedObject);
 
             nextButton.click(function() {
-                        next(matchedObject);
-                    });
+                next(matchedObject);
+            });
 
             previousButton.click(function() {
-                        previous(matchedObject);
-                    });
+                previous(matchedObject);
+            });
         };
 
         var next = function(matchedObject) {
@@ -100,19 +100,19 @@
         }
 
         switch (method) {
-            case "next" :
+            case "next":
                 next(matchedObject);
                 break;
 
-            case "previous" :
+            case "previous":
                 previous(matchedObject);
                 break;
 
-            case "reset" :
+            case "reset":
                 reset(matchedObject);
                 break;
 
-            default :
+            default:
                 init();
         }
     };
@@ -135,21 +135,21 @@
         // registers for the show event in the signup window
         // so that the form contained in it is reset
         windowSignup.bind("show", function() {
-                    // retrieves the refence to the current element
-                    // and the associated form value
-                    var element = jQuery(this);
-                    var form = jQuery("form", element)
+            // retrieves the refence to the current element
+            // and the associated form value
+            var element = jQuery(this);
+            var form = jQuery("form", element)
 
-                    // resets the current form so that new data may
-                    // be set in the various fields of the form
-                    form.trigger("reset");
-                });
+            // resets the current form so that new data may
+            // be set in the various fields of the form
+            form.trigger("reset");
+        });
     };
 })(jQuery);
 
 jQuery(document).ready(function() {
-            var _body = jQuery("body");
-            _body.bind("applied", function(event, base) {
-                        base.uapply();
-                    });
-        });
+    var _body = jQuery("body");
+    _body.bind("applied", function(event, base) {
+        base.uapply();
+    });
+});
