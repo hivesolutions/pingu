@@ -355,7 +355,6 @@ ul.features > li.daily-reports {
 }
 
 .window {
-    background: #ffffff;
     background: transparent url(../images/site/background.png) repeat;
     border-radius: 12px 12px 12px 12px;
     -moz-border-radius: 12px 12px 12px 12px;
