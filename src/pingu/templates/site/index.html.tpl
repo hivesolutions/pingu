@@ -10,8 +10,8 @@
             <div class="button close-button"></div>
         </div>
         <ul class="screens">
-            <li>{{ url_for('static', filename = 'images/site/app-screenshot-dummy.png') }}</li>
-            <li>{{ url_for('static', filename = 'images/site/app-screenshot-dummy2.png') }}</li>
+            <li>{{ url_for("static", filename = "images/site/app-screenshot-dummy.png") }}</li>
+            <li>{{ url_for("static", filename = "images/site/app-screenshot-dummy2.png") }}</li>
         </ul>
     </div>
     <div class="window window-signup">

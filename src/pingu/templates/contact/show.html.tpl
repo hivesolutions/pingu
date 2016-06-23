@@ -8,11 +8,11 @@
         <tbody>
             <tr>
                 <td class="right label" width="50%">phone</td>
-                <td class="left value" width="50%">{{ contact.phone|default("-", true) }}</td>
+                <td class="left value" width="50%">{{ contact.phone|default("-", True) }}</td>
             </tr>
             <tr>
                 <td class="right label" width="50%">xmpp</td>
-                <td class="left value" width="50%">{{ contact.xmpp|default("-", true) }}</td>
+                <td class="left value" width="50%">{{ contact.xmpp|default("-", True) }}</td>
             </tr>
             <tr>
                 <td class="right label" width="50%">twitter</td>
