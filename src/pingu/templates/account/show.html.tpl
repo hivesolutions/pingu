@@ -8,11 +8,11 @@
         <tbody>
             <tr>
                 <td class="right label" width="50%">email</td>
-                <td class="left value" width="50%">{{ account.email | default('-', true) }}</td>
+                <td class="left value" width="50%">{{ account.email|default("-", true) }}</td>
             </tr>
             <tr>
                 <td class="right label" width="50%">phone</td>
-                <td class="left value" width="50%">{{ account.phone | default('-', true) }}</td>
+                <td class="left value" width="50%">{{ account.phone|default("-", true) }}</td>
             </tr>
             <tr>
                 <td class="right label" width="50%">twitter</td>

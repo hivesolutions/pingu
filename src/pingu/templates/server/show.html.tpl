@@ -8,7 +8,7 @@
         <tbody>
             <tr>
                 <td class="right label" width="50%">status</td>
-                <td class="left value {{ server.up_l }}" width="50%">{{ server.up_l | default('-', true) }}</td>
+                <td class="left value {{ server.up_l }}" width="50%">{{ server.up_l|default("-", true) }}</td>
             </tr>
             <tr>
                 <td class="right label" width="50%">response time</td>
