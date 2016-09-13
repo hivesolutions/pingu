@@ -142,7 +142,7 @@
 
             // resets the current form so that new data may
             // be set in the various fields of the form
-            form.trigger("reset");
+            form.triggerHandler("reset");
         });
     };
 })(jQuery);
