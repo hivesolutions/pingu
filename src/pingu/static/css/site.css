@@ -81,13 +81,14 @@ h4 {
 }
 
 a {
+    border-bottom: 1px solid transparent;
     color: #005b9c;
     padding-bottom: 1px;
     text-decoration: none;
 }
 
 a:hover {
-    border-bottom: 1px solid #005b9c;
+    border-color: #005b9c;
 }
 
 table {
@@ -345,8 +346,8 @@ ul.features > li.daily-reports {
 }
 
 .available-on {
-    margin: 140px 0px 0px 0px;
     border-bottom: none;
+    margin: 140px 0px 0px 0px;
 }
 
 .available-on img {
