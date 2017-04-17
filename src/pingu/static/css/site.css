@@ -218,6 +218,7 @@ ul.features > li {
     background-color: transparent;
     background-repeat: no-repeat;
     margin: 0px 0px 28px 0px;
+    min-height: 54px;
     width: 220px;
 }
 
