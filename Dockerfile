@@ -14,6 +14,7 @@ ENV PYTHONPATH /src
 ADD requirements.txt /
 ADD src /src
 
+RUN apk update && apk add libpng-dev libjpeg-turbo-dev libwebp-dev freetype-dev
 RUN pip3 install -r /requirements.txt && pip3 install --upgrade netius
 
 CMD ["/usr/bin/python3", "/src/pingu/main.py"]
