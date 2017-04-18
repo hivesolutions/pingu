@@ -7,9 +7,9 @@
         resources.<br />
         These values will <strong>not be visible to any element</strong>.
     </div>
-    <div class="quote error">
-        {{ error }}
-    </div>
+    {% if error %}
+        <div class="quote error">{{ error }}</div>
+    {% endif %}
     <form action="{{ url_for('login') }}" method="post" class="form">
         <div class="input">
             <input class="small" name="username" value="{{ username }}" placeholder="username" />
