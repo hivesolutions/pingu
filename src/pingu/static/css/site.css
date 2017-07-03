@@ -346,8 +346,12 @@ ul.features > li.daily-reports {
 }
 
 .available-on {
-    border-bottom: none;
     margin: 140px 0px 0px 0px;
+}
+
+.available-on a {
+    border-bottom: none;
+    padding-bottom: none;
 }
 
 .available-on img {
