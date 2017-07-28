@@ -65,7 +65,7 @@
             var index = matchedObject.data("index");
             var screens = matchedObject.data("screens");
 
-            if (index == screens.length - 1) {
+            if (index === screens.length - 1) {
                 return;
             }
             setScreen(matchedObject, index + 1);
@@ -75,7 +75,7 @@
             var index = matchedObject.data("index");
             var screens = matchedObject.data("screens");
 
-            if (index == 0) {
+            if (index === 0) {
                 return;
             }
             setScreen(matchedObject, index - 1);
