@@ -132,9 +132,9 @@
         // element call (component initialization)
         lightbox.ulightbox();
 
-        // registers for the show event in the signup window
+        // registers for the shown event in the signup window
         // so that the form contained in it is reset
-        windowSignup.bind("show", function() {
+        windowSignup.bind("shown", function() {
             // retrieves the refence to the current element
             // and the associated form value
             var element = jQuery(this);
