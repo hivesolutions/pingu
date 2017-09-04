@@ -84,8 +84,8 @@ class Task(base.Base):
         The returned value is global and should contain all
         the tasks in the data source.
 
-        @rtype: List
-        @return: The list containing the complete set of task
+        :rtype: List
+        :return: The list containing the complete set of task
         tuples in the data source.
         """
 
