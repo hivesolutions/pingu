@@ -6,7 +6,7 @@
         {% for contact in contacts %}
             <li>
                 <div class="image">
-                    <img src="http://www.gravatar.com/avatar/{{ contact.email_md5 }}.jpg?size=64" width="64" height="64" />
+                    <img src="//www.gravatar.com/avatar/{{ contact.email_md5 }}.jpg?size=64" width="64" height="64" />
                 </div>
                 <div class="name">
                     <a href="{{ url_for('show_contact', id = contact.id) }}">{{ contact.name }}</a>
