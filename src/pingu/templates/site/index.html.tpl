@@ -231,9 +231,9 @@
         <div class="button button-submit button-signup" data-window_open=".window-signup">Signup</div>
         <div class="available-on">
             <h4>available on</h4>
-            <a href="#"><img src="{{ url_for('static', filename = 'images/site/available-heroku.png') }}"></img></a>
-            <a href="#"><img src="{{ url_for('static', filename = 'images/site/available-app_store.png') }}"></img></a>
-            <a href="#"><img src="{{ url_for('static', filename = 'images/site/available-google_play.png') }}"></img></a>
+            <a href="#"><img src="{{ url_for('static', filename = 'images/site/available-heroku.png') }}" /></a>
+            <a href="#"><img src="{{ url_for('static', filename = 'images/site/available-app_store.png') }}" /></a>
+            <a href="#"><img src="{{ url_for('static', filename = 'images/site/available-google_play.png') }}" /></a>
         </div>
     </div>
 {% endblock %}
