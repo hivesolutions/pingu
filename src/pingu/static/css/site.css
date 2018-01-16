@@ -36,6 +36,11 @@ __license__   = Apache License, Version 2.0
     display: none;
     left: 0px;
     opacity: 0.6;
+    -o-opacity: 0.6;
+    -ms-opacity: 0.6;
+    -moz-opacity: 0.6;
+    -khtml-opacity: 0.6;
+    -webkit-opacity: 0.6;
     position: absolute;
     top: 0px;
 }
@@ -320,6 +325,11 @@ ul.features > li.daily-reports {
     line-height: 58px;
     margin: 50px auto 0px auto;
     text-shadow: 1px 1px 0px #666666;
+    -o-text-shadow: 1px 1px 0px #666666;
+    -ms-text-shadow: 1px 1px 0px #666666;
+    -moz-text-shadow: 1px 1px 0px #666666;
+    -khtml-text-shadow: 1px 1px 0px #666666;
+    -webkit-text-shadow: 1px 1px 0px #666666;
     width: 235px;
 }
 
@@ -361,7 +371,10 @@ ul.features > li.daily-reports {
 .window {
     background: transparent url(../images/site/background.png) repeat;
     border-radius: 12px 12px 12px 12px;
+    -o-border-radius: 12px 12px 12px 12px;
+    -ms-border-radius: 12px 12px 12px 12px;
     -moz-border-radius: 12px 12px 12px 12px;
+    -khtml-border-radius: 12px 12px 12px 12px;
     -webkit-border-radius: 12px 12px 12px 12px;
     overflow: auto;
     padding: 24px 24px 24px 24px;
@@ -435,7 +448,10 @@ ul.features > li.daily-reports {
 
 .window.window-screenshots img {
     border-radius: 12px 12px 0px 0px;
-    -moz-border-radius: 12px 0px 0px 0px;
+    -o-border-radius: 12px 12px 0px 0px;
+    -ms-border-radius: 12px 12px 0px 0px;
+    -moz-border-radius: 12px 12px 0px 0px;
+    -khtml-border-radius: 12px 12px 0px 0px;
     -webkit-border-radius: 12px 12px 0px 0px;
 }
 
@@ -493,6 +509,11 @@ ul.features > li.daily-reports {
     font-size: 16px;
     height: 34px;
     outline: none;
+    -o-outline: none;
+    -ms-outline: none;
+    -moz-outline: none;
+    -khtml-outline: none;
+    -webkit-outline: none;
     padding: 0px 6px 0px 6px;
     width: 283px;
 }
@@ -507,6 +528,11 @@ ul.features > li.daily-reports {
 }
 
 .line > .field input[type="radio"] {
+    appearance: none;
+    -o-appearance: none;
+    -ms-appearance: none;
+    -moz-appearance: none;
+    -khtml-appearance: none;
     -webkit-appearance: none;
     background: transparent url(../images/site/radio-button.png) no-repeat left 0px;
     border: none;
