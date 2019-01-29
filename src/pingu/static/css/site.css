@@ -621,14 +621,16 @@ ul.statistics-server li > p.down {
     margin: 64px 0px 64px 0px;
 }
 
-.footer-logo {
+.footer-logo,
+.footer-logo:not(.button-no-style) {
     background: transparent url(../images/site/logo-footer.png) no-repeat left top;
     height: 25px;
     margin: 12px auto 12px auto;
     width: 25px;
 }
 
-.footer-logo:hover {
+.footer-logo:hover,
+.footer-logo:not(.button-no-style):hover {
     background-position: left -25px;
 }
 
