@@ -77,7 +77,7 @@ def create_servers_h(heroku_id, account, sleep_time = 3.0):
         remote = quorum.legacy.urlopen(url)
         try: data = remote.read()
         finally: remote.close()
-    except:
+    except Exception:
         data = "{}"
 
     # loads the json structure from the data and obtains the

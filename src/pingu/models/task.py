@@ -143,7 +143,7 @@ class Task(base.Base):
         try:
             connection.request(method, path, headers = HEADERS)
             response = connection.getresponse()
-        except:
+        except Exception:
             response = None
         finally:
             connection.close()
