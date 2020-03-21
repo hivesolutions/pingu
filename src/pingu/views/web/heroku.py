@@ -46,7 +46,7 @@ from pingu.main import app
 from pingu.main import flask
 from pingu.main import quorum
 
-# loads the manifest information json and retrieves
+# loads the manifest information JSON and retrieves
 # the various partial values from it to be used
 # for authentication and configuration of the app
 heroku_conf = quorum.load_json("heroku", "addon-manifest.json")
@@ -80,7 +80,7 @@ def create_servers_h(heroku_id, account, sleep_time = 3.0):
     except Exception:
         data = "{}"
 
-    # loads the json structure from the data and obtains the
+    # loads the JSON structure from the data and obtains the
     # owner email and the various domains contained in it
     object = json.loads(data)
     owner_email = object.get("owner_email", "notset@heroku.com")
