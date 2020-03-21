@@ -58,7 +58,7 @@ HEADERS = {
     "X-Powered-By" : "hive-server/0.1.0"
 }
 """ The map of headers to be used as base for the pingu
-http client to use """
+HTTP client to use """
 
 class Task(base.Base):
 
@@ -122,7 +122,7 @@ class Task(base.Base):
         url = self.server.url
         method = self.server.val("method", "GET")
 
-        # parses the provided url values, retrieving the various
+        # parses the provided URL values, retrieving the various
         # components of it to be used in the ping operation
         url_s = quorum.legacy.urlparse(url)
         scheme = url_s.scheme

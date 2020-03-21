@@ -65,13 +65,13 @@ def create_servers_h(heroku_id, account, sleep_time = 3.0):
 
     # retrieves the current instance id to be used
     # from the account structure provided, then encodes
-    # the provided heroku id into url encode
+    # the provided heroku id into URL encode
     instance_id = account.instance_id
     heroku_id_e = quorum.legacy.quote(heroku_id)
 
-    # creates the complete url string from the username,
+    # creates the complete URL string from the username,
     # password and heroku id to be used and the opens the
-    # url reading its data
+    # URL reading its data
     url = "https://%s:%s@api.heroku.com/vendor/apps/%s" % (username_h, password_h, heroku_id_e)
     try:
         remote = quorum.legacy.urlopen(url)
@@ -98,7 +98,7 @@ def create_servers_h(heroku_id, account, sleep_time = 3.0):
     # iterates over all the domains to insert the associated servers
     # into the data source
     for domain in domains:
-        # creates the url string from the domain, note that the url to
+        # creates the URL string from the domain, note that the URL to
         # be used is the root one (index page)
         url = "http://" + domain + "/"
 
