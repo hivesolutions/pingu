@@ -49,7 +49,7 @@ processes handled by flask (eg: sessions) """
 
 MONGO_DATABASE = "pingu"
 """ The default database to be used for the connection with
-the mongo database """
+the MongoDB database """
 
 @quorum.onrun
 def onrun():
