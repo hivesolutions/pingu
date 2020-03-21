@@ -348,7 +348,7 @@ class Account(base.Base):
 
         # "encrypts" the password into the target format defined
         # by the salt and the sha1 hash function and then creates
-        # the api key for the current account
+        # the API key for the current account
         self.password = hashlib.sha1(quorum.legacy.bytes(self.password + PASSWORD_SALT)).hexdigest()
         self.api_key = hashlib.sha1(quorum.legacy.bytes(str(uuid.uuid4()))).hexdigest()
         self.confirmation = hashlib.sha1(quorum.legacy.bytes(str(uuid.uuid4()))).hexdigest()
