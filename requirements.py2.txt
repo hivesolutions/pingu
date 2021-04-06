@@ -1,0 +1,6 @@
+netius
+flask
+quorum
+pymongo
+redis
+pillow<7
